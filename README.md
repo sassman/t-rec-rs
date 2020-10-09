@@ -38,6 +38,23 @@ or with specifying a different program to launch
 ❯ t-rec /bin/sh
 ```
 
+### Hidden Gems
+
+You can record not only the terminal but also every other window. There 2 ways to do so:
+
+1) for example lets record a window 'Google Chrome'
+2) make sure chrome is running and visible on screen
+
+```sh
+❯ TERM_PROGRAM="google chrome" t-rec
+tmp path: "/var/folders/m8/084p1v0x4770rpwpkrgl5b6h0000gn/T/trec-74728.rUxBx3ohGiQ2"
+Press Ctrl+D to end recording
+[src/window_id.rs:122] window_owner = "Google Chrome 2"
+```
+
+this is how it looks then:
+![demo-chrome](./docs/demo-chrome.gif)
+
 ## Contribute
 
 To contribute to t-rec you can either checkout existing issues [labeled with `good first issue`][4] or [open a new issue][5] and describe your problem.
