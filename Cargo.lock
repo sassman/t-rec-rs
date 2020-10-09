@@ -43,12 +43,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "08c48aae112d48ed9f069b33538ea9e3e90aa263cfa3d1c24309612b1f7472de"
 
 [[package]]
-name = "cc"
-version = "1.0.60"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ef611cc68ff783f18535d77ddd080185275713d852c4f5cbb6122c462a7a825c"
-
-[[package]]
 name = "cfg-if"
 version = "0.1.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -147,16 +141,6 @@ dependencies = [
  "autocfg",
  "cfg-if",
  "lazy_static",
-]
-
-[[package]]
-name = "ctrlc"
-version = "3.1.6"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d0b676fa23f995faf587496dcd1c80fead847ed58d2da52ac1caca9a72790dd2"
-dependencies = [
- "nix",
- "winapi",
 ]
 
 [[package]]
@@ -344,19 +328,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "nix"
-version = "0.17.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "50e4785f2c3b7589a0d0c1dd60285e1188adac4006e8abd6dd578e1567027363"
-dependencies = [
- "bitflags",
- "cc",
- "cfg-if",
- "libc",
- "void",
-]
-
-[[package]]
 name = "num-integer"
 version = "0.1.43"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -533,13 +504,12 @@ checksum = "d29ab0c6d3fc0ee92fe66e2d99f700eab17a8d57d1c1d3b748380fb20baa78cd"
 
 [[package]]
 name = "t-rec"
-version = "0.1.0"
+version = "0.1.0-beta.1"
 dependencies = [
  "anyhow",
  "core-foundation",
  "core-foundation-sys",
  "core-graphics",
- "ctrlc",
  "foreign-types-shared 0.3.0",
  "glob",
  "image",
@@ -569,12 +539,6 @@ dependencies = [
  "lzw",
  "miniz_oxide",
 ]
-
-[[package]]
-name = "void"
-version = "1.0.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6a02e4885ed3bc0f2de90ea6dd45ebcbb66dacffe03547fadbb0eeae2770887d"
 
 [[package]]
 name = "weezl"
