@@ -1,6 +1,13 @@
-mod window_id;
+#[cfg(target_os = "macos")]
+mod window_id_macos;
+#[cfg(target_os = "macos")]
+use crate::window_id_macos::get_window_id_for;
 
-use crate::window_id::get_window_id_for;
+#[cfg(not(target_os = "macos"))]
+mod window_id_any;
+#[cfg(not(target_os = "macos"))]
+use crate::window_id_any::get_window_id_for;
+
 use anyhow::Context;
 use core_foundation_sys::base::CFShow;
 use core_graphics::base::{kCGImageAlphaNone, kCGImageAlphaNoneSkipFirst};

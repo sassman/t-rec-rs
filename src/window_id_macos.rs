@@ -75,10 +75,10 @@ fn get_from_dict(dict: CFDictionaryRef, key: &str) -> DictEntryValue {
             return DictEntryValue::_Bool(unsafe { CFBooleanGetValue(value.cast()) });
         } else if type_id == unsafe { CFStringGetTypeID() } {
             let c_ptr = unsafe { CFStringGetCStringPtr(value.cast(), kCFStringEncodingUTF8) };
-            if !c_ptr.is_null() {
+            return if !c_ptr.is_null() {
                 let c_result = unsafe { CStr::from_ptr(c_ptr) };
                 let result = String::from(c_result.to_str().unwrap());
-                return DictEntryValue::_String(result);
+                DictEntryValue::_String(result)
             } else {
                 // in this case there is a high chance we got a `NSString` instead of `CFString`
                 // we have to use the objc runtime to fetch it
@@ -86,8 +86,8 @@ fn get_from_dict(dict: CFDictionaryRef, key: &str) -> DictEntryValue {
                 use objc_id::Id;
                 let nss: Id<NSString> = unsafe { Id::from_retained_ptr(value as *mut NSString) };
 
-                return DictEntryValue::_String(nss.as_str().to_string());
-            }
+                DictEntryValue::_String(nss.as_str().to_string())
+            };
         } else {
             eprintln!("Unexpected type: {}", type_id);
         }

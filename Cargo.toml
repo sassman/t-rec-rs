@@ -4,6 +4,7 @@ version = "0.1.0-beta.1"
 authors = ["Sven Assmann <sven.assmann.it@gmail.com>"]
 edition = "2018"
 license = "GPL-3.0-only"
+description = "lazingly fast terminal recorder that generates animated gif images for the web written in rust."
 homepage = "https://github.com/sassman/t-rec-rs"
 readme = "README.md"
 keywords = ["recorder", "image", "terminal", "gif", "commandline"]
@@ -12,18 +13,25 @@ repository = "https://github.com/sassman/t-rec-rs"
 exclude = [".ci/*", ".gitignore"]
 
 [dependencies]
-#core-graphics = "0.22"
-#core-foundation = "0.9"
-foreign-types-shared = "0.3"
 image = "0.23"
 glob = "0.3"
-objc-foundation = "0.1.1"
-objc_id = "0.1.1"
 libproc = "0.9"
 anyhow = "1.0"
 tempdir = "0.3"
+foreign-types-shared = "0.3"
 
+[target.'cfg(target_os = "macos")'.dependencies]
+objc_id = "0.1.1"
+objc-foundation = "0.1.1"
+#core-graphics = "0.22"
+#core-foundation = "0.9"
+#core-foundation-sys = "0.8"
+
+# needs to be patched until the upstream releases a new verison containing the patches
 #[patch.crates-io]
-core-graphics = { path = "../core-foundation-rs/core-graphics" }
-core-foundation = { path = "../core-foundation-rs/core-foundation" }
-core-foundation-sys = { path = "../core-foundation-rs/core-foundation-sys" }
+core-graphics = { git = "https://github.com/sassman/core-foundation-rs.git", branch = "main" }
+core-foundation = { git = "https://github.com/sassman/core-foundation-rs.git", branch = "main" }
+core-foundation-sys = { git = "https://github.com/sassman/core-foundation-rs.git", branch = "main" }
+#core-graphics = { path = "../core-foundation-rs/core-graphics" }
+#core-foundation = { path = "../core-foundation-rs/core-foundation" }
+#core-foundation-sys = { path = "../core-foundation-rs/core-foundation-sys" }

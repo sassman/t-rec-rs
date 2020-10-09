@@ -57,6 +57,7 @@ checksum = "0dbbb57365263e881e805dc77d94697c9118fd94d8da011240555aa7b23445bd"
 [[package]]
 name = "core-foundation"
 version = "0.9.1"
+source = "git+https://github.com/sassman/core-foundation-rs.git?branch=main#ae2b4934dfa326ba3a865fbca60106769e9325ff"
 dependencies = [
  "core-foundation-sys",
  "libc",
@@ -65,10 +66,12 @@ dependencies = [
 [[package]]
 name = "core-foundation-sys"
 version = "0.8.1"
+source = "git+https://github.com/sassman/core-foundation-rs.git?branch=main#ae2b4934dfa326ba3a865fbca60106769e9325ff"
 
 [[package]]
 name = "core-graphics"
 version = "0.22.1"
+source = "git+https://github.com/sassman/core-foundation-rs.git?branch=main#ae2b4934dfa326ba3a865fbca60106769e9325ff"
 dependencies = [
  "bitflags",
  "core-foundation",
@@ -80,6 +83,7 @@ dependencies = [
 [[package]]
 name = "core-graphics-types"
 version = "0.1.1"
+source = "git+https://github.com/sassman/core-foundation-rs.git?branch=main#ae2b4934dfa326ba3a865fbca60106769e9325ff"
 dependencies = [
  "bitflags",
  "core-foundation",
