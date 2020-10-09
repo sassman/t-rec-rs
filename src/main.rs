@@ -8,6 +8,7 @@ mod window_id_any;
 #[cfg(not(target_os = "macos"))]
 use crate::window_id_any::get_window_id_for;
 
+use crate::window_id_macos::ls_win;
 use anyhow::Context;
 use core_foundation_sys::base::CFShow;
 use core_graphics::base::{kCGImageAlphaNone, kCGImageAlphaNoneSkipFirst};
@@ -38,7 +39,12 @@ fn main() -> Result<(), std::io::Error> {
     let program = {
         let default = "/bin/sh".to_owned();
         if args().len() > 1 {
-            args().skip(1).next().unwrap_or(default)
+            let arg1 = args().skip(1).next().unwrap_or(default);
+            if arg1 == "--ls-win" {
+                ls_win();
+                exit(0);
+            }
+            arg1
         } else {
             env::var("SHELL").unwrap_or(default)
         }

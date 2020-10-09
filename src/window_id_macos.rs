@@ -96,6 +96,18 @@ fn get_from_dict(dict: CFDictionaryRef, key: &str) -> DictEntryValue {
     DictEntryValue::_Unknown
 }
 
+pub fn ls_win() {
+    println!("Window | Id");
+    for (window_owner, window_id, is_onscreen) in window_list() {
+        match (window_owner, window_id) {
+            (DictEntryValue::_String(window_owner), DictEntryValue::_Number(window_id)) => {
+                println!("{} | {}", window_owner, window_id)
+            }
+            (_, _) => {}
+        }
+    }
+}
+
 /// hard nut to crack, some starting point was:
 /// https://stackoverflow.com/questions/60117318/getting-window-owner-names-via-cgwindowlistcopywindowinfo-in-rust
 /// then some more PRs where needed:

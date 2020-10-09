@@ -10,7 +10,7 @@ Blazingly fast terminal recorder that generates animated gif images for the web 
 
 ## Features
 
-- Screenshoting your terminal with 4 frames per second (every 250ms)
+- Screenshotting your terminal with 4 frames per second (every 250ms)
 - Generates high quality small sized animated gif images
 - Runs (only) on MacOS
 - Uses native efficient APIs
@@ -19,7 +19,8 @@ Blazingly fast terminal recorder that generates animated gif images for the web 
 - No issues with fonts or colors
 - No issues with curses based programs
 - No issues with escape sequences
-- No record and replay - just one simple command to rule them all 
+- No record and replay - just one simple command to rule them all
+- Hidden feature: Record every window you want
 - Written in Rust 🦀
 
 ## Install
@@ -42,8 +43,9 @@ or with specifying a different program to launch
 
 You can record not only the terminal but also every other window. There 2 ways to do so:
 
-1) for example lets record a window 'Google Chrome'
-2) make sure chrome is running and visible on screen
+1) abuse the env var `TERM_PROGRAM` like this:
+- for example lets record a window 'Google Chrome'
+- make sure chrome is running and visible on screen
 
 ```sh
 ❯ TERM_PROGRAM="google chrome" t-rec
@@ -54,6 +56,27 @@ Press Ctrl+D to end recording
 
 this is how it looks then:
 ![demo-chrome](./docs/demo-chrome.gif)
+
+2) use the env var `WINDOWID` like this:
+- for example let's record a `VSCode` window
+- figure out the window id program, and make it 
+- make sure the window is visible on screen
+- set the variable and run `t-rec`
+
+```sh
+❯ t-rec --ls-win | grep -i code
+Code | 27600
+
+# set the WINDOWID variable and run t-rec
+❯ WINDOWID=27600 t-rec
+
+tmp path: "/var/folders/m8/084p1v0x4770rpwpkrgl5b6h0000gn/T/trec-77862.BMYiHNRWqv9Y"
+Press Ctrl+D to end recording
+
+```
+
+this is how it looks then:
+![demo-vscode](./docs/demo-vscode.gif)
 
 ## Contribute
 
