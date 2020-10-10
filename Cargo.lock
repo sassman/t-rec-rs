@@ -92,7 +92,8 @@ checksum = "0dbbb57365263e881e805dc77d94697c9118fd94d8da011240555aa7b23445bd"
 [[package]]
 name = "core-foundation"
 version = "0.9.1"
-source = "git+https://github.com/sassman/core-foundation-rs.git?branch=main#ae2b4934dfa326ba3a865fbca60106769e9325ff"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0a89e2ae426ea83155dccf10c0fa6b1463ef6d5fcb44cee0b224a408fa640a62"
 dependencies = [
  "core-foundation-sys",
  "libc",
@@ -101,12 +102,14 @@ dependencies = [
 [[package]]
 name = "core-foundation-sys"
 version = "0.8.1"
-source = "git+https://github.com/sassman/core-foundation-rs.git?branch=main#ae2b4934dfa326ba3a865fbca60106769e9325ff"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c0af3b5e4601de3837c9332e29e0aae47a0d46ebfa246d12b82f564bac233393"
 
 [[package]]
 name = "core-graphics"
 version = "0.22.1"
-source = "git+https://github.com/sassman/core-foundation-rs.git?branch=main#ae2b4934dfa326ba3a865fbca60106769e9325ff"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "fc239bba52bab96649441699533a68de294a101533b0270b2d65aa402b29a7f9"
 dependencies = [
  "bitflags",
  "core-foundation",
@@ -118,7 +121,8 @@ dependencies = [
 [[package]]
 name = "core-graphics-types"
 version = "0.1.1"
-source = "git+https://github.com/sassman/core-foundation-rs.git?branch=main#ae2b4934dfa326ba3a865fbca60106769e9325ff"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3a68b68b3446082644c91ac778bf50cd4104bfb002b5a6a7c44cca5a2c70788b"
 dependencies = [
  "bitflags",
  "core-foundation",

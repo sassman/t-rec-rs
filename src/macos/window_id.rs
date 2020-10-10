@@ -1,8 +1,10 @@
+use crate::macos::core_foundation_sys_patches::{
+    kCFNumberSInt32Type as I32, kCFNumberSInt64Type as I64, CFBooleanGetValue, CFNumberGetType,
+};
 use core_foundation::base::{CFGetTypeID, CFTypeID, ToVoid};
 use core_foundation::string::{kCFStringEncodingUTF8, CFString, CFStringGetCStringPtr};
 use core_foundation_sys::number::{
-    kCFNumberSInt32Type as I32, kCFNumberSInt64Type as I64, CFBooleanGetTypeID, CFBooleanGetValue,
-    CFNumberGetType, CFNumberGetTypeID, CFNumberGetValue, CFNumberRef,
+    CFBooleanGetTypeID, CFNumberGetTypeID, CFNumberGetValue, CFNumberRef,
 };
 use core_foundation_sys::string::CFStringGetTypeID;
 use core_graphics::display::*;

@@ -131,7 +131,7 @@ fn current_win_id() -> u32 {
 fn generate_gif_with_convert(time_codes: &[u128], tempdir: &TempDir) {
     let target = "t-rec.gif";
     println!(
-        "\n\n🎉 🚀 Generating {:?} out of {} frames!",
+        "\n🎉 🚀 Generating {:?} out of {} frames!",
         target,
         time_codes.len()
     );
