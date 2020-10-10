@@ -4,7 +4,7 @@ version = "0.1.0-beta.1"
 authors = ["Sven Assmann <sven.assmann.it@gmail.com>"]
 edition = "2018"
 license = "GPL-3.0-only"
-description = "lazingly fast terminal recorder that generates animated gif images for the web written in rust."
+description = "Blazingly fast terminal recorder that generates animated gif images for the web written in rust."
 homepage = "https://github.com/sassman/t-rec-rs"
 readme = "README.md"
 keywords = ["recorder", "image", "terminal", "gif", "commandline"]
@@ -13,6 +13,7 @@ repository = "https://github.com/sassman/t-rec-rs"
 exclude = [".ci/*", ".gitignore"]
 
 [dependencies]
+clap = "2.33"
 image = "0.23"
 glob = "0.3"
 libproc = "0.9"

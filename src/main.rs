@@ -8,11 +8,13 @@ mod any;
 #[cfg(not(target_os = "macos"))]
 use any::{get_window_id_for, ls_win, screenshot_and_save};
 
+mod cli;
+use crate::cli::launch;
+
 use anyhow::Context;
 use std::borrow::Borrow;
-use std::env::args;
 use std::ffi::OsStr;
-use std::process::{exit, Command};
+use std::process::Command;
 use std::sync::mpsc::Receiver;
 use std::sync::{mpsc, Arc, Mutex};
 use std::time::{Duration, Instant};
@@ -20,19 +22,21 @@ use std::{env, thread};
 use tempdir::TempDir;
 
 fn main() -> Result<(), std::io::Error> {
-    let program = {
-        let default = "/bin/sh".to_owned();
-        if args().len() > 1 {
-            let arg1 = args().nth(1).unwrap_or(default);
-            if arg1 == "--ls-win" {
-                ls_win();
-                exit(0);
-            }
-            arg1
+    let args = launch();
+    if args.is_present("list-windows") {
+        ls_win();
+        return Ok(());
+    }
+
+    let program: String = {
+        if args.is_present("program") {
+            args.value_of("program").unwrap().to_owned()
         } else {
+            let default = "/bin/sh".to_owned();
             env::var("SHELL").unwrap_or(default)
         }
     };
+
     // the nice thing is the cleanup on drop
     let tempdir = Arc::new(Mutex::new(
         TempDir::new(format!("trec-{}", std::process::id()).as_str())
