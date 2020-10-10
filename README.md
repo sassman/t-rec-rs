@@ -27,13 +27,11 @@ Blazingly fast terminal recorder that generates animated gif images for the web 
 
 ## Install
 
-**NOTE** Not yet published on crates.io due to a not yet released version of [core-foundation](https://github.com/servo/core-foundation-rs/pulls?q=is%3Apr+author%3Asassman+).
-
 ```sh
-git clone https://github.com/sassman/t-rec-rs.git
-cd t-rec-rs
-cargo install --path . 
+cargo install -f t-rec 
 ```
+
+**NOTE** `-f` just makes sure the latest version is installed
 
 ## Usage
 
