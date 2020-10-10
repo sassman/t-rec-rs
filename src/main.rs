@@ -5,6 +5,8 @@ use macos::{get_window_id_for, ls_win, screenshot_and_save};
 
 #[cfg(not(target_os = "macos"))]
 mod any;
+#[cfg(not(target_os = "macos"))]
+use any::{get_window_id_for, ls_win, screenshot_and_save};
 
 use anyhow::Context;
 use std::borrow::Borrow;
