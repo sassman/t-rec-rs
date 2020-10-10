@@ -27,8 +27,11 @@ Blazingly fast terminal recorder that generates animated gif images for the web 
 
 ## Install
 
+**NOTE** for now `t-rec` depends on `imagemagick`, but this is going to change soon.
+
 ```sh
-cargo install -f t-rec 
+❯ brew install imagemagick
+❯ cargo install -f t-rec 
 ```
 
 **NOTE** `-f` just makes sure the latest version is installed
