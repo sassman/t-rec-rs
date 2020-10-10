@@ -1,6 +1,9 @@
 use core_foundation::base::{CFGetTypeID, CFTypeID, ToVoid};
-use core_foundation::number::*;
 use core_foundation::string::{kCFStringEncodingUTF8, CFString, CFStringGetCStringPtr};
+use core_foundation_sys::number::{
+    kCFNumberSInt32Type as I32, kCFNumberSInt64Type as I64, CFBooleanGetTypeID, CFBooleanGetValue,
+    CFNumberGetType, CFNumberGetTypeID, CFNumberGetValue, CFNumberRef,
+};
 use core_foundation_sys::string::CFStringGetTypeID;
 use core_graphics::display::*;
 use std::ffi::CStr;
@@ -38,7 +41,7 @@ fn window_list() -> Vec<(DictEntryValue, DictEntryValue, DictEntryValue)> {
         CFRelease(window_list_info as CFTypeRef);
     }
 
-    return win_list;
+    win_list
 }
 
 fn get_from_dict(dict: CFDictionaryRef, key: &str) -> DictEntryValue {
@@ -49,20 +52,18 @@ fn get_from_dict(dict: CFDictionaryRef, key: &str) -> DictEntryValue {
         if type_id == unsafe { CFNumberGetTypeID() } {
             let value = value as CFNumberRef;
             match unsafe { CFNumberGetType(value) } {
-                kCFNumberSInt64Type => {
+                I64 => {
                     let mut value_i64 = 0_i64;
                     let out_value: *mut i64 = &mut value_i64;
-                    let converted =
-                        unsafe { CFNumberGetValue(value, kCFNumberSInt64Type, out_value.cast()) };
+                    let converted = unsafe { CFNumberGetValue(value, I64, out_value.cast()) };
                     if converted {
                         return DictEntryValue::_Number(value_i64);
                     }
                 }
-                kCFNumberSInt32Type => {
+                I32 => {
                     let mut value_i32 = 0_i32;
                     let out_value: *mut i32 = &mut value_i32;
-                    let converted =
-                        unsafe { CFNumberGetValue(value, kCFNumberSInt32Type, out_value.cast()) };
+                    let converted = unsafe { CFNumberGetValue(value, I32, out_value.cast()) };
                     if converted {
                         return DictEntryValue::_Number(value_i32 as i64);
                     }
@@ -98,7 +99,7 @@ fn get_from_dict(dict: CFDictionaryRef, key: &str) -> DictEntryValue {
 
 pub fn ls_win() {
     println!("Window | Id");
-    for (window_owner, window_id, is_onscreen) in window_list() {
+    for (window_owner, window_id, _) in window_list() {
         match (window_owner, window_id) {
             (DictEntryValue::_String(window_owner), DictEntryValue::_Number(window_id)) => {
                 println!("{} | {}", window_owner, window_id)
@@ -119,12 +120,8 @@ pub fn get_window_id_for(terminal: String) -> Option<u32> {
     //     pids.iter().for_each(|pid| println!("PID: {}", pid));
     // }
 
-    for term in terminal.to_lowercase().split(".") {
-        for (window_owner, window_id, is_onscreen) in window_list() {
-            // println!(
-            //     "window owner: {:?}, {:?}, {:?}",
-            //     window_owner, window_id, is_onscreen
-            // );
+    for term in terminal.to_lowercase().split('.') {
+        for (window_owner, window_id, _) in window_list() {
             if let DictEntryValue::_Number(window_id) = window_id {
                 if let DictEntryValue::_String(window_owner) = window_owner {
                     let window = &window_owner.to_lowercase();
