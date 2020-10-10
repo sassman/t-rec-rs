@@ -13,6 +13,6 @@ pub fn screenshot_and_save(
     _time_code: u128,
     _tempdir: &TempDir,
     _file_name_for: fn(&u128, &str) -> String,
-) {
+) -> anyhow::Result<()> {
     unimplemented!("there is only an impl for MacOS")
 }

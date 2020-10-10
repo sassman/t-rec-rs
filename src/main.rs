@@ -12,9 +12,10 @@ mod cli;
 use crate::cli::launch;
 
 use anyhow::Context;
+use anyhow::Result;
 use std::borrow::Borrow;
 use std::ffi::OsStr;
-use std::process::Command;
+use std::process::{Command, ExitStatus};
 use std::sync::mpsc::Receiver;
 use std::sync::{mpsc, Arc, Mutex};
 use std::time::{Duration, Instant};
@@ -32,7 +33,7 @@ fn main() -> Result<(), std::io::Error> {
 }
 
 #[cfg(target_os = "macos")]
-fn main() -> Result<(), std::io::Error> {
+fn main() -> Result<()> {
     let args = launch();
     if args.is_present("list-windows") {
         ls_win();
@@ -50,27 +51,38 @@ fn main() -> Result<(), std::io::Error> {
 
     // the nice thing is the cleanup on drop
     let tempdir = Arc::new(Mutex::new(
-        TempDir::new().expect("Failed to create tempdir."),
+        TempDir::new().context("Cannot create tempdir.")?,
     ));
     let time_codes = Arc::new(Mutex::new(Vec::new()));
     let (tx, rx) = mpsc::channel();
     let photograph = {
         let tempdir = tempdir.clone();
         let time_codes = time_codes.clone();
-        thread::spawn(move || capture_thread(&rx, time_codes, tempdir))
+        thread::spawn(move || -> Result<()> { capture_thread(&rx, time_codes, tempdir) })
     };
-    let interact = thread::spawn(move || sub_shell_thread(&program));
+    let interact = thread::spawn(move || -> Result<()> { sub_shell_thread(&program).map(|_| ()) });
+
     clear_screen();
-    println!("Frame cache dir: {:?}", tempdir.lock().unwrap().path());
+    println!(
+        "Frame cache dir: {:?}",
+        tempdir.lock().expect("Cannot lock tempdir resource").path()
+    );
     println!("Press Ctrl+D to end recording");
 
-    let _ = interact.join();
-    tx.send(()).unwrap();
-    let _ = photograph.join();
+    interact
+        .join()
+        .unwrap()
+        .context("Cannot launch the sub shell")?;
+    tx.send(()).context("Cannot stop the recording thread")?;
+    photograph
+        .join()
+        .unwrap()
+        .context("Cannot launch the recording thread")?;
     generate_gif_with_convert(
         &time_codes.lock().unwrap(),
         tempdir.lock().unwrap().borrow(),
-    );
+    )
+    .map(|_| ())?;
 
     Ok(())
 }
@@ -89,8 +101,8 @@ fn capture_thread(
     rx: &Receiver<()>,
     time_codes: Arc<Mutex<Vec<u128>>>,
     tempdir: Arc<Mutex<TempDir>>,
-) {
-    let win_id = current_win_id();
+) -> Result<()> {
+    let win_id = current_win_id()?;
     let duration = Duration::from_millis(250);
     let start = Instant::now();
     loop {
@@ -100,20 +112,21 @@ fn capture_thread(
         }
         let tc = Instant::now().saturating_duration_since(start).as_millis();
         time_codes.lock().unwrap().push(tc);
-        screenshot_and_save(win_id, tc, tempdir.lock().unwrap().borrow(), file_name_for);
+        screenshot_and_save(win_id, tc, tempdir.lock().unwrap().borrow(), file_name_for)?
     }
+
+    Ok(())
 }
 
 ///
 /// starts the main program and keeps interacting with the user
 /// blocks until termination
-fn sub_shell_thread<T: AsRef<OsStr> + Clone>(program: T) {
+fn sub_shell_thread<T: AsRef<OsStr> + Clone>(program: T) -> Result<ExitStatus> {
     Command::new(program.clone())
         .spawn()
-        .with_context(move || format!("failed to start {:?}", program.as_ref()))
-        .unwrap()
+        .context(format!("failed to start {:?}", program.as_ref()))?
         .wait()
-        .unwrap();
+        .context("Something went wrong waiting for the sub shell.")
 }
 
 ///
@@ -121,25 +134,25 @@ fn sub_shell_thread<T: AsRef<OsStr> + Clone>(program: T) {
 /// or by the env var 'TERM_PROGRAM' and then asking the window manager for all visible windows
 /// and finding the Terminal in that list
 /// panics if WindowId was not was not there
-fn current_win_id() -> u32 {
-    let win_id = env::var("WINDOWID");
-    if let Ok(win_id) = win_id {
-        let win_id = win_id
+fn current_win_id() -> Result<u32> {
+    if env::var("WINDOWID").is_ok() {
+        env::var("WINDOWID")
+            .unwrap()
             .parse::<u32>()
-            .expect("Env variable 'WINDOWID' was not a valid number");
-        return win_id;
+            .context("Cannot parse env variable 'WINDOWID' as number")
+    } else {
+        let terminal = env::var("TERM_PROGRAM").context(
+            "Env variable 'TERM_PROGRAM' was empty but is needed for figure out the WindowId",
+        )?;
+        get_window_id_for(terminal).context(
+            "Cannot determine the WindowId of this terminal. Please set env variable 'WINDOWID' and try again.",
+        )
     }
-    let terminal = env::var("TERM_PROGRAM")
-        .expect("Env variable 'TERM_PROGRAM' was empty but is needed for figure out the WindowId");
-
-    get_window_id_for(terminal).expect(
-        "Cannot determine the WindowId of this terminal. Please set env variable 'WINDOWID' and try again.",
-    )
 }
 
 ///
 /// generating the final gif with help of convert
-fn generate_gif_with_convert(time_codes: &[u128], tempdir: &TempDir) {
+fn generate_gif_with_convert(time_codes: &[u128], tempdir: &TempDir) -> Result<()> {
     let target = "t-rec.gif";
     println!(
         "\n🎉 🚀 Generating {:?} out of {} frames!",
@@ -160,7 +173,9 @@ fn generate_gif_with_convert(time_codes: &[u128], tempdir: &TempDir) {
         .arg("Optimize")
         .arg(target)
         .output()
-        .expect("failed to execute process");
+        .context("Cannot start 'convert' to generate the final gif")?;
+
+    Ok(())
 }
 
 /// TODO implement a image native gif creation

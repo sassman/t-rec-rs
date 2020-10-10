@@ -1,3 +1,4 @@
+use anyhow::{Context, Result};
 use core_graphics::display::*;
 use core_graphics::image::CGImageRef;
 use image::flat::SampleLayout;
@@ -12,7 +13,7 @@ pub fn screenshot_and_save(
     time_code: u128,
     tempdir: &TempDir,
     file_name_for: fn(&u128, &str) -> String,
-) {
+) -> Result<()> {
     let (w, h, channels, raw_data) = {
         let image = unsafe {
             CGDisplay::screenshot(
@@ -24,7 +25,7 @@ pub fn screenshot_and_save(
                     | kCGWindowImageShouldBeOpaque,
             )
         }
-        .expect("failed to get a screenshot");
+        .context("Cannot gather screenshot")?;
 
         let img_ref: &CGImageRef = &image;
         let (_wrong_width, h) = (img_ref.width() as u32, img_ref.height() as u32);
@@ -57,5 +58,5 @@ pub fn screenshot_and_save(
         h,
         color,
     )
-    .expect("failed to save a frame");
+    .context("Cannot save frame")
 }
