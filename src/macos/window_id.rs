@@ -109,26 +109,20 @@ pub fn ls_win() {
     }
 }
 
+///
 /// hard nut to crack, some starting point was:
 /// https://stackoverflow.com/questions/60117318/getting-window-owner-names-via-cgwindowlistcopywindowinfo-in-rust
 /// then some more PRs where needed:
 /// https://github.com/servo/core-foundation-rs/pulls?q=is%3Apr+author%3Asassman+
-///
 pub fn get_window_id_for(terminal: String) -> Option<u32> {
-    // if let Ok(pids) = proc_pid::listpids(proc_pid::ProcType::ProcTTYOnly) {
-    //     println!("Found {} processes using listpids()", pids.len());
-    //     pids.iter().for_each(|pid| println!("PID: {}", pid));
-    // }
-
     for term in terminal.to_lowercase().split('.') {
         for (window_owner, window_id, _) in window_list() {
             if let DictEntryValue::_Number(window_id) = window_id {
                 if let DictEntryValue::_String(window_owner) = window_owner {
                     let window = &window_owner.to_lowercase();
                     let terminal = &terminal.to_lowercase();
-                    // println!("checking for: {:?}", term);
                     if window.contains(term) || terminal.contains(window) {
-                        dbg!(window_owner);
+                        println!("Recording Window: {:?}", window_owner);
                         return Some(window_id as u32);
                     }
                 }
