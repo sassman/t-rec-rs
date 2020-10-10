@@ -21,6 +21,17 @@ use std::time::{Duration, Instant};
 use std::{env, thread};
 use tempfile::TempDir;
 
+#[cfg(target_os = "linux")]
+fn main() -> Result<(), std::io::Error> {
+    unimplemented!("We're super sorry, right now t-rec is only supporting MacOS.\nIf you'd like to contribute checkout:\n\nhttps://github.com/sassman/t-rec-rs/issues/1\n")
+}
+
+#[cfg(target_os = "windows")]
+fn main() -> Result<(), std::io::Error> {
+    unimplemented!("We're super sorry, right now t-rec is only supporting MacOS.\nIf you'd like to contribute checkout:\n\nhttps://github.com/sassman/t-rec-rs/issues/2\n")
+}
+
+#[cfg(target_os = "macos")]
 fn main() -> Result<(), std::io::Error> {
     let args = launch();
     if args.is_present("list-windows") {
