@@ -19,7 +19,7 @@ use std::sync::mpsc::Receiver;
 use std::sync::{mpsc, Arc, Mutex};
 use std::time::{Duration, Instant};
 use std::{env, thread};
-use tempdir::TempDir;
+use tempfile::TempDir;
 
 fn main() -> Result<(), std::io::Error> {
     let args = launch();
@@ -39,11 +39,10 @@ fn main() -> Result<(), std::io::Error> {
 
     // the nice thing is the cleanup on drop
     let tempdir = Arc::new(Mutex::new(
-        TempDir::new(format!("trec-{}", std::process::id()).as_str())
-            .expect("Failed to create tempdir."),
+        TempDir::new().expect("Failed to create tempdir."),
     ));
     clear_screen();
-    println!("tmp path: {:?}", tempdir.lock().unwrap().path());
+    println!("Frame cache dir: {:?}", tempdir.lock().unwrap().path());
     let time_codes = Arc::new(Mutex::new(Vec::new()));
     let (tx, rx) = mpsc::channel();
     let photograph = {

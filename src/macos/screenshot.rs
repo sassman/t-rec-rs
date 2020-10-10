@@ -2,7 +2,7 @@ use core_graphics::display::*;
 use core_graphics::image::CGImageRef;
 use image::flat::SampleLayout;
 use image::{save_buffer, ColorType, FlatSamples};
-use tempdir::TempDir;
+use tempfile::TempDir;
 
 ///
 /// grabs a screenshot by window id and

@@ -1,4 +1,4 @@
-use tempdir::TempDir;
+use tempfile::TempDir;
 
 pub fn get_window_id_for(_terminal: String) -> Option<u32> {
     unimplemented!("there is only an impl for MacOS")
