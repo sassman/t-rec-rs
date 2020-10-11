@@ -48,6 +48,8 @@ or with specifying a different program to launch
 ❯ t-rec /bin/sh
 ```
 
+If you are using **iTerm2**, Make sure you disable the default keybinding of `CTRL-D` which eliminates terminal. (How: Go to `Preference` -> `Keys` -> `Key Bindings` -> Add key -> {Shortcut: ^D, Action: Ignore}).
+
 ### Hidden Gems
 
 You can record not only the terminal but also every other window. There 2 ways to do so:

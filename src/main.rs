@@ -67,7 +67,7 @@ fn main() -> Result<()> {
         "Frame cache dir: {:?}",
         tempdir.lock().expect("Cannot lock tempdir resource").path()
     );
-    println!("Press Ctrl+D to end recording");
+    println!("Press Ctrl+D to end recording (If you are using iTerm2, make sure you disable the default Ctrl-D keybinding which eliminates terminal.)");
 
     interact
         .join()
