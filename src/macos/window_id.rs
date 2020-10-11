@@ -1,6 +1,7 @@
 use crate::macos::core_foundation_sys_patches::{
     kCFNumberSInt32Type as I32, kCFNumberSInt64Type as I64, CFBooleanGetValue, CFNumberGetType,
 };
+use anyhow::{anyhow, Result};
 use core_foundation::base::{CFGetTypeID, CFTypeID, ToVoid};
 use core_foundation::string::{kCFStringEncodingUTF8, CFString, CFStringGetCStringPtr};
 use core_foundation_sys::number::{
@@ -9,6 +10,7 @@ use core_foundation_sys::number::{
 use core_foundation_sys::string::CFStringGetTypeID;
 use core_graphics::display::*;
 use std::ffi::CStr;
+use std::ops::Deref;
 use std::os::raw::c_void;
 
 #[derive(Debug)]
@@ -19,7 +21,7 @@ enum DictEntryValue {
     _Unknown,
 }
 
-fn window_list() -> Vec<(DictEntryValue, DictEntryValue, DictEntryValue)> {
+fn window_list() -> Result<Vec<(DictEntryValue, DictEntryValue, DictEntryValue)>> {
     let mut win_list = Vec::new();
     let window_list_info = unsafe {
         CGWindowListCopyWindowInfo(
@@ -29,10 +31,23 @@ fn window_list() -> Vec<(DictEntryValue, DictEntryValue, DictEntryValue)> {
             kCGNullWindowID,
         )
     };
+    if window_list_info.is_null() {
+        return Err(anyhow!(
+            "Cannot get window list results from low level C-API call `CGWindowListCopyWindowInfo` -> null"
+        ));
+    }
     let count = unsafe { CFArrayGetCount(window_list_info) };
     for i in 0..count {
         let dic_ref =
             unsafe { CFArrayGetValueAtIndex(window_list_info, i as isize) as CFDictionaryRef };
+        if dic_ref.is_null() {
+            unsafe {
+                CFRelease(window_list_info.cast());
+            }
+            return Err(anyhow!(
+                "Cannot get a result from the window list from low level C-API call `CFArrayGetValueAtIndex` -> null"
+            ));
+        }
         let window_owner = get_from_dict(dic_ref, "kCGWindowOwnerName");
         let window_id = get_from_dict(dic_ref, "kCGWindowNumber");
         let is_onscreen = get_from_dict(dic_ref, "kCGWindowIsOnscreen");
@@ -40,10 +55,10 @@ fn window_list() -> Vec<(DictEntryValue, DictEntryValue, DictEntryValue)> {
     }
 
     unsafe {
-        CFRelease(window_list_info as CFTypeRef);
+        CFRelease(window_list_info.cast());
     }
 
-    win_list
+    Ok(win_list)
 }
 
 fn get_from_dict(dict: CFDictionaryRef, key: &str) -> DictEntryValue {
@@ -87,9 +102,13 @@ fn get_from_dict(dict: CFDictionaryRef, key: &str) -> DictEntryValue {
                 // we have to use the objc runtime to fetch it
                 use objc_foundation::{INSString, NSString};
                 use objc_id::Id;
-                let nss: Id<NSString> = unsafe { Id::from_retained_ptr(value as *mut NSString) };
+                let nss: Id<NSString> = unsafe { Id::from_ptr(value as *mut NSString) };
+                let str = std::str::from_utf8(nss.deref().as_str().as_bytes());
 
-                DictEntryValue::_String(nss.as_str().to_string())
+                match str {
+                    Ok(s) => DictEntryValue::_String(s.to_owned()),
+                    Err(_) => DictEntryValue::_Unknown,
+                }
             };
         } else {
             eprintln!("Unexpected type: {}", type_id);
@@ -99,9 +118,9 @@ fn get_from_dict(dict: CFDictionaryRef, key: &str) -> DictEntryValue {
     DictEntryValue::_Unknown
 }
 
-pub fn ls_win() {
+pub fn ls_win() -> anyhow::Result<()> {
     println!("Window | Id");
-    for (window_owner, window_id, _) in window_list() {
+    for (window_owner, window_id, _) in window_list()? {
         match (window_owner, window_id) {
             (DictEntryValue::_String(window_owner), DictEntryValue::_Number(window_id)) => {
                 println!("{} | {}", window_owner, window_id)
@@ -109,6 +128,8 @@ pub fn ls_win() {
             (_, _) => {}
         }
     }
+
+    Ok(())
 }
 
 ///
@@ -116,21 +137,23 @@ pub fn ls_win() {
 /// https://stackoverflow.com/questions/60117318/getting-window-owner-names-via-cgwindowlistcopywindowinfo-in-rust
 /// then some more PRs where needed:
 /// https://github.com/servo/core-foundation-rs/pulls?q=is%3Apr+author%3Asassman+
-pub fn get_window_id_for(terminal: String) -> Option<u32> {
+pub fn get_window_id_for(terminal: String) -> Result<u32> {
     for term in terminal.to_lowercase().split('.') {
-        for (window_owner, window_id, _) in window_list() {
+        for (window_owner, window_id, _) in window_list()? {
             if let DictEntryValue::_Number(window_id) = window_id {
                 if let DictEntryValue::_String(window_owner) = window_owner {
                     let window = &window_owner.to_lowercase();
                     let terminal = &terminal.to_lowercase();
                     if window.contains(term) || terminal.contains(window) {
                         println!("Recording Window: {:?}", window_owner);
-                        return Some(window_id as u32);
+                        return Ok(window_id as u32);
                     }
                 }
             }
         }
     }
 
-    None
+    Err(anyhow!(
+        "Cannot determine the window id from the available window list."
+    ))
 }

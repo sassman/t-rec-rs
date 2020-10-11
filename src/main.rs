@@ -36,8 +36,7 @@ fn main() -> Result<(), std::io::Error> {
 fn main() -> Result<()> {
     let args = launch();
     if args.is_present("list-windows") {
-        ls_win();
-        return Ok(());
+        return ls_win();
     }
 
     let program: String = {
