@@ -1,19 +1,11 @@
+use crate::ImageOnHeap;
 use anyhow::{Context, Result};
 use core_graphics::display::*;
 use core_graphics::image::CGImageRef;
 use image::flat::SampleLayout;
-use image::{save_buffer, ColorType, FlatSamples};
-use tempfile::TempDir;
+use image::{ColorType, FlatSamples};
 
-///
-/// grabs a screenshot by window id and
-/// saves it as a tga file
-pub fn screenshot_and_save(
-    win_id: u32,
-    time_code: u128,
-    tempdir: &TempDir,
-    file_name_for: fn(&u128, &str) -> String,
-) -> Result<()> {
+pub fn capture_window_screenshot(win_id: u32) -> Result<ImageOnHeap> {
     let (w, h, channels, raw_data) = {
         let image = unsafe {
             CGDisplay::screenshot(
@@ -51,12 +43,5 @@ pub fn screenshot_and_save(
         color_hint: Some(color),
     };
 
-    save_buffer(
-        tempdir.path().join(file_name_for(&time_code, "tga")),
-        &buffer.samples,
-        w,
-        h,
-        color,
-    )
-    .context("Cannot save frame")
+    Ok(ImageOnHeap::new(buffer))
 }

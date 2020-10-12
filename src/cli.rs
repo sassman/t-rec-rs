@@ -7,6 +7,15 @@ pub fn launch<'a>() -> ArgMatches<'a> {
         .about(crate_description!())
         .setting(AppSettings::AllowMissingPositional)
         .arg(
+            Arg::with_name("natural-mode")
+                .value_name("natural")
+                .takes_value(false)
+                .required(false)
+                .short("n")
+                .long("natural")
+                .help("If you want a very natural typing experience and disable the idle detection and sampling optimization.")
+        )
+        .arg(
             Arg::with_name("list-windows")
                 .value_name("list all visible windows with name and id")
                 .takes_value(false)

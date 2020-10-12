@@ -14,6 +14,7 @@ Blazingly fast terminal recorder that generates animated gif images for the web 
 
 - Screenshotting your terminal with 4 frames per second (every 250ms)
 - Generates high quality small sized animated gif images
+- **Build-In idle frames detection and optimization** (for super fluid presentations)
 - Runs (only) on MacOS
 - Uses native efficient APIs
 - Runs without any cloud service and entirely offline
@@ -48,7 +49,37 @@ or with specifying a different program to launch
 ❯ t-rec /bin/sh
 ```
 
-### Hidden Gems
+### Full Options
+
+```sh
+❯ t-rec --help
+t-rec 0.2.0
+Sven Assmann <sven.assmann.it@gmail.com>
+Blazingly fast terminal recorder that generates animated gif images for the web written in rust.
+
+USAGE:
+    t-rec [FLAGS] [shell or program to launch]
+
+FLAGS:
+    -h, --help       Prints help information
+    -l, --ls-win     If you want to see a list of windows available for recording by their id, you can set env var
+                     'WINDOWID' to record this specific window only.
+    -n, --natural    If you want a very natural typing experience and disable the idle detection and sampling
+                     optimization.
+    -V, --version    Prints version information
+
+ARGS:
+    <shell or program to launch>    If you want to start a different program than $SHELL you can pass it here. For
+                                    example '/bin/sh'
+```
+
+### Disable idle detection & optimization
+
+If you are not happy with the idle detection and optimization, you can disable it with the `-n` or `--natural` parameter.
+By doing so, you would get the very natural timeline of typing and recording as you do it. 
+In this case there will be no optimizations performed.
+
+## Hidden Gems
 
 You can record not only the terminal but also every other window. There 2 ways to do so:
 
@@ -58,9 +89,9 @@ You can record not only the terminal but also every other window. There 2 ways t
 
 ```sh
 ❯ TERM_PROGRAM="google chrome" t-rec
-tmp path: "/var/folders/m8/084p1v0x4770rpwpkrgl5b6h0000gn/T/trec-74728.rUxBx3ohGiQ2"
+Frame cache dir: "/var/folders/m8/084p1v0x4770rpwpkrgl5b6h0000gn/T/trec-74728.rUxBx3ohGiQ2"
 Press Ctrl+D to end recording
-[src/window_id.rs:122] window_owner = "Google Chrome 2"
+Recording Window: "Google Chrome 2"
 ```
 
 this is how it looks then:
@@ -79,7 +110,7 @@ Code | 27600
 # set the WINDOWID variable and run t-rec
 ❯ WINDOWID=27600 t-rec
 
-tmp path: "/var/folders/m8/084p1v0x4770rpwpkrgl5b6h0000gn/T/trec-77862.BMYiHNRWqv9Y"
+Frame cache dir: "/var/folders/m8/084p1v0x4770rpwpkrgl5b6h0000gn/T/trec-77862.BMYiHNRWqv9Y"
 Press Ctrl+D to end recording
 
 ```
