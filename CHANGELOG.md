@@ -8,11 +8,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - CHANGELOG.md follows now a [new format](https://keepachangelog.com/en/1.0.0/)
 - feature to check for `convert` on launch [issue/6] / [pull/7]
-- feature to avoid overwriting existing final gif [issue/8] / [pull/X]
+- feature to avoid overwriting existing final gif [issue/8] / [pull/9]
 
 [issue/6]: https://github.com/sassman/t-rec-rs/issues/6
 [issue/8]: https://github.com/sassman/t-rec-rs/issues/8
 [pull/7]: https://github.com/sassman/t-rec-rs/pull/7
+[pull/9]: https://github.com/sassman/t-rec-rs/pull/9
 
 ## [0.1.1] - 2020-10-11
 ### Fixed
