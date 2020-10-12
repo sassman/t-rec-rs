@@ -8,10 +8,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.2.0] - 2020-10-12
 ### Added
-- command line parameter for natural recording
-- feature to avoid identical frames, where nobody sees some progress happening [issue/10] / [pull/X]
+- command line parameter for natural recording `-n` or `--natural`
+- feature to avoid identical frames, where nobody sees some progress happening [issue/10] / [pull/11]
   
 [issue/10]: https://github.com/sassman/t-rec-rs/issues/10
+[pull/11]: https://github.com/sassman/t-rec-rs/pull/11
 
 ## [0.1.2] - 2020-10-12
 ### Added
