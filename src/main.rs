@@ -1,26 +1,31 @@
 #[cfg(target_os = "macos")]
 mod macos;
 #[cfg(target_os = "macos")]
-use macos::{get_window_id_for, ls_win, screenshot_and_save};
+use macos::*;
 
 #[cfg(not(target_os = "macos"))]
 mod any;
 #[cfg(not(target_os = "macos"))]
-use any::{get_window_id_for, ls_win, screenshot_and_save};
+use any::*;
 
 mod cli;
 use crate::cli::launch;
 
+use crate::macos::capture_window_screenshot;
 use anyhow::Context;
 use anyhow::Result;
+use image::{save_buffer, FlatSamples};
 use std::borrow::Borrow;
 use std::ffi::OsStr;
+use std::ops::{Add, Sub};
 use std::process::{Command, ExitStatus, Output};
 use std::sync::mpsc::Receiver;
 use std::sync::{mpsc, Arc, Mutex};
 use std::time::{Duration, Instant};
 use std::{env, thread};
 use tempfile::TempDir;
+
+pub type ImageOnHeap = Box<FlatSamples<Vec<u8>>>;
 
 #[cfg(target_os = "linux")]
 fn main() -> Result<(), std::io::Error> {
@@ -48,6 +53,8 @@ fn main() -> Result<()> {
         }
     };
 
+    let force_natural = args.is_present("natural-mode");
+
     check_for_imagemagick()?;
 
     // the nice thing is the cleanup on drop
@@ -59,7 +66,10 @@ fn main() -> Result<()> {
     let photograph = {
         let tempdir = tempdir.clone();
         let time_codes = time_codes.clone();
-        thread::spawn(move || -> Result<()> { capture_thread(&rx, time_codes, tempdir) })
+        let force_natural = force_natural;
+        thread::spawn(move || -> Result<()> {
+            capture_thread(&rx, time_codes, tempdir, force_natural)
+        })
     };
     let interact = thread::spawn(move || -> Result<()> { sub_shell_thread(&program).map(|_| ()) });
 
@@ -102,21 +112,68 @@ fn capture_thread(
     rx: &Receiver<()>,
     time_codes: Arc<Mutex<Vec<u128>>>,
     tempdir: Arc<Mutex<TempDir>>,
+    force_natural: bool,
 ) -> Result<()> {
     let win_id = current_win_id()?;
     let duration = Duration::from_millis(250);
     let start = Instant::now();
+    let mut idle_duration = Duration::from_millis(0);
+    let mut last_frame: Option<ImageOnHeap> = None;
+    let mut identical_frames = 0;
+    let mut last_now = Instant::now();
     loop {
         // blocks for a timeout
         if rx.recv_timeout(duration).is_ok() {
             break;
         }
-        let tc = Instant::now().saturating_duration_since(start).as_millis();
-        time_codes.lock().unwrap().push(tc);
-        screenshot_and_save(win_id, tc, tempdir.lock().unwrap().borrow(), file_name_for)?
+        let now = Instant::now();
+        let effective_now = now.sub(idle_duration);
+        let tc = effective_now.saturating_duration_since(start).as_millis();
+        let image = capture_window_screenshot(win_id)?;
+        if !force_natural {
+            if last_frame.is_some()
+                && image
+                    .samples
+                    .as_slice()
+                    .eq(last_frame.as_ref().unwrap().samples.as_slice())
+            {
+                identical_frames += 1;
+            } else {
+                identical_frames = 0;
+            }
+        }
+
+        if identical_frames > 0 {
+            // let's track now the duration as idle
+            idle_duration = idle_duration.add(now.duration_since(last_now));
+        } else {
+            save_frame(&image, tc, tempdir.lock().unwrap().borrow(), file_name_for)?;
+            time_codes.lock().unwrap().push(tc);
+            last_frame = Some(image);
+            identical_frames = 0;
+        }
+        last_now = now;
     }
 
     Ok(())
+}
+
+///
+/// saves a frame as a tga file
+pub fn save_frame(
+    image: &ImageOnHeap,
+    time_code: u128,
+    tempdir: &TempDir,
+    file_name_for: fn(&u128, &str) -> String,
+) -> Result<()> {
+    save_buffer(
+        tempdir.path().join(file_name_for(&time_code, "tga")),
+        &image.samples,
+        image.layout.width,
+        image.layout.height,
+        image.color_hint.unwrap(),
+    )
+    .context("Cannot save frame")
 }
 
 ///
