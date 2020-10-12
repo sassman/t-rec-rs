@@ -203,33 +203,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e78d4f1cc4ae33bbfc157ed5d5a5ef3bc29227303d595861deb238fcec4e9457"
 
 [[package]]
-name = "errno"
-version = "0.2.6"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6eab5ee3df98a279d9b316b1af6ac95422127b1290317e6d18c1743c99418b01"
-dependencies = [
- "errno-dragonfly",
- "libc",
- "winapi",
-]
-
-[[package]]
-name = "errno-dragonfly"
-version = "0.1.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "14ca354e36190500e1e1fb267c647932382b54053c50b14970856c0b00a35067"
-dependencies = [
- "gcc",
- "libc",
-]
-
-[[package]]
 name = "foreign-types"
 version = "0.3.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f6f339eb8adc052cd2ca78910fda869aefa38d22d5cb648e6485e4d3fc06f3b1"
 dependencies = [
- "foreign-types-shared 0.1.1",
+ "foreign-types-shared",
 ]
 
 [[package]]
@@ -237,18 +216,6 @@ name = "foreign-types-shared"
 version = "0.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "00b0228411908ca8685dba7fc2cdd70ec9990a6e753e89b6ac91a84c40fbaf4b"
-
-[[package]]
-name = "foreign-types-shared"
-version = "0.3.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7684cf33bb7f28497939e8c7cf17e3e4e3b8d9a0080ffa4f8ae2f515442ee855"
-
-[[package]]
-name = "gcc"
-version = "0.3.55"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8f5f3913fa0bfe7ee1fd8248b6b9f42a5af4b9d65ec2dd2c3c26132b950ecfc2"
 
 [[package]]
 name = "getrandom"
@@ -270,12 +237,6 @@ dependencies = [
  "color_quant",
  "weezl",
 ]
-
-[[package]]
-name = "glob"
-version = "0.3.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9b919933a397b79c37e33b77bb2aa3dc8eb6e165ad809e58ff75bc7db2e34574"
 
 [[package]]
 name = "hermit-abi"
@@ -325,16 +286,6 @@ name = "libc"
 version = "0.2.77"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f2f96b10ec2560088a8e76961b00d47107b3a625fecb76dedb29ee7ccbf98235"
-
-[[package]]
-name = "libproc"
-version = "0.9.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "15fb50befee2d3be15b38c93ef79ba22ecbd667874bf692309ffdff179282b8d"
-dependencies = [
- "errno",
- "libc",
-]
 
 [[package]]
 name = "lzw"
@@ -581,10 +532,7 @@ dependencies = [
  "core-foundation",
  "core-foundation-sys",
  "core-graphics",
- "foreign-types-shared 0.3.0",
- "glob",
  "image",
- "libproc",
  "objc-foundation",
  "objc_id",
  "tempfile",
