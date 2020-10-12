@@ -6,6 +6,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## 🎯 [Unreleased]
 
+## [0.2.0] - 2020-10-12
+### Added
+- command line parameter for natural recording
+- feature to avoid identical frames, where nobody sees some progress happening [issue/10] / [pull/X]
+  
+[issue/10]: https://github.com/sassman/t-rec-rs/issues/10
+
 ## [0.1.2] - 2020-10-12
 ### Added
 - CHANGELOG.md follows now a [new format](https://keepachangelog.com/en/1.0.0/)
