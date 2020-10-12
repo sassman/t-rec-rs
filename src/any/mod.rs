@@ -16,3 +16,6 @@ pub fn screenshot_and_save(
 ) -> anyhow::Result<()> {
     unimplemented!("there is only an impl for MacOS")
 }
+
+// references for winRT
+// https://github.com/robmikh/wgc-rust-demo/blob/master/src/main.rs

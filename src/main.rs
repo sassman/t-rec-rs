@@ -15,7 +15,7 @@ use anyhow::Context;
 use anyhow::Result;
 use std::borrow::Borrow;
 use std::ffi::OsStr;
-use std::process::{Command, ExitStatus};
+use std::process::{Command, ExitStatus, Output};
 use std::sync::mpsc::Receiver;
 use std::sync::{mpsc, Arc, Mutex};
 use std::time::{Duration, Instant};
@@ -47,6 +47,8 @@ fn main() -> Result<()> {
             env::var("SHELL").unwrap_or(default)
         }
     };
+
+    check_for_imagemagick()?;
 
     // the nice thing is the cleanup on drop
     let tempdir = Arc::new(Mutex::new(
@@ -147,6 +149,16 @@ fn current_win_id() -> Result<u32> {
             "Cannot determine the WindowId of this terminal. Please set env variable 'WINDOWID' and try again.",
         )
     }
+}
+
+///
+/// checks for imagemagick
+/// and suggests the installation command if there are issues
+fn check_for_imagemagick() -> Result<Output> {
+    Command::new("convert")
+        .arg("--version")
+        .output()
+        .context("There is an issue with 'convert', make sure you have it installed: `brew install imagemagick`")
 }
 
 ///
