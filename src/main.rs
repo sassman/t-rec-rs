@@ -164,7 +164,7 @@ fn check_for_imagemagick() -> Result<Output> {
 ///
 /// generating the final gif with help of convert
 fn generate_gif_with_convert(time_codes: &[u128], tempdir: &TempDir) -> Result<()> {
-    let target = "t-rec.gif";
+    let target = target_file();
     println!(
         "\n🎉 🚀 Generating {:?} out of {} frames!",
         target,
@@ -187,6 +187,19 @@ fn generate_gif_with_convert(time_codes: &[u128], tempdir: &TempDir) -> Result<(
         .context("Cannot start 'convert' to generate the final gif")?;
 
     Ok(())
+}
+
+///
+/// returns a new filename that does not yet exists.
+/// like `t-rec.gif` or `t-rec_1.gif`
+fn target_file() -> String {
+    let mut suffix = "".to_string();
+    let mut i = 0;
+    while std::path::Path::new(format!("t-rec{}.gif", suffix).as_str()).exists() {
+        i += 1;
+        suffix = format!("_{}", i).to_string();
+    }
+    format!("t-rec{}.gif", suffix)
 }
 
 /// TODO implement a image native gif creation
