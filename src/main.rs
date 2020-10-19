@@ -1,22 +1,27 @@
+mod cli;
+mod common;
+mod decor_effect;
+mod gif_gen;
+
+#[cfg(target_os = "linux")]
+mod linux;
 #[cfg(target_os = "macos")]
 mod macos;
+#[cfg(target_os = "windows")]
+mod win;
+
+#[cfg(target_os = "linux")]
+use crate::linux::*;
 #[cfg(target_os = "macos")]
-use macos::*;
-
-#[cfg(not(target_os = "macos"))]
-mod any;
-#[cfg(not(target_os = "macos"))]
-use any::*;
-
-mod cli;
-mod decor_effect;
+use crate::macos::*;
+#[cfg(target_os = "windows")]
+use crate::win::*;
 
 use crate::cli::launch;
-
+use crate::common::PlatformApi;
 use crate::decor_effect::{apply_big_sur_corner_effect, apply_shadow_effect};
-use crate::macos::capture_window_screenshot;
-use anyhow::Context;
-use anyhow::Result;
+use crate::gif_gen::*;
+use anyhow::{bail, Context};
 use image::{save_buffer, FlatSamples};
 use std::borrow::Borrow;
 use std::ffi::OsStr;
@@ -29,18 +34,23 @@ use std::{env, thread};
 use tempfile::TempDir;
 
 pub type ImageOnHeap = Box<FlatSamples<Vec<u8>>>;
+pub type WindowId = u64;
+pub type WindowList = Vec<WindowListEntry>;
+pub type WindowListEntry = (Option<String>, WindowId);
+pub type Result<T> = anyhow::Result<T>;
 
-#[cfg(target_os = "linux")]
-fn main() -> Result<(), std::io::Error> {
-    unimplemented!("We're super sorry, right now t-rec is only supporting MacOS.\nIf you'd like to contribute checkout:\n\nhttps://github.com/sassman/t-rec-rs/issues/1\n")
+macro_rules! prof {
+    ($($something:expr;)+) => {
+        {
+            let start = Instant::now();
+            $(
+                $something;
+            )*
+            start.elapsed()
+        }
+    };
 }
 
-#[cfg(target_os = "windows")]
-fn main() -> Result<(), std::io::Error> {
-    unimplemented!("We're super sorry, right now t-rec is only supporting MacOS.\nIf you'd like to contribute checkout:\n\nhttps://github.com/sassman/t-rec-rs/issues/2\n")
-}
-
-#[cfg(target_os = "macos")]
 fn main() -> Result<()> {
     let args = launch();
     if args.is_present("list-windows") {
@@ -57,7 +67,8 @@ fn main() -> Result<()> {
     };
     let (win_id, window_name) =
         current_win_id().context("Cannot retrieve the window id of the to be recorded window.")?;
-    capture_window_screenshot(win_id)?;
+    let mut api = setup()?;
+    api.calibrate(win_id)?;
 
     let force_natural = args.is_present("natural-mode");
 
@@ -74,7 +85,7 @@ fn main() -> Result<()> {
         let time_codes = time_codes.clone();
         let force_natural = force_natural;
         thread::spawn(move || -> Result<()> {
-            capture_thread(&rx, win_id, time_codes, tempdir, force_natural)
+            capture_thread(&rx, api, win_id, time_codes, tempdir, force_natural)
         })
     };
     let interact = thread::spawn(move || -> Result<()> { sub_shell_thread(&program).map(|_| ()) });
@@ -109,7 +120,6 @@ fn main() -> Result<()> {
         "\n🎆 Applying effects to {} frames (might take a bit)",
         time_codes.lock().unwrap().borrow().len()
     );
-
     apply_big_sur_corner_effect(
         &time_codes.lock().unwrap(),
         tempdir.lock().unwrap().borrow(),
@@ -123,19 +133,24 @@ fn main() -> Result<()> {
         )?
     }
 
+    let time = prof! {
+
     generate_gif_with_convert(
         &time_codes.lock().unwrap(),
         tempdir.lock().unwrap().borrow(),
     )
     .map(|_| ())?;
+    };
+    println!("Time: {}ms", time.as_millis());
 
     Ok(())
 }
 
-///
+/// TODO: that works strange on ubuntu
 /// escape sequences that clears the screen
 fn clear_screen() {
     println!("{esc}[2J{esc}[1;1H", esc = 27 as char);
+    println!();
 }
 
 ///
@@ -144,7 +159,8 @@ fn clear_screen() {
 /// stops once receiving something in rx
 fn capture_thread(
     rx: &Receiver<()>,
-    win_id: u32,
+    api: Box<dyn PlatformApi>,
+    win_id: WindowId,
     time_codes: Arc<Mutex<Vec<u128>>>,
     tempdir: Arc<Mutex<TempDir>>,
     force_natural: bool,
@@ -163,7 +179,7 @@ fn capture_thread(
         let now = Instant::now();
         let effective_now = now.sub(idle_duration);
         let tc = effective_now.saturating_duration_since(start).as_millis();
-        let image = capture_window_screenshot(win_id)?;
+        let image = api.capture_window_screenshot(win_id)?;
         if !force_natural {
             if last_frame.is_some()
                 && image
@@ -226,22 +242,30 @@ fn sub_shell_thread<T: AsRef<OsStr> + Clone>(program: T) -> Result<ExitStatus> {
 /// or by the env var 'TERM_PROGRAM' and then asking the window manager for all visible windows
 /// and finding the Terminal in that list
 /// panics if WindowId was not was not there
-fn current_win_id() -> Result<(u32, Option<String>)> {
-    if env::var("WINDOWID").is_ok() {
-        let win_id = env::var("WINDOWID")
-            .unwrap()
-            .parse::<u32>()
-            .context("Cannot parse env variable 'WINDOWID' as number")?;
-        Ok((win_id, None))
-    } else {
-        let terminal = env::var("TERM_PROGRAM").context(
-            "Env variable 'TERM_PROGRAM' was empty but it is needed for determine the window id",
-        )?;
-        let (win_id, name) = get_window_id_for(terminal.to_owned()).context(
-            format!(
-            "Cannot determine the window id of {}. Please set env variable 'WINDOWID' and try again.", terminal),
-        )?;
-        Ok((win_id, Some(name)))
+fn current_win_id() -> Result<(WindowId, Option<String>)> {
+    match env::var("WINDOWID") {
+        Ok(win_id) => {
+            let win_id = win_id
+                .parse::<u64>()
+                .context("Cannot parse env variable 'WINDOWID' as number")?;
+            Ok((win_id, None))
+        }
+        Err(_) => {
+            let terminal = env::var("TERM_PROGRAM").context(
+                "Env variable 'TERM_PROGRAM' was empty but is needed for figure out the WindowId. Please set it to e.g. TERM_PROGRAM=alacitty",
+            );
+            if terminal.is_ok() {
+                let (win_id, name) = get_window_id_for(terminal.unwrap()).context(
+                    "Cannot determine the WindowId of this terminal. Please set env variable 'WINDOWID' and try again.",
+                )?;
+                Ok((win_id, Some(name)))
+            } else {
+                let api = setup()?;
+                let win_id = api.get_active_window()
+                    .context("Cannot determine the active window. Please set either env variable `WINDOWID` or `TERM_PROGRAM`. Check also `-l` to list all windows.")?;
+                Ok((win_id, None))
+            }
+        }
     }
 }
 
@@ -256,33 +280,9 @@ fn check_for_imagemagick() -> Result<Output> {
 }
 
 ///
-/// generating the final gif with help of convert
-fn generate_gif_with_convert(time_codes: &[u128], tempdir: &TempDir) -> Result<()> {
-    let target = target_file();
-    println!("🎉 🚀 Generating {}", target);
-    let mut cmd = Command::new("convert");
-    cmd.arg("-loop").arg("0");
-    let mut delay = 0;
-    for tc in time_codes.iter() {
-        delay = *tc - delay;
-        cmd.arg("-delay")
-            .arg(format!("{}", (delay as f64 * 0.1) as u64))
-            .arg(tempdir.path().join(file_name_for(tc, "tga")));
-        delay = *tc;
-    }
-    cmd.arg("-layers")
-        .arg("Optimize")
-        .arg(target)
-        .output()
-        .context("Cannot start 'convert' to generate the final gif")?;
-
-    Ok(())
-}
-
-///
 /// returns a new filename that does not yet exists.
 /// like `t-rec.gif` or `t-rec_1.gif`
-fn target_file() -> String {
+pub fn target_file() -> String {
     let mut suffix = "".to_string();
     let mut i = 0;
     while std::path::Path::new(format!("t-rec{}.gif", suffix).as_str()).exists() {
@@ -292,11 +292,42 @@ fn target_file() -> String {
     format!("t-rec{}.gif", suffix)
 }
 
-/// TODO implement a image native gif creation
-// fn generate_gif(time_codes: &Vec<i128>) {}
-
 ///
 /// encapsulate the file naming convention
-fn file_name_for(tc: &u128, ext: &str) -> String {
+pub fn file_name_for(tc: &u128, ext: &str) -> String {
     format!("t-rec-frame-{:09}.{}", tc, ext)
+}
+
+///
+/// finds the window id for a given terminal / programm by name
+pub fn get_window_id_for(terminal: String) -> Result<(WindowId, String)> {
+    let api = setup()?;
+    for term in terminal.to_lowercase().split('.') {
+        for (window_owner, window_id) in api.window_list()? {
+            if let Some(window_owner) = window_owner {
+                let window = &window_owner.to_lowercase();
+                let terminal = &terminal.to_lowercase();
+                if window.contains(term) || terminal.contains(window) {
+                    return Ok((window_id, terminal.to_owned()));
+                }
+            }
+        }
+    }
+
+    bail!("Cannot determine the window id from the available window list.")
+}
+
+///
+/// lists all windows with name and id
+pub fn ls_win() -> Result<()> {
+    let api = setup()?;
+    println!("Window | Id");
+    for (window_owner, window_id) in api.window_list()? {
+        match (window_owner, window_id) {
+            (Some(window_owner), window_id) => println!("{} | {}", window_owner, window_id),
+            (_, _) => {}
+        }
+    }
+
+    Ok(())
 }

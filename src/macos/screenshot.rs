@@ -5,13 +5,13 @@ use core_graphics::image::CGImageRef;
 use image::flat::SampleLayout;
 use image::{ColorType, FlatSamples};
 
-pub fn capture_window_screenshot(win_id: u32) -> Result<ImageOnHeap> {
+pub fn capture_window_screenshot(win_id: u64) -> Result<ImageOnHeap> {
     let (w, h, channels, raw_data) = {
         let image = unsafe {
             CGDisplay::screenshot(
                 CGRectNull,
                 kCGWindowListOptionIncludingWindow | kCGWindowListExcludeDesktopElements,
-                win_id,
+                win_id as u32,
                 kCGWindowImageNominalResolution
                     | kCGWindowImageBoundsIgnoreFraming
                     | kCGWindowImageShouldBeOpaque,

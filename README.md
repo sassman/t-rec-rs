@@ -48,6 +48,12 @@ Blazingly fast terminal recorder that generates animated gif images for the web 
 
 **NOTE** `-f` just makes sure the latest version is installed
 
+### Linux
+
+```sh
+sudo apt-get install libx11-dev imagemagick
+```
+
 ## Usage
 
 ```sh
@@ -136,7 +142,6 @@ Code | 27600
 ❯ WINDOWID=27600 t-rec
 
 Frame cache dir: "/var/folders/m8/084p1v0x4770rpwpkrgl5b6h0000gn/T/trec-77862.BMYiHNRWqv9Y"
-Recording window id: 27600
 Press Ctrl+D to end recording
 
 ```
@@ -148,6 +153,12 @@ this is how it looks then:
 
 To contribute to t-rec you can either checkout existing issues [labeled with `good first issue`][4] or [open a new issue][5] and describe your problem.
 Also every PR is welcome. Support for Linux and Windows needs to be done.
+
+## On the web & social media
+
+- t-rec [on producthunt.com](https://www.producthunt.com/posts/t-rec)
+- t-rec [on hacker news](https://news.ycombinator.com/item?id=24742378)
+- t-rec [on reddit](https://www.reddit.com/r/rust/comments/j8tqs9/trec_a_blazingly_fast_terminal_recorder_that/)
 
 ## License
 
