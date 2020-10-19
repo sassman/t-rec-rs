@@ -1,6 +1,7 @@
 use crate::macos::core_foundation_sys_patches::{
     kCFNumberSInt32Type as I32, kCFNumberSInt64Type as I64, CFBooleanGetValue, CFNumberGetType,
 };
+use crate::WindowList;
 use anyhow::{anyhow, Result};
 use core_foundation::base::{CFGetTypeID, CFTypeID, ToVoid};
 use core_foundation::string::{kCFStringEncodingUTF8, CFString, CFStringGetCStringPtr};
@@ -21,8 +22,13 @@ enum DictEntryValue {
     _Unknown,
 }
 
-fn window_list() -> Result<Vec<(DictEntryValue, DictEntryValue, DictEntryValue)>> {
-    let mut win_list = Vec::new();
+///
+/// hard nut to crack, some starting point was:
+/// https://stackoverflow.com/questions/60117318/getting-window-owner-names-via-cgwindowlistcopywindowinfo-in-rust
+/// then some more PRs where needed:
+/// https://github.com/servo/core-foundation-rs/pulls?q=is%3Apr+author%3Asassman+
+pub fn window_list() -> Result<WindowList> {
+    let mut win_list = vec![];
     let window_list_info = unsafe {
         CGWindowListCopyWindowInfo(
             kCGWindowListOptionIncludingWindow
@@ -50,8 +56,13 @@ fn window_list() -> Result<Vec<(DictEntryValue, DictEntryValue, DictEntryValue)>
         }
         let window_owner = get_from_dict(dic_ref, "kCGWindowOwnerName");
         let window_id = get_from_dict(dic_ref, "kCGWindowNumber");
-        let is_onscreen = get_from_dict(dic_ref, "kCGWindowIsOnscreen");
-        win_list.push((window_owner, window_id, is_onscreen));
+        // let is_onscreen = get_from_dict(dic_ref, "kCGWindowIsOnscreen");
+        match (window_owner, window_id) {
+            (DictEntryValue::_String(name), DictEntryValue::_Number(win_id)) => {
+                win_list.push((Some(name), win_id as u64));
+            }
+            _ => {}
+        }
     }
 
     unsafe {
@@ -116,43 +127,4 @@ fn get_from_dict(dict: CFDictionaryRef, key: &str) -> DictEntryValue {
     }
 
     DictEntryValue::_Unknown
-}
-
-pub fn ls_win() -> anyhow::Result<()> {
-    println!("Window | Id");
-    for (window_owner, window_id, _) in window_list()? {
-        match (window_owner, window_id) {
-            (DictEntryValue::_String(window_owner), DictEntryValue::_Number(window_id)) => {
-                println!("{} | {}", window_owner, window_id)
-            }
-            (_, _) => {}
-        }
-    }
-
-    Ok(())
-}
-
-///
-/// hard nut to crack, some starting point was:
-/// https://stackoverflow.com/questions/60117318/getting-window-owner-names-via-cgwindowlistcopywindowinfo-in-rust
-/// then some more PRs where needed:
-/// https://github.com/servo/core-foundation-rs/pulls?q=is%3Apr+author%3Asassman+
-pub fn get_window_id_for(terminal: String) -> Result<(u32, String)> {
-    for term in terminal.to_lowercase().split('.') {
-        for (window_owner, window_id, _) in window_list()? {
-            if let DictEntryValue::_Number(window_id) = window_id {
-                if let DictEntryValue::_String(window_owner) = window_owner {
-                    let window = &window_owner.to_lowercase();
-                    let terminal = &terminal.to_lowercase();
-                    if window.contains(term) || terminal.contains(window) {
-                        return Ok((window_id as u32, window_owner));
-                    }
-                }
-            }
-        }
-    }
-
-    Err(anyhow!(
-        "Cannot determine the window id from the available window list."
-    ))
 }
