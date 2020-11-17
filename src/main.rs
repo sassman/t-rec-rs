@@ -52,6 +52,9 @@ fn main() -> Result<()> {
             env::var("SHELL").unwrap_or(default)
         }
     };
+    let (win_id, window_name) =
+        current_win_id().context("Cannot retrieve the window id of the to be recorded window.")?;
+    capture_window_screenshot(win_id)?;
 
     let force_natural = args.is_present("natural-mode");
 
@@ -68,7 +71,7 @@ fn main() -> Result<()> {
         let time_codes = time_codes.clone();
         let force_natural = force_natural;
         thread::spawn(move || -> Result<()> {
-            capture_thread(&rx, time_codes, tempdir, force_natural)
+            capture_thread(&rx, win_id, time_codes, tempdir, force_natural)
         })
     };
     let interact = thread::spawn(move || -> Result<()> { sub_shell_thread(&program).map(|_| ()) });
@@ -78,6 +81,11 @@ fn main() -> Result<()> {
         "Frame cache dir: {:?}",
         tempdir.lock().expect("Cannot lock tempdir resource").path()
     );
+    if let Some(window) = window_name {
+        println!("Recording window: {:?}", window);
+    } else {
+        println!("Recording window id: {}", win_id);
+    }
     println!("Press Ctrl+D to end recording");
 
     interact
@@ -110,11 +118,11 @@ fn clear_screen() {
 /// stops once receiving something in rx
 fn capture_thread(
     rx: &Receiver<()>,
+    win_id: u32,
     time_codes: Arc<Mutex<Vec<u128>>>,
     tempdir: Arc<Mutex<TempDir>>,
     force_natural: bool,
 ) -> Result<()> {
-    let win_id = current_win_id()?;
     let duration = Duration::from_millis(250);
     let start = Instant::now();
     let mut idle_duration = Duration::from_millis(0);
@@ -192,19 +200,22 @@ fn sub_shell_thread<T: AsRef<OsStr> + Clone>(program: T) -> Result<ExitStatus> {
 /// or by the env var 'TERM_PROGRAM' and then asking the window manager for all visible windows
 /// and finding the Terminal in that list
 /// panics if WindowId was not was not there
-fn current_win_id() -> Result<u32> {
+fn current_win_id() -> Result<(u32, Option<String>)> {
     if env::var("WINDOWID").is_ok() {
-        env::var("WINDOWID")
+        let win_id = env::var("WINDOWID")
             .unwrap()
             .parse::<u32>()
-            .context("Cannot parse env variable 'WINDOWID' as number")
+            .context("Cannot parse env variable 'WINDOWID' as number")?;
+        Ok((win_id, None))
     } else {
         let terminal = env::var("TERM_PROGRAM").context(
-            "Env variable 'TERM_PROGRAM' was empty but is needed for figure out the WindowId",
+            "Env variable 'TERM_PROGRAM' was empty but it is needed for determine the window id",
         )?;
-        get_window_id_for(terminal).context(
-            "Cannot determine the WindowId of this terminal. Please set env variable 'WINDOWID' and try again.",
-        )
+        let (win_id, name) = get_window_id_for(terminal.to_owned()).context(
+            format!(
+            "Cannot determine the window id of {}. Please set env variable 'WINDOWID' and try again.", terminal),
+        )?;
+        Ok((win_id, Some(name)))
     }
 }
 

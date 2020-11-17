@@ -6,6 +6,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## 🎯 [Unreleased]
 
+## [0.2.1] - 2020-11-17
+- improve error handling for invalid window id [issue/13] / [pull/14]
+  
+[issue/13]: https://github.com/sassman/t-rec-rs/issues/13
+[pull/14]: https://github.com/sassman/t-rec-rs/pull/14
+
 ## [0.2.0] - 2020-10-12
 ### Added
 - command line parameter for natural recording `-n` or `--natural`
