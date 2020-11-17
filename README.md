@@ -28,7 +28,7 @@ Blazingly fast terminal recorder that generates animated gif images for the web 
 
 ## Install
 
-**NOTE** for now `t-rec` depends on `imagemagick`, but this is going to change soon.
+**NOTE** for now `t-rec` depends on `imagemagick`.
 
 ```sh
 ❯ brew install imagemagick
@@ -53,7 +53,7 @@ or with specifying a different program to launch
 
 ```sh
 ❯ t-rec --help
-t-rec 0.2.0
+t-rec 0.2.1
 Sven Assmann <sven.assmann.it@gmail.com>
 Blazingly fast terminal recorder that generates animated gif images for the web written in rust.
 
@@ -89,9 +89,11 @@ You can record not only the terminal but also every other window. There 2 ways t
 
 ```sh
 ❯ TERM_PROGRAM="google chrome" t-rec
+
 Frame cache dir: "/var/folders/m8/084p1v0x4770rpwpkrgl5b6h0000gn/T/trec-74728.rUxBx3ohGiQ2"
+Recording window: "Google Chrome 2"
 Press Ctrl+D to end recording
-Recording Window: "Google Chrome 2"
+
 ```
 
 this is how it looks then:
@@ -111,6 +113,7 @@ Code | 27600
 ❯ WINDOWID=27600 t-rec
 
 Frame cache dir: "/var/folders/m8/084p1v0x4770rpwpkrgl5b6h0000gn/T/trec-77862.BMYiHNRWqv9Y"
+Recording window id: 27600
 Press Ctrl+D to end recording
 
 ```

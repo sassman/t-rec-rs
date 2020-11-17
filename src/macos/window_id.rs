@@ -137,7 +137,7 @@ pub fn ls_win() -> anyhow::Result<()> {
 /// https://stackoverflow.com/questions/60117318/getting-window-owner-names-via-cgwindowlistcopywindowinfo-in-rust
 /// then some more PRs where needed:
 /// https://github.com/servo/core-foundation-rs/pulls?q=is%3Apr+author%3Asassman+
-pub fn get_window_id_for(terminal: String) -> Result<u32> {
+pub fn get_window_id_for(terminal: String) -> Result<(u32, String)> {
     for term in terminal.to_lowercase().split('.') {
         for (window_owner, window_id, _) in window_list()? {
             if let DictEntryValue::_Number(window_id) = window_id {
@@ -145,8 +145,7 @@ pub fn get_window_id_for(terminal: String) -> Result<u32> {
                     let window = &window_owner.to_lowercase();
                     let terminal = &terminal.to_lowercase();
                     if window.contains(term) || terminal.contains(window) {
-                        println!("Recording Window: {:?}", window_owner);
-                        return Ok(window_id as u32);
+                        return Ok((window_id as u32, window_owner));
                     }
                 }
             }

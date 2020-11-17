@@ -17,7 +17,10 @@ pub fn capture_window_screenshot(win_id: u32) -> Result<ImageOnHeap> {
                     | kCGWindowImageShouldBeOpaque,
             )
         }
-        .context("Cannot gather screenshot")?;
+        .context(format!(
+            "Cannot grab screenshot from CGDisplay of window id {}",
+            win_id
+        ))?;
 
         let img_ref: &CGImageRef = &image;
         let (_wrong_width, h) = (img_ref.width() as u32, img_ref.height() as u32);
