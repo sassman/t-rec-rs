@@ -28,6 +28,14 @@ Blazingly fast terminal recorder that generates animated gif images for the web 
 
 ## Install
 
+### with homebrew
+
+```sh
+❯ brew install t-rec
+```
+
+### with cargo
+
 **NOTE** for now `t-rec` depends on `imagemagick`.
 
 ```sh
