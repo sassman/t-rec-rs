@@ -6,7 +6,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## 🎯 [Unreleased]
 
+## [0.2.2] - 2020-11-26
+### Fixed
+- improve error handling for invalid captured image data [pull/15]
+  
+[pull/15]: https://github.com/sassman/t-rec-rs/pull/15
+
 ## [0.2.1] - 2020-11-17
+### Fixed
 - improve error handling for invalid window id [issue/13] / [pull/14]
   
 [issue/13]: https://github.com/sassman/t-rec-rs/issues/13
