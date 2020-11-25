@@ -53,9 +53,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [macos-latest]
-        rust: [nightly, stable]
-    runs-on: ${{ matrix.os }}
+        version: [ 'macos-11.0', 'macos-10.15', 'macos-10.14' ]
+        rust: [ nightly, stable ]
+    runs-on: ${{ matrix.version }}
     continue-on-error: ${{ matrix.rust == 'nightly' }}
     steps:
       - uses: actions/checkout@v2
