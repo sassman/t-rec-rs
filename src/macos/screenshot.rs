@@ -6,7 +6,7 @@ use image::flat::SampleLayout;
 use image::{ColorType, FlatSamples};
 
 pub fn capture_window_screenshot(win_id: u32) -> Result<ImageOnHeap> {
-    let (w, h, channels, raw_data, delta_width) = {
+    let (w, h, channels, raw_data) = {
         let image = unsafe {
             CGDisplay::screenshot(
                 CGRectNull,
@@ -24,7 +24,7 @@ pub fn capture_window_screenshot(win_id: u32) -> Result<ImageOnHeap> {
 
         let img_ref: &CGImageRef = &image;
         // CAUTION: the width is not trust worthy, only the buffer dimensions are real
-        let (wrong_width, h) = (img_ref.width() as u32, img_ref.height() as u32);
+        let (_wrong_width, h) = (img_ref.width() as u32, img_ref.height() as u32);
         let raw_data: Vec<_> = img_ref.data().to_vec();
         let byte_per_row = img_ref.bytes_per_row() as u32;
         // the buffer must be as long as the row length x height
@@ -39,13 +39,8 @@ pub fn capture_window_screenshot(win_id: u32) -> Result<ImageOnHeap> {
         let channels = img_ref.bits_per_component() as u32 / 8;
         // the actual width based on the buffer dimensions
         let w = byte_per_row / (byte_per_pixel * channels);
-        // dbg!(wrong_width, w);
-        let d = wrong_width as i64 - w as i64;
-        // if d != 0 {
-        //     eprintln!("width delta: {}", d);
-        // }
 
-        (w, h, channels as u8, raw_data, d)
+        (w, h, channels as u8, raw_data)
     };
 
     let color = ColorType::Bgra8;
