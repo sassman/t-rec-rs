@@ -9,8 +9,11 @@ mod any;
 use any::*;
 
 mod cli;
+mod decor_effect;
+
 use crate::cli::launch;
 
+use crate::decor_effect::apply_shadow_decor_effect;
 use crate::macos::capture_window_screenshot;
 use anyhow::Context;
 use anyhow::Result;
@@ -97,6 +100,17 @@ fn main() -> Result<()> {
         .join()
         .unwrap()
         .context("Cannot launch the recording thread")?;
+
+    match args.value_of("decor") {
+        Some("shadow") => {
+            apply_shadow_decor_effect(
+                &time_codes.lock().unwrap(),
+                tempdir.lock().unwrap().borrow(),
+            );
+        }
+        _ => {}
+    }
+
     generate_gif_with_convert(
         &time_codes.lock().unwrap(),
         tempdir.lock().unwrap().borrow(),
