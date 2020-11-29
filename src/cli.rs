@@ -7,6 +7,16 @@ pub fn launch<'a>() -> ArgMatches<'a> {
         .about(crate_description!())
         .setting(AppSettings::AllowMissingPositional)
         .arg(
+            Arg::with_name("decor")
+                .takes_value(true)
+                .possible_values(&["shadow", "none"])
+                .default_value("shadow")
+                .required(false)
+                .short("d")
+                .long("decor")
+                .help("Decorates the animation with certain, mostly border effects.")
+        )
+        .arg(
             Arg::with_name("natural-mode")
                 .value_name("natural")
                 .takes_value(false)
