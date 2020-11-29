@@ -13,7 +13,7 @@ mod decor_effect;
 
 use crate::cli::launch;
 
-use crate::decor_effect::apply_shadow_decor_effect;
+use crate::decor_effect::{apply_big_sur_corner_effect, apply_shadow_effect};
 use crate::macos::capture_window_screenshot;
 use anyhow::Context;
 use anyhow::Result;
@@ -101,13 +101,16 @@ fn main() -> Result<()> {
         .unwrap()
         .context("Cannot launch the recording thread")?;
 
+    apply_big_sur_corner_effect(
+        &time_codes.lock().unwrap(),
+        tempdir.lock().unwrap().borrow(),
+    )?;
+
     match args.value_of("decor") {
-        Some("shadow") => {
-            apply_shadow_decor_effect(
-                &time_codes.lock().unwrap(),
-                tempdir.lock().unwrap().borrow(),
-            );
-        }
+        Some("shadow") => apply_shadow_effect(
+            &time_codes.lock().unwrap(),
+            tempdir.lock().unwrap().borrow(),
+        )?,
         _ => {}
     }
 
