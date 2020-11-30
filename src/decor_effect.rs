@@ -89,7 +89,7 @@ fn apply_effect(
     let mut results = Vec::new();
     for tc in time_codes.iter() {
         let file = tempdir.path().join(file_name_for(tc, "tga"));
-        results.push(effect(file.into())?);
+        results.push(effect(file)?);
     }
 
     for mut r in results {

@@ -80,16 +80,20 @@ fn main() -> Result<()> {
     let interact = thread::spawn(move || -> Result<()> { sub_shell_thread(&program).map(|_| ()) });
 
     clear_screen();
-    println!(
-        "Frame cache dir: {:?}",
-        tempdir.lock().expect("Cannot lock tempdir resource").path()
-    );
-    if let Some(window) = window_name {
-        println!("Recording window: {:?}", window);
-    } else {
-        println!("Recording window id: {}", win_id);
+    if args.is_present("verbose") {
+        println!(
+            "Frame cache dir: {:?}",
+            tempdir.lock().expect("Cannot lock tempdir resource").path()
+        );
+        if let Some(window) = window_name {
+            println!("Recording window: {:?}", window);
+        } else {
+            println!("Recording window id: {}", win_id);
+        }
     }
     println!("Press Ctrl+D to end recording");
+    thread::sleep(Duration::from_millis(1250));
+    clear_screen();
 
     interact
         .join()
@@ -101,17 +105,21 @@ fn main() -> Result<()> {
         .unwrap()
         .context("Cannot launch the recording thread")?;
 
+    println!(
+        "\n🎆 Applying effects to {} frames (might take a bit)",
+        time_codes.lock().unwrap().borrow().len()
+    );
+
     apply_big_sur_corner_effect(
         &time_codes.lock().unwrap(),
         tempdir.lock().unwrap().borrow(),
     )?;
 
-    match args.value_of("decor") {
-        Some("shadow") => apply_shadow_effect(
+    if let Some("shadow") = args.value_of("decor") {
+        apply_shadow_effect(
             &time_codes.lock().unwrap(),
             tempdir.lock().unwrap().borrow(),
-        )?,
-        _ => {}
+        )?
     }
 
     generate_gif_with_convert(
@@ -250,11 +258,7 @@ fn check_for_imagemagick() -> Result<Output> {
 /// generating the final gif with help of convert
 fn generate_gif_with_convert(time_codes: &[u128], tempdir: &TempDir) -> Result<()> {
     let target = target_file();
-    println!(
-        "\n🎉 🚀 Generating {:?} out of {} frames!",
-        target,
-        time_codes.len()
-    );
+    println!("🎉 🚀 Generating {}", target);
     let mut cmd = Command::new("convert");
     cmd.arg("-loop").arg("0");
     let mut delay = 0;
