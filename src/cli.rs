@@ -7,6 +7,14 @@ pub fn launch<'a>() -> ArgMatches<'a> {
         .about(crate_description!())
         .setting(AppSettings::AllowMissingPositional)
         .arg(
+            Arg::with_name("verbose")
+                .takes_value(false)
+                .short("v")
+                .long("verbose")
+                .required(false)
+                .help("Enable verbose insights for the curious.")
+        )
+        .arg(
             Arg::with_name("decor")
                 .takes_value(true)
                 .possible_values(&["shadow", "none"])
@@ -14,7 +22,7 @@ pub fn launch<'a>() -> ArgMatches<'a> {
                 .required(false)
                 .short("d")
                 .long("decor")
-                .help("Decorates the animation with certain, mostly border effects.")
+                .help("Decorates the animation with certain, mostly border effects")
         )
         .arg(
             Arg::with_name("natural-mode")
@@ -23,7 +31,7 @@ pub fn launch<'a>() -> ArgMatches<'a> {
                 .required(false)
                 .short("n")
                 .long("natural")
-                .help("If you want a very natural typing experience and disable the idle detection and sampling optimization.")
+                .help("If you want a very natural typing experience and disable the idle detection and sampling optimization")
         )
         .arg(
             Arg::with_name("list-windows")
@@ -32,7 +40,7 @@ pub fn launch<'a>() -> ArgMatches<'a> {
                 .required(false)
                 .short("l")
                 .long("ls-win")
-                .help("If you want to see a list of windows available for recording by their id, you can set env var 'WINDOWID' to record this specific window only."),
+                .help("If you want to see a list of windows available for recording by their id, you can set env var 'WINDOWID' to record this specific window only"),
         )
         .arg(
             Arg::with_name("program")

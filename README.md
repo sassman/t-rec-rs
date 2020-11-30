@@ -61,12 +61,12 @@ or with specifying a different program to launch
 
 ```sh
 ❯ t-rec --help
-t-rec 0.2.1
+t-rec 0.3.0
 Sven Assmann <sven.assmann.it@gmail.com>
 Blazingly fast terminal recorder that generates animated gif images for the web written in rust.
 
 USAGE:
-    t-rec [FLAGS] [shell or program to launch]
+    t-rec [FLAGS] [OPTIONS] [shell or program to launch]
 
 FLAGS:
     -h, --help       Prints help information
@@ -75,6 +75,11 @@ FLAGS:
     -n, --natural    If you want a very natural typing experience and disable the idle detection and sampling
                      optimization.
     -V, --version    Prints version information
+    -v, --verbose    Enable verbose insights for the curious.
+
+OPTIONS:
+    -d, --decor <decor>    Decorates the animation with certain, mostly border effects. [default: shadow]  [possible
+                           values: shadow, none]
 
 ARGS:
     <shell or program to launch>    If you want to start a different program than $SHELL you can pass it here. For

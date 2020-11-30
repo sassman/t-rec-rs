@@ -6,6 +6,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## 🎯 [Unreleased]
 
+## [0.3.0] - XXXX
+### Added
+- command line parameter `-d` or `--decor` that allows to turn on and off effects [feat(decor:shadow)]
+- command line parameter `-v` or `--verbose` that shows insights on the window name and window id for the curious
+- turn on the new shadow decor effect by default 
+![demo](./docs/demo-shadow.gif)
+
+[feat(decor:shadow)]: https://github.com/sassman/t-rec-rs/commit/65ceeb2bb23da9243b57152755c865d8950af3c7
+
+### Fixed
+- white corners are now fixed and aligned with the radius of macos big sur [feat(decor:big-sur)]
+- sometimes there were unexpected image dimensions, with a small stripe on the right of black pixel [feat(decor:big-sur)]
+
+[feat(decor:big-sur)]: https://github.com/sassman/t-rec-rs/commit/ab64d3dd8e9b264b617acca9a0db9375525911d0
+
 ## [0.2.2] - 2020-11-26
 ### Fixed
 - improve error handling for invalid captured image data [pull/15]
