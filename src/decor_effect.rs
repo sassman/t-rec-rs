@@ -23,7 +23,7 @@ pub fn apply_shadow_effect(time_codes: &[u128], tempdir: &TempDir) -> Result<()>
             Command::new("convert")
                 .arg(file.to_str().unwrap())
                 .arg("(")
-                .args(&["+clone", "-background", "black", "-shadow", "140x10+0+0"])
+                .args(&["+clone", "-background", "black", "-shadow", "100x20+0+0"])
                 .arg(")")
                 .args(&["+swap", "-background", "white"])
                 .args(&["-layers", "merge"])
