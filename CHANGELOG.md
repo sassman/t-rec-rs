@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.3.0] - XXXX
 ### Added
 - command line parameter `-d` or `--decor` that allows to turn on and off effects [feat(decor:shadow)]
+- command line parameter `-b` or `--bg` that allows to change the target background color to white, black or transparent
 - command line parameter `-v` or `--verbose` that shows insights on the window name and window id for the curious
 - turn on the new shadow decor effect by default 
 ![demo](./docs/demo-shadow.gif)

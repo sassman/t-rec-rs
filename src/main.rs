@@ -119,6 +119,7 @@ fn main() -> Result<()> {
         apply_shadow_effect(
             &time_codes.lock().unwrap(),
             tempdir.lock().unwrap().borrow(),
+            args.value_of("bg").unwrap().to_string(),
         )?
     }
 

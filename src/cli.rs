@@ -25,6 +25,16 @@ pub fn launch<'a>() -> ArgMatches<'a> {
                 .help("Decorates the animation with certain, mostly border effects")
         )
         .arg(
+            Arg::with_name("bg")
+                .takes_value(true)
+                .possible_values(&["white", "black", "transparent"])
+                .default_value("white")
+                .required(false)
+                .short("b")
+                .long("bg")
+                .help("Background color when decors are used")
+        )
+        .arg(
             Arg::with_name("natural-mode")
                 .value_name("natural")
                 .takes_value(false)
