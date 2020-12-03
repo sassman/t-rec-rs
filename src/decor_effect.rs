@@ -15,7 +15,7 @@ use tempfile::TempDir;
 ///     -layers merge \
 ///     t-rec-frame-000000251.tga
 /// ```
-pub fn apply_shadow_effect(time_codes: &[u128], tempdir: &TempDir) -> Result<()> {
+pub fn apply_shadow_effect(time_codes: &[u128], tempdir: &TempDir, bg_color: String) -> Result<()> {
     apply_effect(
         time_codes,
         tempdir,
@@ -25,7 +25,7 @@ pub fn apply_shadow_effect(time_codes: &[u128], tempdir: &TempDir) -> Result<()>
                 .arg("(")
                 .args(&["+clone", "-background", "black", "-shadow", "100x20+0+0"])
                 .arg(")")
-                .args(&["+swap", "-background", "white"])
+                .args(&["+swap", "-background", bg_color.as_str()])
                 .args(&["-layers", "merge"])
                 .arg(file.to_str().unwrap())
                 .spawn()
