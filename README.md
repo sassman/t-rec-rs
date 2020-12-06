@@ -15,6 +15,7 @@ Blazingly fast terminal recorder that generates animated gif images for the web 
 - Screenshotting your terminal with 4 frames per second (every 250ms)
 - Generates high quality small sized animated gif images
 - **Build-In idle frames detection and optimization** (for super fluid presentations)
+- Applies (can be disabled) border decor effects like drop shadow
 - Runs (only) on MacOS
 - Uses native efficient APIs
 - Runs without any cloud service and entirely offline
@@ -36,7 +37,7 @@ Blazingly fast terminal recorder that generates animated gif images for the web 
 
 ### with cargo
 
-**NOTE** for now `t-rec` depends on `imagemagick`.
+**NOTE** `t-rec` depends on `imagemagick`.
 
 ```sh
 ❯ brew install imagemagick
@@ -78,6 +79,8 @@ FLAGS:
     -v, --verbose    Enable verbose insights for the curious.
 
 OPTIONS:
+    -b, --bg <bg>          Background color when decors are used [default: white]  [possible values: white, black,
+                           transparent]
     -d, --decor <decor>    Decorates the animation with certain, mostly border effects. [default: shadow]  [possible
                            values: shadow, none]
 
@@ -91,6 +94,11 @@ ARGS:
 If you are not happy with the idle detection and optimization, you can disable it with the `-n` or `--natural` parameter.
 By doing so, you would get the very natural timeline of typing and recording as you do it. 
 In this case there will be no optimizations performed.
+
+### Disable shadow border decor
+
+In order to disable the drop shadow border decor you have to pass `-p none` as an argument. If your only want to change 
+the color of the background you can use `-b black` for example to have a black background.
 
 ## Hidden Gems
 
