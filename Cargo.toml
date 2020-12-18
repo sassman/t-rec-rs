@@ -17,10 +17,10 @@ github-actions = { repository = "sassman/t-rec-rs", branch = "main", workflow = 
 maintenance = { status = "actively-developed" }
 
 [dependencies]
-clap = "2.33"
+clap = "2.33.3"
 image = "0.23.12"
-anyhow = "1.0"
-tempfile = "3.1"
+anyhow = "1.0.35"
+tempfile = "3.1.0"
 
 [target.'cfg(target_os = "macos")'.dependencies]
 objc_id = "0.1.1"

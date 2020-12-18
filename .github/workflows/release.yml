@@ -156,7 +156,7 @@ jobs:
         with:
           # This pulls from the "Get Changelog Entry" step above, referencing it's ID to get its outputs object.
           # See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps
-          tag_name: ${{ steps.changelog_reader.outputs.version }}
+          tag_name: ${{ github.ref }}
           release_name: Release ${{ steps.changelog_reader.outputs.version }}
           body: ${{ steps.changelog_reader.outputs.changes }}
           prerelease: ${{ steps.changelog_reader.outputs.status == 'prereleased' }}
