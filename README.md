@@ -1,6 +1,8 @@
 # Terminal Recorder - t-rec
 
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
+[![crates.io](https://img.shields.io/crates/v/t-rec.svg)](https://crates.io/crates/t-rec)
+[![dependency status](https://deps.rs/repo/github/sassman/t-rec-rs/status.svg)](https://deps.rs/repo/github/sassman/t-rec-rs)
 [![Build Status](https://github.com/sassman/t-rec-rs/workflows/Build/badge.svg)](https://github.com/sassman/t-rec-rs/actions?query=branch%3Amain+workflow%3ABuild+)
 [![LOC](https://tokei.rs/b1/github/sassman/t-rec-rs?category=code)](https://github.com/Aaronepower/tokei)
 
