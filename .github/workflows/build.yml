@@ -17,8 +17,8 @@ on:
       - "**.md"
 
 jobs:
-  checks:
-    name: pre / code quality
+  check:
+    name: check
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v2
@@ -37,19 +37,40 @@ jobs:
             ~/.cargo/git
             target
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-      - name: build | format
-        uses: actions-rs/cargo@v1
+      - run: cargo check
+
+  lint:
+    name: lint
+    needs: check
+    strategy:
+      fail-fast: false
+      matrix:
+        cargo-cmd:
+          - fmt --all -- --check
+          - clippy --all-targets --all-features -- -D warnings
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: setup | rust
+        uses: actions-rs/toolchain@v1
         with:
-          command: fmt
-          args: --all -- --check
-      - name: build | lint
-        uses: actions-rs/cargo@v1
+          toolchain: stable
+          default: true
+          profile: minimal
+          components: clippy, rustfmt
+      - name: setup | cache
+        uses: actions/cache@v2
         with:
-          command: clippy
-          args: --all-targets --all-features -- -D warnings
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+      - run: cargo ${{ matrix['cargo-cmd'] }}
 
   tests:
-    name: tests
+    name: test
+    needs: check
     strategy:
       fail-fast: false
       matrix:
@@ -73,20 +94,12 @@ jobs:
             ~/.cargo/git
             target
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-      - name: build | check
-        uses: actions-rs/cargo@v1
-        with:
-          command: check
-          args: --all
-      - name: build | tests
-        uses: actions-rs/cargo@v1
-        with:
-          command: test
-          args: --all-features --all --locked -- -Z unstable-options
+      - name: cargo test
+        run: cargo test --all-features --all --locked -- -Z unstable-options
 
   audit:
-    name: post / audit
-    needs: tests
+    name: security audit
+    needs: check
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v2
@@ -104,7 +117,7 @@ jobs:
             ~/.cargo/git
             target
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-      - name: build | audit
+      - name: audit
         uses: actions-rs/audit-check@v1
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
