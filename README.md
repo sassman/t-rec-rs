@@ -13,12 +13,11 @@ Blazingly fast terminal recorder that generates animated gif images for the web 
 ![demo](./docs/demo.gif)
 
 ## Features
-
 - Screenshotting your terminal with 4 frames per second (every 250ms)
 - Generates high quality small sized animated gif images
 - **Build-In idle frames detection and optimization** (for super fluid presentations)
 - Applies (can be disabled) border decor effects like drop shadow
-- Runs (only) on MacOS
+- Runs on MacOS and Linux
 - Uses native efficient APIs
 - Runs without any cloud service and entirely offline
 - No issues with terminal sizes larger than 80x24
@@ -29,48 +28,47 @@ Blazingly fast terminal recorder that generates animated gif images for the web 
 - Hidden feature: Record every window you want
 - Written in Rust 🦀
 
-## Install
-
+## Installation on MacOS
 ### with homebrew
-
 ```sh
-❯ brew install t-rec
+brew install t-rec
 ```
 
 ### with cargo
-
 **NOTE** `t-rec` depends on `imagemagick`.
-
 ```sh
-❯ brew install imagemagick
-❯ cargo install -f t-rec 
+brew install imagemagick
+cargo install -f t-rec 
 ```
-
 **NOTE** `-f` just makes sure the latest version is installed
 
-### Linux
-
+## Installation on Linux
 ```sh
 sudo apt-get install libx11-dev imagemagick
+cargo install -f t-rec
 ```
 
-## Usage
+tested on those distros:
+- ubuntu 20.10 on GNOME ![demo-ubuntu](./docs/demo-ubuntu.gif)
+- ubuntu 20.10 on i3wm ![demo-ubuntu-i3wm](./docs/demo-ubuntu-i3wm.gif)
+- mint 20 on cinnamon ![demo-mint](./docs/demo-mint.gif)
 
+## Usage
 ```sh
-❯ t-rec
+t-rec
 ```
 
 or with specifying a different program to launch
 
 ```sh
-❯ t-rec /bin/sh
+t-rec /bin/sh
 ```
 
 ### Full Options
 
 ```sh
-❯ t-rec --help
-t-rec 0.3.0
+t-rec --help
+t-rec 0.4.0
 Sven Assmann <sven.assmann.it@gmail.com>
 Blazingly fast terminal recorder that generates animated gif images for the web written in rust.
 
@@ -117,7 +115,7 @@ You can record not only the terminal but also every other window. There 2 ways t
 - make sure chrome is running and visible on screen
 
 ```sh
-❯ TERM_PROGRAM="google chrome" t-rec
+TERM_PROGRAM="google chrome" t-rec
 
 Frame cache dir: "/var/folders/m8/084p1v0x4770rpwpkrgl5b6h0000gn/T/trec-74728.rUxBx3ohGiQ2"
 Recording window: "Google Chrome 2"
@@ -135,11 +133,11 @@ this is how it looks then:
 - set the variable and run `t-rec`
 
 ```sh
-❯ t-rec --ls-win | grep -i code
+t-rec --ls-win | grep -i code
 Code | 27600
 
 # set the WINDOWID variable and run t-rec
-❯ WINDOWID=27600 t-rec
+WINDOWID=27600 t-rec
 
 Frame cache dir: "/var/folders/m8/084p1v0x4770rpwpkrgl5b6h0000gn/T/trec-77862.BMYiHNRWqv9Y"
 Press Ctrl+D to end recording
@@ -163,7 +161,7 @@ Also every PR is welcome. Support for Linux and Windows needs to be done.
 ## License
 
 - **[GNU GPL v3 license](https://www.gnu.org/licenses/gpl-3.0)**
-- Copyright 2020 © [Sven Assmann][2].
+- Copyright 2020 - 2021 © [Sven Assmann][2].
 
 [2]: https://www.d34dl0ck.me
 [4]: https://github.com/sassman/t-rec-rs/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22
