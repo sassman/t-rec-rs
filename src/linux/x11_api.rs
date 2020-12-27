@@ -128,7 +128,7 @@ impl PlatformApi for X11Api {
             let Bgra([_, _, _, a]) = image.get_pixel(half_width, y);
             if a == 0xff {
                 // the end of the transparent area
-                margin.top = (y - 1) as u16;
+                margin.top = y as u16;
                 dbg!(margin.top);
                 break;
             }
@@ -148,7 +148,7 @@ impl PlatformApi for X11Api {
             let Bgra([_, _, _, a]) = image.get_pixel(x, half_height);
             if a == 0xff {
                 // the end of the transparent area
-                margin.left = (x - 1) as u16;
+                margin.left = x as u16;
                 dbg!(margin.left);
                 break;
             }
