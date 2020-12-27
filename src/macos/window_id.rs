@@ -56,12 +56,10 @@ pub fn window_list() -> Result<WindowList> {
         }
         let window_owner = get_from_dict(dic_ref, "kCGWindowOwnerName");
         let window_id = get_from_dict(dic_ref, "kCGWindowNumber");
-        // let is_onscreen = get_from_dict(dic_ref, "kCGWindowIsOnscreen");
-        match (window_owner, window_id) {
-            (DictEntryValue::_String(name), DictEntryValue::_Number(win_id)) => {
-                win_list.push((Some(name), win_id as u64));
-            }
-            _ => {}
+        if let (DictEntryValue::_String(name), DictEntryValue::_Number(win_id)) =
+            (window_owner, window_id)
+        {
+            win_list.push((Some(name), win_id as u64));
         }
     }
 
