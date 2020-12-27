@@ -87,11 +87,15 @@ impl X11Api {
         let tree = conn.query_tree(root)?.reply()?;
         let mut result = vec![];
         for window in tree.children {
-            let attr = conn.get_window_attributes(window)?.reply()?;
-            if let MapState::Viewable = attr.map_state {
-                result.push(window as WindowId);
+            let window_id = window as WindowId;
+            let (_, _, width, height) = self.get_window_geometry(&window_id)?;
+            if width > 1 && height > 1 {
+                let attr = conn.get_window_attributes(window)?.reply()?;
+                if let MapState::Viewable = attr.map_state {
+                    result.push(window as WindowId);
+                }
             }
-            let mut sub_windows = self.get_all_sub_windows(&(window as WindowId))?;
+            let mut sub_windows = self.get_all_sub_windows(&window_id)?;
             result.append(&mut sub_windows);
         }
 
@@ -363,6 +367,11 @@ mod test {
         let api = X11Api::new()?;
         let windows = api.get_visible_windows()?;
         assert!(!windows.is_empty());
+        for win in windows {
+            let (_, _, width, height) = api.get_window_geometry(&win)?;
+            assert!(width > 1);
+            assert!(height > 1);
+        }
 
         Ok(())
     }
