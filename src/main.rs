@@ -149,8 +149,8 @@ fn main() -> Result<()> {
 /// TODO: that works strange on ubuntu
 /// escape sequences that clears the screen
 fn clear_screen() {
-    println!("{esc}[2J{esc}[1;1H", esc = 27 as char);
-    println!();
+    print!("{esc}[2J", esc = 27 as char);
+    print!("{esc}[H", esc = 27 as char);
 }
 
 ///
