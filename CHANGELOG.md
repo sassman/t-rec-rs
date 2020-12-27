@@ -6,6 +6,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## 🎯 [Unreleased]
 
+## [0.4.0] - 2020-12-27
+### Added
+- t-rec runs now on linux (X11 only) [issues/1] and has been tested on the following systems:
+  - ubuntu 20.10 on GNOME ![demo-ubuntu](./docs/demo-ubuntu.gif)
+  - ubuntu 20.10 on i3wm ![demo-ubuntu-i3wm](./docs/demo-ubuntu-i3wm.gif)
+  - mint 20 on cinnamon ![demo-mint](./docs/demo-mint.gif)
+  
+[issues/1]: https://github.com/sassman/t-rec-rs/issues/1
+
+### Fixed
+- clear screen before starting the recording was somehow broken, it behaves now better
+
 ## [0.3.1] - 2020-12-18
 ### Added
 - Readme badge for dependencies and latest version on crates.io
