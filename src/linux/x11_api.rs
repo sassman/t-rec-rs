@@ -1,4 +1,4 @@
-use crate::common::Margin;
+use crate::linux::Margin;
 use crate::{ImageOnHeap, PlatformApi, Result, WindowId, WindowList};
 use anyhow::Context;
 use image::flat::{SampleLayout, View};
