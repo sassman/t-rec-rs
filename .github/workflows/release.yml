@@ -16,7 +16,11 @@ on:
 jobs:
   check:
     name: check
-    runs-on: macos-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        version: [ 'macos-latest', 'ubuntu-latest']
+    runs-on: ${{ matrix.version }}
     steps:
       - uses: actions/checkout@v2
       - name: setup | rust
@@ -42,10 +46,11 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
+        version: [ 'macos-latest', 'ubuntu-latest']
         cargo-cmd:
           - fmt --all -- --check
           - clippy --all-targets --all-features -- -D warnings
-    runs-on: macos-latest
+    runs-on: ${{ matrix.version }}
     steps:
       - uses: actions/checkout@v2
       - name: setup | rust
@@ -71,7 +76,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        version: [ 'macos-11.0', 'macos-10.15', 'macos-10.14' ]
+        version: [ 'macos-11.0', 'macos-10.15', 'macos-10.14', 'ubuntu-latest']
         rust: [ nightly, stable ]
     runs-on: ${{ matrix.version }}
     continue-on-error: ${{ matrix.rust == 'nightly' }}
