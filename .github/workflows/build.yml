@@ -100,7 +100,7 @@ jobs:
             target
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
       - name: cargo test
-        run: cargo test --all-features --all --locked -- -Z unstable-options
+        run: cargo test --all --locked -- -Z unstable-options
 
   audit:
     name: security audit
