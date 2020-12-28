@@ -48,10 +48,14 @@ sudo apt-get install libx11-dev imagemagick
 cargo install -f t-rec
 ```
 
-tested on those distros:
-- ubuntu 20.10 on GNOME ![demo-ubuntu](./docs/demo-ubuntu.gif)
-- ubuntu 20.10 on i3wm ![demo-ubuntu-i3wm](./docs/demo-ubuntu-i3wm.gif)
-- mint 20 on cinnamon ![demo-mint](./docs/demo-mint.gif)
+| tested on those distros |
+|-------------------------|
+| ubuntu 20.10 on GNOME |
+| ![demo-ubuntu](./docs/demo-ubuntu.gif) |
+| ubuntu 20.10 on i3wm | 
+| ![demo-ubuntu-i3wm](./docs/demo-ubuntu-i3wm.gif) |
+| mint 20 on cinnamon | 
+| ![demo-mint](./docs/demo-mint.gif) |
 
 ## Usage
 ```sh
