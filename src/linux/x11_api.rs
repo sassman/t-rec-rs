@@ -268,6 +268,7 @@ impl PlatformApi for X11Api {
     }
 }
 
+#[cfg(feature = "test_against_real_display")]
 #[cfg(test)]
 mod test {
     use super::*;
@@ -315,6 +316,7 @@ mod test {
         let win = api.get_active_window()?;
         let image = api.capture_window_screenshot(win)?;
         let image: View<_, Bgra<u8>> = image.as_view().unwrap();
+
         let Bgra([b, g, r, a]) = image.get_pixel(10, 25);
         assert_ne!(b, 0);
         assert_ne!(g, 0);
