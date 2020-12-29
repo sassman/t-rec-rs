@@ -97,7 +97,7 @@ jobs:
             target
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
       - name: cargo test
-        run: cargo test --all-features --all --locked -- -Z unstable-options
+        run: cargo test --all --locked -- -Z unstable-options
 
   audit:
     name: security audit
@@ -127,7 +127,7 @@ jobs:
 
   publish:
     name: post / cargo publish
-    needs: audit
+    needs: [audit, lint, tests]
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v2
@@ -144,7 +144,7 @@ jobs:
   # https://github.com/marketplace/actions/changelog-reader
   release:
     name: post / github release
-    needs: audit
+    needs: publish
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v2
@@ -183,7 +183,7 @@ jobs:
   # https://github.com/mislav/bump-homebrew-formula-action
   publish-to-brew:
     name: post / homebrew
-    needs: audit
+    needs: publish
     runs-on: macos-latest
     steps:
       - uses: mislav/bump-homebrew-formula-action@v1
