@@ -1,0 +1,29 @@
+name: t-rec
+base: core20 
+adopt-info: t-rec
+summary: Terminal Recorder - t-rec
+description: |
+  Blazingly fast terminal recorder that generates animated gif images for the web written in rust.
+
+grade: stable
+confinement: classic
+
+parts:
+  t-rec:
+    plugin: rust
+    source: .
+    override-pull: |
+      snapcraftctl pull
+      snapcraftctl set-version "$(git describe --tags)"
+    override-build: |
+      snapcraftctl build
+      cd $SNAPCRAFT_PART_INSTALL/usr/bin
+      ln -s ./convert-im6.q16 ./convert
+    build-packages: 
+      - libx11-dev
+    stage-packages: 
+      - imagemagick
+
+apps:
+  t-rec:
+    command: bin/t-rec
