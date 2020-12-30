@@ -3,6 +3,7 @@ use crate::{ImageOnHeap, PlatformApi, Result, WindowId, WindowList};
 use anyhow::Context;
 use image::flat::{SampleLayout, View};
 use image::{Bgra, ColorType, FlatSamples, GenericImageView};
+use log::debug;
 use x11rb::connection::Connection;
 use x11rb::protocol::xproto::*;
 use x11rb::rust_connection::{DefaultStream, RustConnection};
@@ -93,7 +94,14 @@ impl X11Api {
                 let attr = conn.get_window_attributes(window)?.reply()?;
                 if let MapState::Viewable = attr.map_state {
                     result.push(window as WindowId);
+                } else {
+                    debug!(
+                        "Window {} with {} x {} is unmapped",
+                        window_id, width, height
+                    );
                 }
+            } else {
+                debug!("Window {} with {} x {}", window_id, width, height);
             }
             let mut sub_windows = self.get_all_sub_windows(&window_id)?;
             result.append(&mut sub_windows);
