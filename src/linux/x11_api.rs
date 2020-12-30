@@ -262,7 +262,13 @@ impl PlatformApi for X11Api {
                 u32::MAX,
             )?
             .reply()?;
-        let window = prop.value32().unwrap().next().unwrap();
+        let window = prop
+            .value32()
+            .context(
+                "Window Manager does not have an active window property (NET_ACTIVE_WINDOW) set.",
+            )?
+            .next()
+            .unwrap();
 
         Ok(window as WindowId)
     }
