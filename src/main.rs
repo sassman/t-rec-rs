@@ -52,6 +52,8 @@ macro_rules! prof {
 }
 
 fn main() -> Result<()> {
+    env_logger::init();
+
     let args = launch();
     if args.is_present("list-windows") {
         return ls_win();
