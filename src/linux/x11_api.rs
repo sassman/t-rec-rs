@@ -78,7 +78,7 @@ impl X11Api {
             std::str::from_utf8(&prop.value)?.to_owned()
         };
 
-        Ok(if name.is_empty() { Some(name) } else { None })
+        Ok(if !name.is_empty() { Some(name) } else { None })
     }
 
     pub fn get_all_sub_windows(&self, root: &WindowId) -> Result<Vec<WindowId>> {
@@ -349,12 +349,25 @@ mod test {
     }
 
     #[test]
+    fn should_always_have_an_active_window() -> Result<()> {
+        let api = X11Api::new()?;
+        let window = api.get_active_window();
+
+        assert!(window.is_ok(), "Active window was not set.");
+        Ok(())
+    }
+
+    #[test]
     fn should_list_current_active_window() -> Result<()> {
         let api = X11Api::new()?;
         let windows = api.get_visible_windows()?;
-        let window = api.get_active_window()?;
+        assert!(!windows.is_empty(), "Window list should never be empty!");
+        for win in windows {
+            let name = api.get_window_name(&win)?;
+            assert!(name.is_some(), "A window should always have a name");
+        }
 
-        assert!(!windows.is_empty());
+        let window = api.get_active_window()?;
         assert!(
             windows.contains(&window),
             "Active window was not found in visible list"
@@ -364,7 +377,7 @@ mod test {
             assert!(!name.is_empty());
             println!("Active window: {:?}", name);
         } else {
-            eprintln!("The active window has no name :(");
+            assert!(false, "this should not have happened");
         }
 
         Ok(())
