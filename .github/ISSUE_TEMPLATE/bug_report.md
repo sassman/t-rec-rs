@@ -2,7 +2,7 @@
 name: Bug report
 about: Create a report to help us improve
 title: ''
-labels: ''
+labels: 'Type: Bug'
 assignees: ''
 
 ---
@@ -23,9 +23,14 @@ A clear and concise description of what you expected to happen.
 **Screenshots**
 If applicable, add screenshots to help explain your problem.
 
-**Desktop (please complete the following information):**
- - OS: [e.g. iOS]
- - Version [e.g. 22]
+**Version Numbers of your System:**
+ - OS: [Linux | MacOS]
+ - Version: [e.g. 22]
+ - XServer:
+ - WindowManager:
+ - Terminal:
 
 **Additional context**
 Add any other context about the problem here.
+
+On Linux please include the output of `xwininfo -root -tree -int`
