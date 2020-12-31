@@ -370,22 +370,22 @@ mod test {
         let api = X11Api::new()?;
         let windows = api.get_visible_windows()?;
         assert!(!windows.is_empty(), "Window list should never be empty!");
-        for win in windows {
-            let name = api.get_window_name(&win)?;
-            assert!(name.is_some(), "A window should always have a name");
-        }
-
         let window = api.get_active_window()?;
         assert!(
             windows.contains(&window),
             "Active window was not found in visible list"
         );
+        for win in windows {
+            let name = api.get_window_name(&win)?;
+            assert!(name.is_some(), "A window should always have a name");
+        }
+
         let name = api.get_window_name(&window)?;
         if let Some(name) = name {
             assert!(!name.is_empty());
             println!("Active window: {:?}", name);
         } else {
-            assert!(false, "this should not have happened");
+            panic!("this should not have happened");
         }
 
         Ok(())
