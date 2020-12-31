@@ -10,9 +10,9 @@ readme = "README.md"
 keywords = ["recorder", "image", "terminal", "gif", "commandline"]
 categories = ["multimedia::images", "command-line-utilities"]
 repository = "https://github.com/sassman/t-rec-rs"
-exclude = [".github/*", ".gitignore"]
 links = "X11"
 build = "build.rs"
+include = ["src/**/*", "LICENSE", "README.md", "CHANGELOG.md", "build.rs"]
 
 [badges]
 github-actions = { repository = "sassman/t-rec-rs", branch = "main", workflow = "Build" }
