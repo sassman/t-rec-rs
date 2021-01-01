@@ -2,7 +2,7 @@ use super::d3d::{D3D11Device, D3D11Texture2D};
 use crate::win::windows::graphics::capture::{
     Direct3D11CaptureFramePool, GraphicsCaptureItem, GraphicsCaptureSession,
 };
-use crate::win::windows::graphics::directx::direct3d11::{IDirect3DDevice, IDirect3DSurface};
+use crate::win::windows::graphics::directx::direct3d11::IDirect3DDevice;
 use crate::win::windows::graphics::directx::DirectXPixelFormat;
 use std::sync::mpsc::{channel, Receiver, Sender};
 use winapi::um::d3d11::{D3D11_CPU_ACCESS_READ, D3D11_USAGE_STAGING};

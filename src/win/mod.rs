@@ -9,10 +9,6 @@ winrt::import!(
 );
 
 use crate::{ImageOnHeap, PlatformApi, Result, WindowId, WindowList};
-// use image::flat::{SampleLayout, View};
-// use image::{Bgra, ColorType, FlatSamples, GenericImageView};
-// use std::{convert::TryInto, ops::DerefMut};
-use crate::win::windows::graphics::directx::direct3d11::IDirect3DDevice;
 
 use winapi::shared::minwindef::{BOOL, FALSE, INT, LPARAM, MAX_PATH, TRUE};
 // use winapi::shared::ntdef::LONG;
