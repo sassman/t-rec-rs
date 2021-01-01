@@ -273,10 +273,11 @@ fn current_win_id() -> Result<(WindowId, Option<String>)> {
 /// checks for imagemagick
 /// and suggests the installation command if there are issues
 fn check_for_imagemagick() -> Result<Output> {
-    Command::new("convert")
+    Command::new("magick")
+        .arg("convert")
         .arg("--version")
         .output()
-        .context("There is an issue with 'convert', make sure you have it installed: `brew install imagemagick`")
+        .context("There is an issue with 'magick', make sure you have it installed: `brew install imagemagick`")
 }
 
 ///

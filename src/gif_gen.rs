@@ -13,7 +13,8 @@ use tempfile::TempDir;
 pub fn generate_gif_with_convert(time_codes: &[u128], tempdir: &TempDir) -> Result<()> {
     let target = target_file();
     println!("🎉 🚀 Generating {}", target);
-    let mut cmd = Command::new("convert");
+    let mut cmd = Command::new("magick");
+    cmd.arg("convert");
     cmd.arg("-loop").arg("0");
     let mut delay = 0;
     for tc in time_codes.iter() {
