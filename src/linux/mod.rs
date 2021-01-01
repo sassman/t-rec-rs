@@ -7,6 +7,8 @@ pub fn setup() -> Result<Box<dyn PlatformApi>> {
     Ok(Box::new(X11Api::new()?))
 }
 
+pub const DEFAULT_SHELL: &str = "/bin/sh";
+
 #[derive(Debug)]
 pub struct Margin {
     pub top: u16,
