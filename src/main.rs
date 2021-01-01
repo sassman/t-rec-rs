@@ -63,7 +63,7 @@ fn main() -> Result<()> {
         if args.is_present("program") {
             args.value_of("program").unwrap().to_owned()
         } else {
-            let default = "/bin/sh".to_owned();
+            let default = DEFAULT_SHELL.to_owned();
             env::var("SHELL").unwrap_or(default)
         }
     };

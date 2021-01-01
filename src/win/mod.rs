@@ -1,5 +1,7 @@
 use crate::{ImageOnHeap, WindowList};
 
+pub const DEFAULT_SHELL: &str = "cmd.exe";
+
 pub fn window_list() -> anyhow::Result<WindowList> {
     unimplemented!("there is only an impl for MacOS")
 }
