@@ -37,6 +37,14 @@ core-foundation-sys = "0.8.2"
 [target.'cfg(target_os = "linux")'.dependencies]
 x11rb = "0.7.0"
 
+[target.'cfg(target_os = "windows")'.dependencies]
+winapi = { version = "0.3.8", features = [ "std", "winuser", "d3d11", "d2d1", "dxgi", "d3dcommon", "impl-default", "dwmapi", "wincon" ] }
+winrt = { git = "https://github.com/microsoft/winrt-rs", rev = "a036b8e61c0859ba9b72e9fe5c913cd4439c6ed3" }
+uuid = { version = "0.8", features = ["v4"] }
+
+# [target.'cfg(target_os = "windows")'.build-dependencies]
+# winrt = { git = "https://github.com/microsoft/winrt-rs", rev = "bacab1e162987fe5974f74425419d11f0c686ccf" }
+
 [features]
 e2e_tests = []
 
