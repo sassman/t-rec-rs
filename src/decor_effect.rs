@@ -22,7 +22,8 @@ pub fn apply_shadow_effect(time_codes: &[u128], tempdir: &TempDir, bg_color: Str
         time_codes,
         tempdir,
         Box::new(move |file| {
-            let e = Command::new("convert")
+            let e = Command::new("magick")
+                .arg("convert")
                 .arg(file.to_str().unwrap())
                 .arg("(")
                 .args(&["+clone", "-background", "black", "-shadow", "100x20+0+0"])
@@ -61,7 +62,8 @@ pub fn apply_big_sur_corner_effect(time_codes: &[u128], tempdir: &TempDir) -> Re
         time_codes,
         tempdir,
         Box::new(move |file| {
-            let e = Command::new("convert")
+            let e = Command::new("magick")
+                .arg("convert")
                 .arg(file.to_str().unwrap())
                 .arg("(")
                 .args(&["+clone", "-alpha", "extract"])

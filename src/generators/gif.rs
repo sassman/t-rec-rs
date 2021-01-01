@@ -3,7 +3,7 @@ use anyhow::{Context, Result};
 use std::process::{Command, Output};
 use tempfile::TempDir;
 
-const PROGRAM: &str = "convert";
+const PROGRAM: &str = "magick";
 
 ///
 /// checks for imagemagick
@@ -29,7 +29,7 @@ pub fn generate_gif_with_convert(
 ) -> Result<()> {
     println!("🎉 🚀 Generating {}", target);
     let mut cmd = Command::new(PROGRAM);
-    cmd.arg("-loop").arg("0");
+    cmd.arg("convert").arg("-loop").arg("0");
     let mut delay = 0;
     for tc in time_codes.iter() {
         delay = *tc - delay;
