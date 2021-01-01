@@ -1,17 +1,22 @@
+winrt::import!(
+    dependencies
+        "os"
+    modules
+        "windows.graphics"
+        "windows.graphics.capture"
+        "windows.graphics.directx"
+        "windows.graphics.directx.direct3d11"
+);
+
 use crate::{ImageOnHeap, PlatformApi, Result, WindowId, WindowList};
 // use image::flat::{SampleLayout, View};
 // use image::{Bgra, ColorType, FlatSamples, GenericImageView};
 // use std::{convert::TryInto, ops::DerefMut};
-use crate::windows::graphics::directx::direct3d11::IDirect3DDevice;
+use crate::win::windows::graphics::directx::direct3d11::IDirect3DDevice;
 
 use winapi::shared::minwindef::{BOOL, FALSE, INT, LPARAM, MAX_PATH, TRUE};
 // use winapi::shared::ntdef::LONG;
 use winapi::shared::windef::{HWND, RECT};
-// use winapi::um::wingdi::{
-//     BitBlt, CreateCompatibleBitmap, CreateCompatibleDC, DeleteObject, GetDIBits, GetObjectW,
-//     SelectObject, SetStretchBltMode, StretchBlt, BITMAP, BITMAPINFO, BITMAPINFOHEADER, BI_RGB,
-//     DIB_RGB_COLORS, HALFTONE, SRCCOPY,
-// };
 use winapi::um::winnt::WCHAR;
 use winapi::um::winuser::{
     EnumWindows, GetForegroundWindow, GetWindowLongPtrW, GetWindowRect, GetWindowTextLengthW,
@@ -37,7 +42,7 @@ struct CaptureTarget {
     hwnd: HWND,
     // capture_item: crate::windows::graphics::capture::GraphicsCaptureItem,
     capture_session: snapshot::CaptureSnapshot,
-    device: IDirect3DDevice,
+    // device: IDirect3DDevice,
 }
 
 unsafe impl Send for CaptureTarget {}
@@ -237,7 +242,6 @@ impl PlatformApi for WinApi {
                 *mtx = Some(CaptureTarget {
                     hwnd,
                     capture_session: session,
-                    device,
                 });
             }
             Some(ct) => {
@@ -250,15 +254,12 @@ impl PlatformApi for WinApi {
                     *mtx = Some(CaptureTarget {
                         hwnd,
                         capture_session: session,
-                        device,
                     });
                 }
             }
         }
         let ct = mtx.as_ref().unwrap();
-        let surface = ct.capture_session.take_session().unwrap();
-        let buffer = encoder::encode_d3d_surface(&ct.device, &surface).unwrap();
-
+        let buffer = ct.capture_session.snapshot().unwrap();
         Ok(ImageOnHeap::new(buffer))
     }
 
