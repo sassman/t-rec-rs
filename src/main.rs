@@ -74,7 +74,11 @@ fn main() -> Result<()> {
 
     let force_natural = args.is_present("natural-mode");
 
-    let framerate = args.value_of("capture-framerate").unwrap().parse::<u32>().context("Invalid value for framerate")?;
+    let framerate = args
+        .value_of("capture-framerate")
+        .unwrap()
+        .parse::<u32>()
+        .context("Invalid value for framerate")?;
 
     check_for_imagemagick()?;
 
@@ -89,7 +93,15 @@ fn main() -> Result<()> {
         let time_codes = time_codes.clone();
         let force_natural = force_natural;
         thread::spawn(move || -> Result<()> {
-            capture_thread(&rx, api, win_id, time_codes, tempdir, force_natural, framerate)
+            capture_thread(
+                &rx,
+                api,
+                win_id,
+                time_codes,
+                tempdir,
+                force_natural,
+                framerate,
+            )
         })
     };
     let interact = thread::spawn(move || -> Result<()> { sub_shell_thread(&program).map(|_| ()) });
