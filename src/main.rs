@@ -74,6 +74,8 @@ fn main() -> Result<()> {
 
     let force_natural = args.is_present("natural-mode");
 
+    let framerate = args.value_of("capture-framerate").unwrap().parse::<u32>().context("Invalid value for framerate")?;
+
     check_for_imagemagick()?;
 
     // the nice thing is the cleanup on drop
@@ -87,7 +89,7 @@ fn main() -> Result<()> {
         let time_codes = time_codes.clone();
         let force_natural = force_natural;
         thread::spawn(move || -> Result<()> {
-            capture_thread(&rx, api, win_id, time_codes, tempdir, force_natural)
+            capture_thread(&rx, api, win_id, time_codes, tempdir, force_natural, framerate)
         })
     };
     let interact = thread::spawn(move || -> Result<()> { sub_shell_thread(&program).map(|_| ()) });
@@ -166,8 +168,9 @@ fn capture_thread(
     time_codes: Arc<Mutex<Vec<u128>>>,
     tempdir: Arc<Mutex<TempDir>>,
     force_natural: bool,
+    framerate: u32,
 ) -> Result<()> {
-    let duration = Duration::from_millis(250);
+    let duration = Duration::from_secs(1) / framerate;
     let start = Instant::now();
     let mut idle_duration = Duration::from_millis(0);
     let mut last_frame: Option<ImageOnHeap> = None;

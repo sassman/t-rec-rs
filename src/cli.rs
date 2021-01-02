@@ -44,6 +44,16 @@ pub fn launch<'a>() -> ArgMatches<'a> {
                 .help("If you want a very natural typing experience and disable the idle detection and sampling optimization")
         )
         .arg(
+            Arg::with_name("capture-framerate")
+                .value_name("framerate")
+                .takes_value(true)
+                .required(false)
+                .short("f")
+                .long("framerate")
+                .default_value("4")
+                .help("If you want to capture at a different framerate you can pass it here. For example '10'"),
+        )
+        .arg(
             Arg::with_name("list-windows")
                 .value_name("list all visible windows with name and id")
                 .takes_value(false)

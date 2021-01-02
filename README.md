@@ -13,7 +13,7 @@ Blazingly fast terminal recorder that generates animated gif images for the web 
 ![demo](./docs/demo.gif)
 
 ## Features
-- Screenshotting your terminal with 4 frames per second (every 250ms)
+- Screenshotting your terminal with 4 frames per second (every 250ms, but this is configurable)
 - Generates high quality small sized animated gif images
 - **Build-In idle frames detection and optimization** (for super fluid presentations)
 - Applies (can be disabled) border decor effects like drop shadow
@@ -89,10 +89,12 @@ FLAGS:
     -v, --verbose    Enable verbose insights for the curious.
 
 OPTIONS:
-    -b, --bg <bg>          Background color when decors are used [default: white]  [possible values: white, black,
-                           transparent]
-    -d, --decor <decor>    Decorates the animation with certain, mostly border effects. [default: shadow]  [possible
-                           values: shadow, none]
+    -b, --bg <bg>                  Background color when decors are used [default: white]  [possible values: white, black,
+                                   transparent]
+    -f, --framerate <framerate>    If you want to capture at a different framerate you can pass it here. For example
+                                   '10' [default: 4]
+    -d, --decor <decor>            Decorates the animation with certain, mostly border effects. [default: shadow]  [possible
+                                   values: shadow, none]
 
 ARGS:
     <shell or program to launch>    If you want to start a different program than $SHELL you can pass it here. For
