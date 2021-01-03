@@ -76,7 +76,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        version: [ 'macos-11.0', 'macos-10.15', 'macos-10.14', 'ubuntu-latest']
+#        version: [ 'macos-11.0', 'macos-10.15', 'macos-10.14', 'ubuntu-latest']
+        version: [ 'macos-latest', 'ubuntu-latest']
         rust: [ nightly, stable ]
     runs-on: ${{ matrix.version }}
     continue-on-error: ${{ matrix.rust == 'nightly' }}
