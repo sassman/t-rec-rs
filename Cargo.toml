@@ -1,6 +1,6 @@
 [package]
 name = "t-rec"
-version = "0.4.0"
+version = "0.4.1"
 authors = ["Sven Assmann <sven.assmann.it@gmail.com>"]
 edition = "2018"
 license = "GPL-3.0-only"
@@ -20,10 +20,11 @@ maintenance = { status = "actively-developed" }
 
 [dependencies]
 clap = "2.33.3"
-image = "0.23.12"
+image = { version = "0.23.12", features = ["tga"] }
 anyhow = "1.0.35"
 tempfile = "3.1.0"
 gif = "0.11"
+rayon = "1.5.0"
 log = "0.4.11"
 env_logger = "0.8.2"
 #image-convert = "0.10"
@@ -31,12 +32,12 @@ env_logger = "0.8.2"
 [target.'cfg(target_os = "macos")'.dependencies]
 objc_id = "0.1.1"
 objc-foundation = "0.1.1"
-core-graphics = "0.22"
-core-foundation = "0.9"
-core-foundation-sys = "0.8"
+core-graphics = "0.22.2"
+core-foundation = "0.9.1"
+core-foundation-sys = "0.8.2"
 
 [target.'cfg(target_os = "linux")'.dependencies]
-x11rb = "0.7"
+x11rb = "0.7.0"
 
 [features]
 test_against_real_display = []

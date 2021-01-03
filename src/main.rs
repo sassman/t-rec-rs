@@ -199,7 +199,11 @@ fn capture_thread(
             // let's track now the duration as idle
             idle_duration = idle_duration.add(now.duration_since(last_now));
         } else {
-            save_frame(&image, tc, tempdir.lock().unwrap().borrow(), file_name_for)?;
+            if let Err(e) = save_frame(&image, tc, tempdir.lock().unwrap().borrow(), file_name_for)
+            {
+                eprintln!("{}", &e);
+                return Err(e);
+            }
             time_codes.lock().unwrap().push(tc);
             last_frame = Some(image);
             identical_frames = 0;
