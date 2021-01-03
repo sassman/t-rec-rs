@@ -124,7 +124,7 @@ impl X11Api {
 }
 
 impl PlatformApi for X11Api {
-    /// 1. it does check for the screenshot
+    /// 1. error if no screenshot is capture-able
     /// 2. it checks for transparent margins and configures the api
     ///     to cut them away in further screenshots
     fn calibrate(&mut self, window_id: WindowId) -> Result<()> {
@@ -133,12 +133,14 @@ impl PlatformApi for X11Api {
         let (width, height) = image.dimensions();
         let half_width = width / 2;
         let half_height = height / 2;
+        // > 3/4 transparency is good enough to declare the end of transparent regions
+        let transparency_end: u8 = 0xff - (0xff / 4);
 
         let mut margin = Margin::zero();
         // identify top margin
         for y in 0..half_height {
             let Bgra([_, _, _, a]) = image.get_pixel(half_width, y);
-            if a == 0xff {
+            if a > transparency_end {
                 // the end of the transparent area
                 margin.top = y as u16;
                 dbg!(margin.top);
@@ -148,7 +150,7 @@ impl PlatformApi for X11Api {
         // identify bottom margin
         for y in (half_height..height).rev() {
             let Bgra([_, _, _, a]) = image.get_pixel(half_width, y);
-            if a == 0xff {
+            if a > transparency_end {
                 // the end of the transparent area
                 margin.bottom = (height - y - 1) as u16;
                 dbg!(margin.bottom);
@@ -158,7 +160,7 @@ impl PlatformApi for X11Api {
         // identify left margin
         for x in 0..half_width {
             let Bgra([_, _, _, a]) = image.get_pixel(x, half_height);
-            if a == 0xff {
+            if a > transparency_end {
                 // the end of the transparent area
                 margin.left = x as u16;
                 dbg!(margin.left);
@@ -168,14 +170,14 @@ impl PlatformApi for X11Api {
         // identify right margin
         for x in (half_width..width).rev() {
             let Bgra([_, _, _, a]) = image.get_pixel(x, half_height);
-            if a == 0xff {
+            if a > transparency_end {
                 // the end of the transparent area
                 margin.right = (width - x - 1) as u16;
                 dbg!(margin.right);
                 break;
             }
         }
-        self.margin = if margin.is_zero() { None } else { Some(margin) };
+        self.margin = Some(margin);
 
         Ok(())
     }
@@ -200,7 +202,7 @@ impl PlatformApi for X11Api {
     fn capture_window_screenshot(&self, window_id: WindowId) -> Result<ImageOnHeap> {
         let (_, _, mut width, mut height) = self.get_window_geometry(&window_id)?;
         let (mut x, mut y) = (0_i16, 0_i16);
-        if self.margin.is_some() {
+        if self.margin.is_some() && !self.margin.as_ref().unwrap().is_zero() {
             let margin = self.margin.as_ref().unwrap();
             width -= margin.left + margin.right;
             height -= margin.top + margin.bottom;
@@ -234,8 +236,8 @@ impl PlatformApi for X11Api {
             color_hint: Some(color),
         };
 
-        // NOTE: in this case the alpha channel is 0, but should be set to 0xff
         if image.depth == 24 {
+            // NOTE: in this case the alpha channel is 0, but should be set to 0xff
             // the index into the alpha channel
             let mut i = 3;
             let len = buffer.samples.len();
@@ -252,6 +254,22 @@ impl PlatformApi for X11Api {
                 i += buffer.layout.width_stride;
             }
         }
+        if self.margin.is_some() {
+            // once first image is captured, we make sure that transparency is removed
+            // even in cases where `margin.is_zero()`
+            let mut i = 3;
+            let len = buffer.samples.len();
+            while i < len {
+                let alpha = buffer.samples.get_mut(i).unwrap();
+                if alpha != &0xff {
+                    *alpha = 0xff;
+                }
+
+                // going one pixel further, still pointing to the alpha channel
+                i += buffer.layout.width_stride;
+            }
+        }
+        debug!("Image dimensions: {}x{}", width, height);
 
         Ok(ImageOnHeap::new(buffer))
     }
@@ -282,7 +300,7 @@ impl PlatformApi for X11Api {
     }
 }
 
-#[cfg(feature = "test_against_real_display")]
+// #[cfg(feature = "test_against_real_display")]
 #[cfg(test)]
 mod test {
     use super::*;
@@ -301,6 +319,7 @@ mod test {
         let image_calibrated = api.capture_window_screenshot(win)?;
         let image_calibrated: View<_, Bgra<u8>> = image_calibrated.as_view().unwrap();
         let (width_new, height_new) = image_calibrated.dimensions();
+        dbg!(width, width_new, height, height_new);
 
         assert!(height >= height_new);
         assert!(width >= width_new);
