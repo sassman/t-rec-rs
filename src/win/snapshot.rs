@@ -92,6 +92,9 @@ impl CaptureSnapshot {
             }
         });
 
+        // Prevent the cursor from being visible in the recorded image
+        session.set_is_cursor_capture_enabled(true)?;
+
         // Start the capture
         frame_pool.frame_arrived(frame_arrived)?;
         session.start_capture()?;
