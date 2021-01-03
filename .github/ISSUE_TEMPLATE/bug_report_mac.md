@@ -1,8 +1,8 @@
 ---
-name: Bug report
+name: Bug report MacOS
 about: Create a report to help us improve
-title: ''
-labels: 'Type: Bug'
+title: 'MacOS based bug template'
+labels: ['Type: Bug', 'OS: MacOS']
 assignees: ''
 
 ---
@@ -24,13 +24,9 @@ A clear and concise description of what you expected to happen.
 If applicable, add screenshots to help explain your problem.
 
 **Version Numbers of your System:**
- - OS: [Linux | MacOS]
- - Version: [e.g. 22]
- - XServer:
- - WindowManager:
- - Terminal:
+ - OS: MacOS
+ - Version: 11.1 (or 11.0 or ..)
+ - Terminal: iTerm | Alacitty | Apple Termina
 
 **Additional context**
 Add any other context about the problem here.
-
-On Linux please include the output of `xwininfo -root -tree -int`
