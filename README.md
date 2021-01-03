@@ -72,7 +72,7 @@ t-rec /bin/sh
 
 ```sh
 t-rec --help
-t-rec 0.4.0
+t-rec 0.4.1
 Sven Assmann <sven.assmann.it@gmail.com>
 Blazingly fast terminal recorder that generates animated gif images for the web written in rust.
 
