@@ -1,9 +1,11 @@
-use crate::{file_name_for, Result};
+use std::path::PathBuf;
+use std::process::Command;
 
 use anyhow::Context;
-use std::path::PathBuf;
-use std::process::{Child, Command};
+use rayon::prelude::*;
 use tempfile::TempDir;
+
+use crate::{file_name_for, Result};
 
 ///
 /// apply a border decor effect via a chain of convert commands
@@ -20,7 +22,7 @@ pub fn apply_shadow_effect(time_codes: &[u128], tempdir: &TempDir, bg_color: Str
         time_codes,
         tempdir,
         Box::new(move |file| {
-            Command::new("convert")
+            let e = Command::new("convert")
                 .arg(file.to_str().unwrap())
                 .arg("(")
                 .args(&["+clone", "-background", "black", "-shadow", "100x20+0+0"])
@@ -28,8 +30,14 @@ pub fn apply_shadow_effect(time_codes: &[u128], tempdir: &TempDir, bg_color: Str
                 .args(&["+swap", "-background", bg_color.as_str()])
                 .args(&["-layers", "merge"])
                 .arg(file.to_str().unwrap())
-                .spawn()
-                .context("Cannot apply shadow decor effect")
+                .output()
+                .context("Cannot apply shadow decor effect")?;
+
+            if !e.status.success() {
+                anyhow::bail!("{}", String::from_utf8_lossy(&e.stderr))
+            } else {
+                Ok(())
+            }
         }),
     )
 }
@@ -53,7 +61,7 @@ pub fn apply_big_sur_corner_effect(time_codes: &[u128], tempdir: &TempDir) -> Re
         time_codes,
         tempdir,
         Box::new(move |file| {
-            Command::new("convert")
+            let e = Command::new("convert")
                 .arg(file.to_str().unwrap())
                 .arg("-trim")
                 .arg("(")
@@ -72,8 +80,14 @@ pub fn apply_big_sur_corner_effect(time_codes: &[u128], tempdir: &TempDir) -> Re
                 .arg(")")
                 .args(&["-alpha", "off", "-compose", "CopyOpacity", "-composite"])
                 .arg(file.to_str().unwrap())
-                .spawn()
-                .context("Cannot apply corner decor effect")
+                .output()
+                .context("Cannot apply corner decor effect")?;
+
+            if !e.status.success() {
+                anyhow::bail!("{}", String::from_utf8_lossy(&e.stderr))
+            } else {
+                Ok(())
+            }
         }),
     )
 }
@@ -84,17 +98,14 @@ pub fn apply_big_sur_corner_effect(time_codes: &[u128], tempdir: &TempDir) -> Re
 fn apply_effect(
     time_codes: &[u128],
     tempdir: &TempDir,
-    effect: Box<dyn Fn(PathBuf) -> Result<Child>>,
+    effect: Box<dyn Fn(PathBuf) -> Result<()> + Send + Sync>,
 ) -> Result<()> {
-    let mut results = Vec::new();
-    for tc in time_codes.iter() {
-        let file = tempdir.path().join(file_name_for(tc, "tga"));
-        results.push(effect(file)?);
-    }
-
-    for mut r in results {
-        r.wait()?;
-    }
+    time_codes.into_par_iter().for_each(|tc| {
+        let file = tempdir.path().join(file_name_for(&tc, "tga"));
+        if let Err(e) = effect(file) {
+            eprintln!("{}", e);
+        }
+    });
 
     Ok(())
 }

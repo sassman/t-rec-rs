@@ -5,17 +5,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## 🎯 [Unreleased]
+
+## [0.4.1] - 2021-01-03
 ### Added
 - Snap support on it's way to [snapcraft.io](https://snapcraft.io/t-rec) [pull/25], thanks to [@popey](https://github.com/popey)
 ### Fixed
 - reduced crate size from 4.8MB to 34kB [pull/32], thanks to [@Byron](https://github.com/Byron)
 - fixed a panic when the active window cannot be identified on Linux [pull/31] / [issue/30]
 - fixed `t-rec -l` did not show any window names on Linux [pull/31]
+- fixed system freeze on "Applying Effects" caused by too many threads [issue/29]
 
 [pull/32]: https://github.com/sassman/t-rec-rs/pull/32
 [pull/31]: https://github.com/sassman/t-rec-rs/pull/31
-[issue/30]: https://github.com/sassman/t-rec-rs/issues/30
 [pull/25]: https://github.com/sassman/t-rec-rs/pull/25
+[issue/30]: https://github.com/sassman/t-rec-rs/issues/30
+[issue/29]: https://github.com/sassman/t-rec-rs/issues/29
 
 ## [0.4.0] - 2020-12-27
 ### Added
