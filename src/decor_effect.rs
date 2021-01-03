@@ -63,7 +63,6 @@ pub fn apply_big_sur_corner_effect(time_codes: &[u128], tempdir: &TempDir) -> Re
         Box::new(move |file| {
             let e = Command::new("convert")
                 .arg(file.to_str().unwrap())
-                .arg("-trim")
                 .arg("(")
                 .args(&["+clone", "-alpha", "extract"])
                 .args(&[
