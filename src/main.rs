@@ -18,7 +18,7 @@ use crate::macos::*;
 use crate::win::*;
 
 use crate::cli::launch;
-use crate::common::PlatformApi;
+use crate::common::{Margin, PlatformApi};
 use crate::decor_effect::{apply_big_sur_corner_effect, apply_shadow_effect};
 use crate::gif_gen::*;
 use anyhow::{bail, Context};
@@ -33,7 +33,8 @@ use std::time::{Duration, Instant};
 use std::{env, thread};
 use tempfile::TempDir;
 
-pub type ImageOnHeap = Box<FlatSamples<Vec<u8>>>;
+pub type Image = FlatSamples<Vec<u8>>;
+pub type ImageOnHeap = Box<Image>;
 pub type WindowId = u64;
 pub type WindowList = Vec<WindowListEntry>;
 pub type WindowListEntry = (Option<String>, WindowId);
