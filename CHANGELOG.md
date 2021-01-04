@@ -6,6 +6,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## 🎯 [Unreleased]
 
+## [0.4.2] - 2021-01-04
+### Added
+- ArcoLinux 5.4 on Xfwm4 to the list of tested distros
+
+![demo-arco](./docs/demo-arco-xfwm4.gif)
+
+### Fixed
+- fixed issues on terminals with transparency (or where the compositor caused transparency) on Linux see [issue/26](https://github.com/sassman/t-rec-rs/issues/26) / [pull/38](https://github.com/sassman/t-rec-rs/pull/38)
+
 ## [0.4.1] - 2021-01-03
 ### Added
 - Snap support on it's way to [snapcraft.io](https://snapcraft.io/t-rec) [pull/25], thanks to [@popey](https://github.com/popey)
