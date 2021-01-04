@@ -54,8 +54,10 @@ cargo install -f t-rec
 | ![demo-ubuntu](./docs/demo-ubuntu.gif) |
 | ubuntu 20.10 on i3wm | 
 | ![demo-ubuntu-i3wm](./docs/demo-ubuntu-i3wm.gif) |
-| mint 20 on cinnamon | 
+| linux mint 20 on cinnamon | 
 | ![demo-mint](./docs/demo-mint.gif) |
+| ArcoLinux 5.4 on Xfwm4 | 
+| ![demo-arco](./docs/demo-arco-xfwm4.gif) |
 
 ## Usage
 ```sh
