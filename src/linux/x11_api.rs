@@ -321,9 +321,9 @@ mod test {
         let (width_new, height_new) = image_calibrated.dimensions();
         dbg!(width, width_new, height, height_new);
 
-        let Bgra([_, _, _, a]) = image.get_pixel(width / 2, 0);
-        dbg!(a);
-        if a == 0 {
+        let Bgra([_, _, _, alpha]) = image.get_pixel(width / 2, 0);
+        dbg!(alpha);
+        if alpha == 0 {
             // if that pixel was full transparent, for example on ubuntu / GNOME, caused by the drop shadow
             // then we expect the calibrated image to be smaller and cropped by this area
             assert!(api.margin.is_some());
@@ -379,13 +379,13 @@ mod test {
         let win = api.get_active_window()?;
         let image_raw = api.capture_window_screenshot(win)?;
         let image: View<_, Bgra<u8>> = image_raw.as_view().unwrap();
-        let (w, h) = image.dimensions();
+        let (width, height) = image.dimensions();
 
-        let Bgra([b, g, r, a]) = image.get_pixel(w / 2, h / 2);
-        assert_ne!(b, 0);
-        assert_ne!(g, 0);
-        assert_ne!(r, 0);
-        assert_ne!(a, 0, "alpha is unexpected");
+        let Bgra([blue, green, red, alpha]) = image.get_pixel(width / 2, height / 2);
+        assert_ne!(blue, 0);
+        assert_ne!(green, 0);
+        assert_ne!(red, 0);
+        assert_ne!(alpha, 0, "alpha is unexpected");
 
         // Note: visual validation is sometimes helpful:
         // let file = format!("frame-{}.tga", win);
