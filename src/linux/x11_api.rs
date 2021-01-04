@@ -300,7 +300,7 @@ impl PlatformApi for X11Api {
     }
 }
 
-// #[cfg(feature = "test_against_real_display")]
+#[cfg(feature = "test_against_real_display")]
 #[cfg(test)]
 mod test {
     use super::*;
@@ -311,18 +311,48 @@ mod test {
     fn calibrate() -> Result<()> {
         let mut api = X11Api::new()?;
         let win = api.get_active_window()?;
-        let image = api.capture_window_screenshot(win)?;
-        let image: View<_, Bgra<u8>> = image.as_view().unwrap();
+        let image_raw = api.capture_window_screenshot(win)?;
+        let image: View<_, Bgra<u8>> = image_raw.as_view().unwrap();
         let (width, height) = image.dimensions();
 
         api.calibrate(win)?;
-        let image_calibrated = api.capture_window_screenshot(win)?;
-        let image_calibrated: View<_, Bgra<u8>> = image_calibrated.as_view().unwrap();
+        let image_calibrated_raw = api.capture_window_screenshot(win)?;
+        let image_calibrated: View<_, Bgra<u8>> = image_calibrated_raw.as_view().unwrap();
         let (width_new, height_new) = image_calibrated.dimensions();
         dbg!(width, width_new, height, height_new);
 
-        assert!(height >= height_new);
-        assert!(width >= width_new);
+        let Bgra([_, _, _, a]) = image.get_pixel(width / 2, 0);
+        dbg!(a);
+        if a == 0 {
+            // if that pixel was full transparent, for example on ubuntu / GNOME, caused by the drop shadow
+            // then we expect the calibrated image to be smaller and cropped by this area
+            assert!(api.margin.is_some());
+            assert!(!api.margin.as_ref().unwrap().is_zero());
+            assert!(height > height_new);
+            assert!(width > width_new);
+        } else {
+            assert!(height >= height_new);
+            assert!(width >= width_new);
+        }
+
+        // Note: visual validation is sometimes helpful:
+        // save_buffer(
+        //     format!("frame-raw-{}.tga", win),
+        //     &image_raw.samples,
+        //     image_raw.layout.width,
+        //     image_raw.layout.height,
+        //     image_raw.color_hint.unwrap(),
+        // )
+        // .context("Cannot save a frame.")?;
+        //
+        // save_buffer(
+        //     format!("frame-calibrated-{}.tga", win),
+        //     &image_calibrated_raw.samples,
+        //     image_calibrated_raw.layout.width,
+        //     image_calibrated_raw.layout.height,
+        //     image_calibrated_raw.color_hint.unwrap(),
+        // )
+        // .context("Cannot save a frame.")?;
 
         Ok(())
     }
@@ -347,24 +377,27 @@ mod test {
     fn should_inspect_screenshots() -> Result<()> {
         let api = X11Api::new()?;
         let win = api.get_active_window()?;
-        let image = api.capture_window_screenshot(win)?;
-        let image: View<_, Bgra<u8>> = image.as_view().unwrap();
+        let image_raw = api.capture_window_screenshot(win)?;
+        let image: View<_, Bgra<u8>> = image_raw.as_view().unwrap();
+        let (w, h) = image.dimensions();
 
-        let Bgra([b, g, r, a]) = image.get_pixel(10, 25);
+        let Bgra([b, g, r, a]) = image.get_pixel(w / 2, h / 2);
         assert_ne!(b, 0);
         assert_ne!(g, 0);
         assert_ne!(r, 0);
-        assert_eq!(a, 0xff);
+        assert_ne!(a, 0, "alpha is unexpected");
 
         // Note: visual validation is sometimes helpful:
-        // let file = format!("/tmp/foo-bar-{}.tga", win);
+        // let file = format!("frame-{}.tga", win);
         // save_buffer(
         //     file.clone(),
-        //     &image.samples,
-        //     image.layout.width,
-        //     image.layout.height,
-        //     image.color_hint.unwrap(),
-        // )?;
+        //     &image_raw.samples,
+        //     image_raw.layout.width,
+        //     image_raw.layout.height,
+        //     image_raw.color_hint.unwrap(),
+        // )
+        // .context("Cannot save a frame.")
+
         Ok(())
     }
 
