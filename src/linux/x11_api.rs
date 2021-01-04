@@ -1,8 +1,8 @@
-use crate::linux::Margin;
-use crate::{ImageOnHeap, PlatformApi, Result, WindowId, WindowList};
+use crate::common::identify_transparency::identify_transparency;
+use crate::{ImageOnHeap, Margin, PlatformApi, Result, WindowId, WindowList};
 use anyhow::Context;
-use image::flat::{SampleLayout, View};
-use image::{Bgra, ColorType, FlatSamples, GenericImageView};
+use image::flat::SampleLayout;
+use image::{ColorType, FlatSamples};
 use log::debug;
 use x11rb::connection::Connection;
 use x11rb::protocol::xproto::*;
@@ -129,55 +129,7 @@ impl PlatformApi for X11Api {
     ///     to cut them away in further screenshots
     fn calibrate(&mut self, window_id: WindowId) -> Result<()> {
         let image = self.capture_window_screenshot(window_id)?;
-        let image: View<_, Bgra<u8>> = image.as_view()?;
-        let (width, height) = image.dimensions();
-        let half_width = width / 2;
-        let half_height = height / 2;
-        // > 3/4 transparency is good enough to declare the end of transparent regions
-        let transparency_end: u8 = 0xff - (0xff / 4);
-
-        let mut margin = Margin::zero();
-        // identify top margin
-        for y in 0..half_height {
-            let Bgra([_, _, _, a]) = image.get_pixel(half_width, y);
-            if a > transparency_end {
-                // the end of the transparent area
-                margin.top = y as u16;
-                dbg!(margin.top);
-                break;
-            }
-        }
-        // identify bottom margin
-        for y in (half_height..height).rev() {
-            let Bgra([_, _, _, a]) = image.get_pixel(half_width, y);
-            if a > transparency_end {
-                // the end of the transparent area
-                margin.bottom = (height - y - 1) as u16;
-                dbg!(margin.bottom);
-                break;
-            }
-        }
-        // identify left margin
-        for x in 0..half_width {
-            let Bgra([_, _, _, a]) = image.get_pixel(x, half_height);
-            if a > transparency_end {
-                // the end of the transparent area
-                margin.left = x as u16;
-                dbg!(margin.left);
-                break;
-            }
-        }
-        // identify right margin
-        for x in (half_width..width).rev() {
-            let Bgra([_, _, _, a]) = image.get_pixel(x, half_height);
-            if a > transparency_end {
-                // the end of the transparent area
-                margin.right = (width - x - 1) as u16;
-                dbg!(margin.right);
-                break;
-            }
-        }
-        self.margin = Some(margin);
+        self.margin = identify_transparency(*image)?;
 
         Ok(())
     }
@@ -202,12 +154,13 @@ impl PlatformApi for X11Api {
     fn capture_window_screenshot(&self, window_id: WindowId) -> Result<ImageOnHeap> {
         let (_, _, mut width, mut height) = self.get_window_geometry(&window_id)?;
         let (mut x, mut y) = (0_i16, 0_i16);
-        if self.margin.is_some() && !self.margin.as_ref().unwrap().is_zero() {
-            let margin = self.margin.as_ref().unwrap();
-            width -= margin.left + margin.right;
-            height -= margin.top + margin.bottom;
-            x = margin.left as i16;
-            y = margin.top as i16;
+        if let Some(margin) = self.margin.as_ref() {
+            if !margin.is_zero() {
+                width -= margin.left + margin.right;
+                height -= margin.top + margin.bottom;
+                x = margin.left as i16;
+                y = margin.top as i16;
+            }
         }
         let image = self
             .conn
@@ -300,12 +253,12 @@ impl PlatformApi for X11Api {
     }
 }
 
-#[cfg(feature = "test_against_real_display")]
+#[cfg(feature = "e2e_tests")]
 #[cfg(test)]
 mod test {
     use super::*;
     use image::flat::View;
-    use image::{Bgra, GenericImageView};
+    use image::{save_buffer, Bgra, GenericImageView};
 
     #[test]
     fn calibrate() -> Result<()> {
@@ -388,15 +341,15 @@ mod test {
         assert_ne!(alpha, 0, "alpha is unexpected");
 
         // Note: visual validation is sometimes helpful:
-        // let file = format!("frame-{}.tga", win);
-        // save_buffer(
-        //     file.clone(),
-        //     &image_raw.samples,
-        //     image_raw.layout.width,
-        //     image_raw.layout.height,
-        //     image_raw.color_hint.unwrap(),
-        // )
-        // .context("Cannot save a frame.")
+        let file = format!("frame-{}.tga", win);
+        save_buffer(
+            file,
+            &image_raw.samples,
+            image_raw.layout.width,
+            image_raw.layout.height,
+            image_raw.color_hint.unwrap(),
+        )
+        .context("Cannot save a frame.")?;
 
         Ok(())
     }

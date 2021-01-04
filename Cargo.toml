@@ -40,4 +40,4 @@ core-foundation-sys = "0.8.2"
 x11rb = "0.7.0"
 
 [features]
-test_against_real_display = []
+e2e_tests = []
