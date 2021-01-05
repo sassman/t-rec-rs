@@ -105,7 +105,11 @@ fn main() -> Result<()> {
             println!("Recording window id: {}", win_id);
         }
     }
-    println!("Press Ctrl+D to end recording");
+    if args.is_present("quiet") {
+        println!();
+    } else {
+        println!("Press Ctrl+D to end recording");
+    }
     thread::sleep(Duration::from_millis(1250));
     clear_screen();
 

@@ -14,6 +14,13 @@ pub fn launch<'a>() -> ArgMatches<'a> {
                 .required(false)
                 .help("Enable verbose insights for the curious.")
         )
+        .arg(Arg::with_name("quiet")
+                .takes_value(false)
+                .short("q")
+                .long("quiet")
+                .required(false)
+                .help("Quiet mode, suppresses the banner: 'Press Ctrl+D to end recording'")
+        )
         .arg(
             Arg::with_name("decor")
                 .takes_value(true)
