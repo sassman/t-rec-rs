@@ -21,7 +21,6 @@ pub fn identify_transparency(image: Image) -> Result<Option<Margin>> {
         if a > transparency_end {
             // the end of the transparent area
             margin.top = y as u16;
-            dbg!(margin.top);
             break;
         }
     }
@@ -31,7 +30,6 @@ pub fn identify_transparency(image: Image) -> Result<Option<Margin>> {
         if a > transparency_end {
             // the end of the transparent area
             margin.bottom = (height - y - 1) as u16;
-            dbg!(margin.bottom);
             break;
         }
     }
@@ -41,7 +39,6 @@ pub fn identify_transparency(image: Image) -> Result<Option<Margin>> {
         if a > transparency_end {
             // the end of the transparent area
             margin.left = x as u16;
-            dbg!(margin.left);
             break;
         }
     }
@@ -51,7 +48,6 @@ pub fn identify_transparency(image: Image) -> Result<Option<Margin>> {
         if a > transparency_end {
             // the end of the transparent area
             margin.right = (width - x - 1) as u16;
-            dbg!(margin.right);
             break;
         }
     }
