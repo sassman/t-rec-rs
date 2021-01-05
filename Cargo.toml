@@ -41,3 +41,4 @@ x11rb = "0.7.0"
 
 [features]
 e2e_tests = []
+experimental = []
