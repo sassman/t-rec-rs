@@ -1,4 +1,6 @@
-# Terminal Recorder - t-rec
+<div align="center">
+ <img src="https://github.com/sassman/t-rec-rs/blob/main/resources/logo.png?raw=true" width="250" height="250">
+ <h1><strong>t-rec: Terminal Recorder</strong></h1>
 
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 [![crates.io](https://img.shields.io/crates/v/t-rec.svg)](https://crates.io/crates/t-rec)
@@ -7,6 +9,9 @@
 [![LOC](https://tokei.rs/b1/github/sassman/t-rec-rs?category=code)](https://github.com/Aaronepower/tokei)
 
 Blazingly fast terminal recorder that generates animated gif images for the web written in rust.
+
+</div>
+
 
 # Demo
 
