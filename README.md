@@ -43,6 +43,21 @@ cargo install -f t-rec
 **NOTE** `-f` just makes sure the latest version is installed
 
 ## Installation on Linux
+### as snap
+
+[![Get it from the Snap Store](https://snapcraft.io/static/images/badges/en/snap-store-black.svg)](https://snapcraft.io/t-rec)
+
+- installation [for Linux Mint](https://snapcraft.io/install/t-rec/mint)
+- installation [for Arch Linux](https://snapcraft.io/install/t-rec/arch)
+
+*TL;DR:*
+```sh
+sudo snap install t-rec --classic
+/snap/bin/t-rec --version
+t-rec 0.4.3
+```
+
+### with cargo
 ```sh
 sudo apt-get install libx11-dev imagemagick
 cargo install -f t-rec
@@ -74,7 +89,7 @@ t-rec /bin/sh
 
 ```sh
 t-rec --help
-t-rec 0.4.1
+t-rec 0.4.3
 Sven Assmann <sven.assmann.it@gmail.com>
 Blazingly fast terminal recorder that generates animated gif images for the web written in rust.
 
@@ -87,6 +102,7 @@ FLAGS:
                      'WINDOWID' to record this specific window only.
     -n, --natural    If you want a very natural typing experience and disable the idle detection and sampling
                      optimization.
+    -q, --quiet      Quiet mode, suppresses the banner: 'Press Ctrl+D to end recording'
     -V, --version    Prints version information
     -v, --verbose    Enable verbose insights for the curious.
 
