@@ -35,7 +35,7 @@ pub fn launch<'a>() -> ArgMatches<'a> {
             Arg::with_name("bg")
                 .takes_value(true)
                 .possible_values(&["white", "black", "transparent"])
-                .default_value("white")
+                .default_value("transparent")
                 .required(false)
                 .short("b")
                 .long("bg")
