@@ -30,14 +30,7 @@ jobs:
           default: true
           profile: minimal
           components: clippy, rustfmt
-      - name: setup | cache
-        uses: actions/cache@v2
-        with:
-          path: |
-            ~/.cargo/registry
-            ~/.cargo/git
-            target
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+      - uses: Swatinem/rust-cache@v1
       - run: cargo check
 
   lint:
@@ -60,14 +53,7 @@ jobs:
           default: true
           profile: minimal
           components: clippy, rustfmt
-      - name: setup | cache
-        uses: actions/cache@v2
-        with:
-          path: |
-            ~/.cargo/registry
-            ~/.cargo/git
-            target
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+      - uses: Swatinem/rust-cache@v1
       - run: cargo ${{ matrix['cargo-cmd'] }}
 
   tests:
@@ -89,14 +75,7 @@ jobs:
           toolchain: ${{ matrix.rust }}
           default: true
           profile: minimal
-      - name: setup | cache
-        uses: actions/cache@v2
-        with:
-          path: |
-            ~/.cargo/registry
-            ~/.cargo/git
-            target
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+      - uses: Swatinem/rust-cache@v1
       - name: cargo test
         run: cargo test --all --locked -- -Z unstable-options
 
@@ -112,14 +91,7 @@ jobs:
           toolchain: stable
           default: true
           profile: minimal
-      - name: setup | cache
-        uses: actions/cache@v2
-        with:
-          path: |
-            ~/.cargo/registry
-            ~/.cargo/git
-            target
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+      - uses: Swatinem/rust-cache@v1
       - name: audit
         uses: actions-rs/audit-check@v1
         with:
@@ -138,6 +110,7 @@ jobs:
           toolchain: stable
           default: true
           profile: minimal
+      - uses: Swatinem/rust-cache@v1
       - uses: katyo/publish-crates@v1
         with:
           registry-token: ${{ secrets.CARGO_REGISTRY_TOKEN }}
@@ -155,10 +128,12 @@ jobs:
           toolchain: stable
           default: true
           profile: minimal
+          components: deb
+      - uses: Swatinem/rust-cache@v1
+      - run: cargo deb
       - name: Get version from tag
         id: tag_name
-        run: |
-          echo ::set-output name=current_version::${GITHUB_REF#refs/tags/v}
+        run: echo ::set-output name=current_version::${GITHUB_REF#refs/tags/v}
         shell: bash
       - name: Get Changelog Entry
         id: changelog_reader
@@ -180,6 +155,17 @@ jobs:
           body: ${{ steps.changelog_reader.outputs.changes }}
           prerelease: ${{ steps.changelog_reader.outputs.status == 'prereleased' }}
           draft: ${{ steps.changelog_reader.outputs.status == 'unreleased' }}
+      - name: Upload Release Asset
+        id: upload-release-asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          # https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./target/debian/t-rec_${{ github.ref }}_amd64.deb
+          asset_name: t-rec_${{ steps.tag_name.outputs.current_version }}_amd64.deb
+          asset_content_type: application/vnd.debian.binary-package
 
   # https://github.com/mislav/bump-homebrew-formula-action
   publish-to-brew:
