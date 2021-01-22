@@ -115,11 +115,10 @@ jobs:
         with:
           registry-token: ${{ secrets.CARGO_REGISTRY_TOKEN }}
 
-  # https://github.com/marketplace/actions/changelog-reader
   release:
     name: post / github release
     needs: publish
-    runs-on: ubuntu-latest
+    runs-on: macos-latest
     steps:
       - uses: actions/checkout@v2
       - name: setup | rust
@@ -128,9 +127,8 @@ jobs:
           toolchain: stable
           default: true
           profile: minimal
-          components: deb
       - uses: Swatinem/rust-cache@v1
-      - run: cargo deb
+      - run: cargo install cargo-deb
       - name: Get version from tag
         id: tag_name
         run: echo ::set-output name=current_version::${GITHUB_REF#refs/tags/v}
@@ -142,7 +140,9 @@ jobs:
           validation_depth: 10
           version: ${{ steps.tag_name.outputs.current_version }}
           path: ./CHANGELOG.md
+      - run: cargo deb
       - name: Create Release
+        # https://github.com/marketplace/actions/changelog-reader
         id: create_release
         uses: actions/create-release@v1
         env:
