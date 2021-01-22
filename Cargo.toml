@@ -41,3 +41,28 @@ x11rb = "0.7.0"
 
 [features]
 e2e_tests = []
+
+[package.metadata.deb]
+section = "x11"
+depends = "imagemagick"
+extended-description = """## Features
+- Screenshotting your terminal with 4 frames per second (every 250ms)
+- Generates high quality small sized animated gif images
+- **Build-In idle frames detection and optimization** (for super fluid
+presentations)
+- Applies (can be disabled) border decor effects like drop shadow
+- Runs on MacOS and Linux
+- Uses native efficient APIs
+- Runs without any cloud service and entirely offline
+- No issues with terminal sizes larger than 80x24
+- No issues with fonts or colors
+- No issues with curses based programs
+- No issues with escape sequences
+- No record and replay - just one simple command to rule them all
+- Hidden feature: Record every window you want
+- Written in Rust 🦀
+"""
+
+[package.metadata.rpm.targets]
+buildflags = ["--release"]
+t-rec = { path = "/usr/bin/t-rec" }
