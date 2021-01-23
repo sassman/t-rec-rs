@@ -1,7 +1,7 @@
 mod cli;
 mod common;
 mod decor_effect;
-mod gif_gen;
+mod generators;
 
 #[cfg(target_os = "linux")]
 mod linux;
@@ -18,15 +18,17 @@ use crate::macos::*;
 use crate::win::*;
 
 use crate::cli::launch;
+use crate::common::utils::{clear_screen, HumanReadable};
 use crate::common::{Margin, PlatformApi};
 use crate::decor_effect::{apply_big_sur_corner_effect, apply_shadow_effect};
-use crate::gif_gen::*;
+use crate::generators::{check_for_gif, check_for_mp4, generate_gif, generate_mp4};
+
 use anyhow::{bail, Context};
 use image::{save_buffer, FlatSamples};
 use std::borrow::Borrow;
 use std::ffi::OsStr;
 use std::ops::{Add, Sub};
-use std::process::{Command, ExitStatus, Output};
+use std::process::{Command, ExitStatus};
 use std::sync::mpsc::Receiver;
 use std::sync::{mpsc, Arc, Mutex};
 use std::time::{Duration, Instant};
@@ -74,8 +76,12 @@ fn main() -> Result<()> {
     api.calibrate(win_id)?;
 
     let force_natural = args.is_present("natural-mode");
+    let with_video = args.is_present("video");
 
-    check_for_imagemagick()?;
+    check_for_gif()?;
+    if with_video {
+        check_for_mp4()?;
+    }
 
     // the nice thing is the cleanup on drop
     let tempdir = Arc::new(Mutex::new(
@@ -140,24 +146,30 @@ fn main() -> Result<()> {
         )?
     }
 
-    let time = prof! {
-
-    generate_gif_with_convert(
-        &time_codes.lock().unwrap(),
-        tempdir.lock().unwrap().borrow(),
-    )
-    .map(|_| ())?;
+    let target = target_file();
+    let gif_target = target.clone() + ".gif";
+    let mut time = prof! {
+        generate_gif(
+            &time_codes.lock().unwrap(),
+            tempdir.lock().unwrap().borrow(),
+            &gif_target
+        )?;
     };
-    println!("Time: {}ms", time.as_millis());
+
+    if with_video {
+        let mp4_target = target.clone() + ".mp4";
+        time += prof! {
+            generate_mp4(
+                &time_codes.lock().unwrap(),
+                tempdir.lock().unwrap().borrow(),
+                &mp4_target,
+            )?;
+        }
+    }
+
+    println!("Time: {}", time.as_human_readable());
 
     Ok(())
-}
-
-/// TODO: that works strange on ubuntu
-/// escape sequences that clears the screen
-fn clear_screen() {
-    print!("{esc}[2J", esc = 27 as char);
-    print!("{esc}[H", esc = 27 as char);
 }
 
 ///
@@ -281,26 +293,22 @@ fn current_win_id() -> Result<(WindowId, Option<String>)> {
 }
 
 ///
-/// checks for imagemagick
-/// and suggests the installation command if there are issues
-fn check_for_imagemagick() -> Result<Output> {
-    Command::new("convert")
-        .arg("--version")
-        .output()
-        .context("There is an issue with 'convert', make sure you have it installed: `brew install imagemagick`")
-}
-
-///
 /// returns a new filename that does not yet exists.
-/// like `t-rec.gif` or `t-rec_1.gif`
+/// Note: returns without extension, but checks with extension
+/// like `t-rec` or `t-rec_1`
 pub fn target_file() -> String {
     let mut suffix = "".to_string();
+    let default_ext = "gif";
+    let movie_ext = "mp4";
     let mut i = 0;
-    while std::path::Path::new(format!("t-rec{}.gif", suffix).as_str()).exists() {
+    while std::path::Path::new(format!("t-rec{}.{}", suffix, default_ext).as_str()).exists()
+        || std::path::Path::new(format!("t-rec{}.{}", suffix, movie_ext).as_str()).exists()
+    {
         i += 1;
         suffix = format!("_{}", i).to_string();
     }
-    format!("t-rec{}.gif", suffix)
+
+    format!("t-rec{}", suffix)
 }
 
 ///

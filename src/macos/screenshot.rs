@@ -55,7 +55,9 @@ pub fn capture_window_screenshot(win_id: u64) -> Result<ImageOnHeap> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[cfg(feature = "e2e_tests")]
     use crate::macos::setup;
+    #[cfg(feature = "e2e_tests")]
     use image::save_buffer;
 
     #[test]
