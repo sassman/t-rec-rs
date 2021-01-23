@@ -1,5 +1,6 @@
 pub mod identify_transparency;
 pub mod image;
+pub mod utils;
 
 use crate::{ImageOnHeap, Result, WindowId, WindowList};
 
