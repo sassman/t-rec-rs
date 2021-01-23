@@ -56,6 +56,15 @@ wget https://github.com/sassman/t-rec-rs/releases/download/v0.5.0/t-rec_0.5.0_am
 sudo dpkg -i t-rec_0.5.0_amd64.deb
 ```
 
+### as .rpm
+
+```sh
+dnf install epel-release
+dnf install ImageMagick
+wget https://github.com/sassman/t-rec-rs/releases/download/v0.5.0/t-rec-0.5.0-1.el8.x86_64.rpm
+rpm i t-rec-0.5.0-1.el8.x86_64.rpm 
+```
+
 ### as snap
 
 [![Get it from the Snap Store](https://snapcraft.io/static/images/badges/en/snap-store-black.svg)](https://snapcraft.io/t-rec)
