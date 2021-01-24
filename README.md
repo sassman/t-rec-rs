@@ -33,6 +33,10 @@ Blazingly fast terminal recorder that generates animated gif images for the web 
 - Hidden feature: Record every window you want
 - Written in Rust 🦀
 
+## Demo video
+
+![demo-video](./docs/demo-video.mp4)
+
 ## Installation on MacOS
 ### with homebrew
 ```sh

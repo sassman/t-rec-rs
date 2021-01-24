@@ -26,6 +26,7 @@ parts:
       - libx11-dev
     stage-packages: 
       - imagemagick
+      - ffmpeg
 
 apps:
   t-rec:

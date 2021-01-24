@@ -38,7 +38,7 @@ pub fn generate_mp4_with_ffmpeg(
     target: &str,
 ) -> Result<()> {
     println!("🎉 🎬 Generating {}", &target);
-    let out = Command::new(PROGRAM)
+    Command::new(PROGRAM)
         .arg("-y")
         .arg("-r")
         // framerate
@@ -59,11 +59,6 @@ pub fn generate_mp4_with_ffmpeg(
         // end of fix
         .arg(target)
         .output()
-        .with_context(|| format!("Cannot start '{}' to generate the final video", PROGRAM))?;
-    // .map(|_| ())
-
-    println!("{}", String::from_utf8(out.stdout).unwrap());
-    println!("{}", String::from_utf8(out.stderr).unwrap());
-
-    Ok(())
+        .with_context(|| format!("Cannot start '{}' to generate the final video", PROGRAM))
+        .map(|_| ())
 }
