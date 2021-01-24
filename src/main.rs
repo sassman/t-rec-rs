@@ -147,7 +147,7 @@ fn main() -> Result<()> {
     }
 
     let target = target_file();
-    let gif_target = target.clone() + ".gif";
+    let gif_target = format!("{}.{}", target, "gif");
     let mut time = prof! {
         generate_gif(
             &time_codes.lock().unwrap(),
@@ -157,7 +157,7 @@ fn main() -> Result<()> {
     };
 
     if with_video {
-        let mp4_target = target.clone() + ".mp4";
+        let mp4_target = format!("{}.{}", target, "mp4");
         time += prof! {
             generate_mp4(
                 &time_codes.lock().unwrap(),
