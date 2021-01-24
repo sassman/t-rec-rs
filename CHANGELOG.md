@@ -4,7 +4,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## 🎯 [Unreleased]
+## [Unreleased]
+### Added
+- Video output feature: (`--video` or `-m`) now additionally generates a (H.256) `.mp4` file parallel to the `.gif`. [pull/48](https://github.com/sassman/t-rec-rs/pull/48), [issues/45](https://github.com/sassman/t-rec-rs/issues/45), [fd600e0]
+- Release ci pipeline now produces a debian package file and attaches it to the release [7e8ca49]
+- t-rec has now an own pixel art logo [e511731]
+- more installation hints for linux [7a1b152]
+### Changed
+- set default bg value to transparent, closes [issues/46](https://github.com/sassman/t-rec-rs/issues/46), [pull/47](https://github.com/sassman/t-rec-rs/pull/47), [24c3049]
+- updated dependencies
+### Removed
+- snap: remove unsupported i386 architecture [41178ea]
 
 ## [0.4.3] - 2021-01-05
 ### Added
@@ -116,7 +126,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 [issue/4]: https://github.com/sassman/t-rec-rs/issues/4
 
-[Unreleased]: https://github.com/sassman/t-rec-rs/tree/v0.4.3...HEAD
+[Unreleased]: https://github.com/sassman/t-rec-rs/compare/v0.5.0...HEAD
+[0.5.0]: https://github.com/sassman/t-rec-rs/compare/v0.5.0...v0.4.3
 [0.4.3]: https://github.com/sassman/t-rec-rs/compare/v0.4.2...v0.4.3
 [0.4.2]: https://github.com/sassman/t-rec-rs/compare/v0.4.1...v0.4.2
 [0.4.1]: https://github.com/sassman/t-rec-rs/compare/v0.4.0...v0.4.1
