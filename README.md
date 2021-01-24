@@ -48,6 +48,14 @@ cargo install -f t-rec
 **NOTE** `-f` just makes sure the latest version is installed
 
 ## Installation on Linux
+### as .deb
+
+```sh
+sudo apt-get install imagemagick
+wget https://github.com/sassman/t-rec-rs/releases/download/v0.5.0/t-rec_0.5.0_amd64.deb
+sudo dpkg -i t-rec_0.5.0_amd64.deb
+```
+
 ### as snap
 
 [![Get it from the Snap Store](https://snapcraft.io/static/images/badges/en/snap-store-black.svg)](https://snapcraft.io/t-rec)

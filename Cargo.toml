@@ -1,6 +1,6 @@
 [package]
 name = "t-rec"
-version = "0.4.3"
+version = "0.5.0"
 authors = ["Sven Assmann <sven.assmann.it@gmail.com>"]
 edition = "2018"
 license = "GPL-3.0-only"
@@ -23,11 +23,9 @@ clap = "2.33.3"
 image = { version = "0.23.12", features = ["tga"] }
 anyhow = "1.0.38"
 tempfile = "3.2.0"
-gif = "0.11"
 rayon = "1.5.0"
 log = "0.4.13"
 env_logger = "0.8.2"
-#image-convert = "0.10"
 
 [target.'cfg(target_os = "macos")'.dependencies]
 objc_id = "0.1.1"
