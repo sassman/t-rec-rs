@@ -19,7 +19,7 @@ Blazingly fast terminal recorder that generates animated gif images for the web 
 
 ## Features
 - Screenshotting your terminal with 4 frames per second (every 250ms)
-- Generates high quality small sized animated gif images
+- Generates high quality small sized animated gif images or mp4 videos
 - **Build-In idle frames detection and optimization** (for super fluid presentations)
 - Applies (can be disabled) border decor effects like drop shadow
 - Runs on MacOS and Linux
@@ -102,7 +102,7 @@ t-rec /bin/sh
 
 ```sh
 t-rec --help
-t-rec 0.4.3
+t-rec 0.5.0
 Sven Assmann <sven.assmann.it@gmail.com>
 Blazingly fast terminal recorder that generates animated gif images for the web written in rust.
 
@@ -112,18 +112,20 @@ USAGE:
 FLAGS:
     -h, --help       Prints help information
     -l, --ls-win     If you want to see a list of windows available for recording by their id, you can set env var
-                     'WINDOWID' to record this specific window only.
+                     'WINDOWID' to record this specific window only
     -n, --natural    If you want a very natural typing experience and disable the idle detection and sampling
-                     optimization.
+                     optimization
     -q, --quiet      Quiet mode, suppresses the banner: 'Press Ctrl+D to end recording'
     -V, --version    Prints version information
-    -v, --verbose    Enable verbose insights for the curious.
+    -v, --verbose    Enable verbose insights for the curious
 
 OPTIONS:
-    -b, --bg <bg>          Background color when decors are used [default: white]  [possible values: white, black,
+    -b, --bg <bg>          Background color when decors are used [default: transparent]  [possible values: white, black,
                            transparent]
-    -d, --decor <decor>    Decorates the animation with certain, mostly border effects. [default: shadow]  [possible
+    -d, --decor <decor>    Decorates the animation with certain, mostly border effects [default: shadow]  [possible
                            values: shadow, none]
+    -m, --video <video>    Generates additionally to the gif a mp4 video of the recording [default: mp4]  [possible
+                           values: mp4]
 
 ARGS:
     <shell or program to launch>    If you want to start a different program than $SHELL you can pass it here. For
