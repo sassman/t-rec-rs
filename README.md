@@ -70,6 +70,22 @@ sudo snap install t-rec --classic
 t-rec 0.4.3
 ```
 
+### from AUR
+
+`t-rec` can be installed from available [AUR packages](https://aur.archlinux.org/packages/?O=0&SeB=nd&K=Blazingly+fast+terminal+recorder&outdated=&SB=n&SO=a&PP=50&do_Search=Go) using an [AUR helper](https://wiki.archlinux.org/index.php/AUR_helpers). For example,
+
+```
+paru -S t-rec
+```
+
+If you prefer, you can clone the [AUR packages](https://aur.archlinux.org/packages/?O=0&SeB=nd&K=Blazingly+fast+terminal+recorder&outdated=&SB=n&SO=a&PP=50&do_Search=Go) and then compile them with [makepkg](https://wiki.archlinux.org/index.php/Makepkg). For example,
+
+```
+git clone https://aur.archlinux.org/t-rec.git
+cd t-rec
+makepkg -si
+```
+
 ### with cargo
 ```sh
 sudo apt-get install libx11-dev imagemagick
