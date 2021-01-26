@@ -8,7 +8,7 @@ winrt::import!(
         "windows.graphics.directx.direct3d11"
 );
 
-use crate::{ImageOnHeap, PlatformApi, Result, WindowId, WindowList};
+use std::sync::{Arc, Mutex};
 
 use winapi::shared::minwindef::{BOOL, FALSE, INT, LPARAM, MAX_PATH, TRUE};
 // use winapi::shared::ntdef::LONG;
@@ -19,20 +19,15 @@ use winapi::um::winuser::{
     GetWindowTextW, GWL_STYLE, WS_SYSMENU, WS_VISIBLE,
 };
 
+use crate::common::identify_transparency::identify_transparency;
+use crate::{ImageOnHeap, Margin, PlatformApi, Result, WindowId, WindowList};
+
 mod capture;
 mod d3d;
 mod encoder;
 mod snapshot;
 
 pub const DEFAULT_SHELL: &str = "cmd.exe";
-
-#[derive(Debug)]
-pub struct Margin {
-    pub top: u16,
-    pub right: u16,
-    pub bottom: u16,
-    pub left: u16,
-}
 
 struct CaptureTarget {
     hwnd: HWND,
@@ -42,32 +37,6 @@ struct CaptureTarget {
 }
 
 unsafe impl Send for CaptureTarget {}
-
-// impl Margin {
-//     pub fn new(top: u16, right: u16, bottom: u16, left: u16) -> Self {
-//         Self {
-//             top,
-//             right,
-//             bottom,
-//             left,
-//         }
-//     }
-
-//     pub fn new_equal(margin: u16) -> Self {
-//         Self::new(margin, margin, margin, margin)
-//     }
-
-//     pub fn zero() -> Self {
-//         Self::new_equal(0)
-//     }
-
-//     pub fn is_zero(&self) -> bool {
-//         self.top == 0
-//             && self.right == self.left
-//             && self.left == self.bottom
-//             && self.bottom == self.top
-//     }
-// }
 
 pub fn enumerate_windows<F>(mut callback: F)
 where
@@ -104,10 +73,9 @@ unsafe extern "system" fn enumerate_callback(hwnd: HWND, lparam: LPARAM) -> BOOL
     }
 }
 
-use std::sync::{Arc, Mutex};
-
 pub struct WinApi {
     cap: Arc<Mutex<Option<CaptureTarget>>>,
+    margin: Option<Margin>,
 }
 
 impl WinApi {
@@ -118,6 +86,7 @@ impl WinApi {
 
         Ok(WinApi {
             cap: Arc::new(Mutex::new(None)),
+            margin: None,
         })
     }
 }
@@ -130,55 +99,9 @@ impl PlatformApi for WinApi {
     /// 1. it does check for the screenshot
     /// 2. it checks for transparent margins and configures the api
     ///     to cut them away in further screenshots
-    fn calibrate(&mut self, _window_id: WindowId) -> Result<()> {
-        // let image = self.capture_window_screenshot(window_id)?;
-        // let image: View<_, Bgra<u8>> = image.as_view()?;
-        // let (width, height) = image.dimensions();
-        // let half_width = width / 2;
-        // let half_height = height / 2;
-
-        // let mut margin = Margin::zero();
-        // // identify top margin
-        // for y in 0..half_height {
-        //     let Bgra([_, _, _, a]) = image.get_pixel(half_width, y);
-        //     if a == 0xff {
-        //         // the end of the transparent area
-        //         margin.top = y as u16;
-        //         dbg!(margin.top);
-        //         break;
-        //     }
-        // }
-        // // identify bottom margin
-        // for y in (half_height..height).rev() {
-        //     let Bgra([_, _, _, a]) = image.get_pixel(half_width, y);
-        //     if a == 0xff {
-        //         // the end of the transparent area
-        //         margin.bottom = (height - y - 1) as u16;
-        //         dbg!(margin.bottom);
-        //         break;
-        //     }
-        // }
-        // // identify left margin
-        // for x in 0..half_width {
-        //     let Bgra([_, _, _, a]) = image.get_pixel(x, half_height);
-        //     if a == 0xff {
-        //         // the end of the transparent area
-        //         margin.left = x as u16;
-        //         dbg!(margin.left);
-        //         break;
-        //     }
-        // }
-        // // identify right margin
-        // for x in (half_width..width).rev() {
-        //     let Bgra([_, _, _, a]) = image.get_pixel(x, half_height);
-        //     if a == 0xff {
-        //         // the end of the transparent area
-        //         margin.right = (width - x - 1) as u16;
-        //         dbg!(margin.right);
-        //         break;
-        //     }
-        // }
-        // self.margin = if margin.is_zero() { None } else { Some(margin) };
+    fn calibrate(&mut self, window_id: WindowId) -> Result<()> {
+        let image = self.capture_window_screenshot(window_id)?;
+        self.margin = identify_transparency(*image)?;
 
         Ok(())
     }
