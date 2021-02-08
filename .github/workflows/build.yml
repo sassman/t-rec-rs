@@ -82,6 +82,22 @@ jobs:
       - name: cargo test
         run: cargo test --all --locked -- -Z unstable-options
 
+  pkg-deb:
+    name: binaray package .deb
+    needs: check
+    runs-on: ubuntu-latest
+    container:
+      image: 5422m4n/rust-deb-builder:latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: cargo deb
+        run: cargo deb --target=x86_64-unknown-linux-musl
+      - name: Archive deb artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: t-rec-amd64-static.deb
+          path: target/x86_64-unknown-linux-musl/debian/t-rec*.deb
+
   audit:
     name: security audit
     needs: check
