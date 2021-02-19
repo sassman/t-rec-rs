@@ -17,7 +17,7 @@ use crate::{file_name_for, Result};
 ///     -layers merge \
 ///     t-rec-frame-000000251.tga
 /// ```
-pub fn apply_shadow_effect(time_codes: &[u128], tempdir: &TempDir, bg_color: String) -> Result<()> {
+pub fn apply_shadow_effect(time_codes: &[u128], tempdir: &TempDir, bg_color: String) {
     apply_effect(
         time_codes,
         tempdir,
@@ -55,7 +55,7 @@ pub fn apply_shadow_effect(time_codes: &[u128], tempdir: &TempDir, bg_color: Str
 ///      \) -alpha off -compose CopyOpacity -composite \
 ///    t-rec-frame-000000251.tga
 /// ```
-pub fn apply_big_sur_corner_effect(time_codes: &[u128], tempdir: &TempDir) -> Result<()> {
+pub fn apply_big_sur_corner_effect(time_codes: &[u128], tempdir: &TempDir) {
     let radius = 13;
     apply_effect(
         time_codes,
@@ -98,13 +98,11 @@ fn apply_effect(
     time_codes: &[u128],
     tempdir: &TempDir,
     effect: Box<dyn Fn(PathBuf) -> Result<()> + Send + Sync>,
-) -> Result<()> {
+) {
     time_codes.into_par_iter().for_each(|tc| {
         let file = tempdir.path().join(file_name_for(&tc, "tga"));
         if let Err(e) = effect(file) {
             eprintln!("{}", e);
         }
     });
-
-    Ok(())
 }
