@@ -136,14 +136,14 @@ fn main() -> Result<()> {
     apply_big_sur_corner_effect(
         &time_codes.lock().unwrap(),
         tempdir.lock().unwrap().borrow(),
-    )?;
+    );
 
     if let Some("shadow") = args.value_of("decor") {
         apply_shadow_effect(
             &time_codes.lock().unwrap(),
             tempdir.lock().unwrap().borrow(),
             args.value_of("bg").unwrap().to_string(),
-        )?
+        )
     }
 
     let target = target_file();
