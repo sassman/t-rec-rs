@@ -6,6 +6,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.1] - 2021-04-03
+### Changed
+- [chore(deps): bump anyhow from 1.0.39 to 1.0.40](https://github.com/sassman/t-rec-rs/pull/60)
+- [chore(deps): bump anyhow from 1.0.38 to 1.0.39](https://github.com/sassman/t-rec-rs/pull/59)
+- [chore(deps): bump image from 0.23.13 to 0.23.14](https://github.com/sassman/t-rec-rs/pull/58)
+- [chore(clippy): make clippy happy](https://github.com/sassman/t-rec-rs/pull/56)
+- [feat(ci): add .deb as regular build artifact](https://github.com/sassman/t-rec-rs/pull/54)
+- [chore(deps): bump image from 0.23.12 to 0.23.13](https://github.com/sassman/t-rec-rs/pull/53)
+- [chore(deps): bump log from 0.4.13 to 0.4.14](https://github.com/sassman/t-rec-rs/pull/52)
+- [docs(README): add AUR installation instructions](https://github.com/sassman/t-rec-rs/pull/50)
+- [feat(mp4): add cli option for generating a video](https://github.com/sassman/t-rec-rs/pull/49)
+
+### Contributors
+- [dependabot-preview[bot]](https://github.com/apps/dependabot-preview)
+- [orhun](https://github.com/orhun)
+- [sassman](https://github.com/sassman)
+
 ## [0.5.0] - 2021-01-24
 ### Added
 - Video output feature: (`--video` or `-m`) now additionally generates a (H.256) `.mp4` file parallel to the `.gif`. [pull/49](https://github.com/sassman/t-rec-rs/pull/49), [issues/45](https://github.com/sassman/t-rec-rs/issues/45), [fd600e0]
@@ -128,7 +145,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 [issue/4]: https://github.com/sassman/t-rec-rs/issues/4
 
-[Unreleased]: https://github.com/sassman/t-rec-rs/compare/v0.5.0...HEAD
+[Unreleased]: https://github.com/sassman/t-rec-rs/compare/v0.5.1...HEAD
+[0.5.1]: https://github.com/sassman/t-rec-rs/compare/v0.5.1...v0.5.0
 [0.5.0]: https://github.com/sassman/t-rec-rs/compare/v0.5.0...v0.4.3
 [0.4.3]: https://github.com/sassman/t-rec-rs/compare/v0.4.2...v0.4.3
 [0.4.2]: https://github.com/sassman/t-rec-rs/compare/v0.4.1...v0.4.2
