@@ -39,6 +39,12 @@ Blazingly fast terminal recorder that generates animated gif images for the web 
 brew install t-rec
 ```
 
+### with macports
+```sh
+sudo port selfupdate
+sudo port install t-rec
+```
+
 ### with cargo
 **NOTE** `t-rec` depends on `imagemagick`.
 ```sh
