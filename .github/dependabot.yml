@@ -1,0 +1,15 @@
+version: 2
+updates:
+- package-ecosystem: cargo
+  directory: "/"
+  schedule:
+    interval: weekly
+    time: "04:00"
+  open-pull-requests-limit: 10
+  ignore:
+  - dependency-name: x11rb
+    versions:
+    - "> 0.7.0"
+  - dependency-name: env_logger
+    versions:
+    - 0.8.3
