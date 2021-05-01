@@ -70,8 +70,7 @@ fn main() -> Result<()> {
             env::var("SHELL").unwrap_or(default)
         }
     };
-    let (win_id, window_name) =
-        current_win_id().context("Cannot retrieve the window id of the to be recorded window.")?;
+    let (win_id, window_name) = current_win_id()?;
     let mut api = setup()?;
     api.calibrate(win_id)?;
 
@@ -284,8 +283,7 @@ fn current_win_id() -> Result<(WindowId, Option<String>)> {
                 Ok((win_id, Some(name)))
             } else {
                 let api = setup()?;
-                let win_id = api.get_active_window()
-                    .context("Cannot determine the active window. Please set either env variable `WINDOWID` or `TERM_PROGRAM`. Check also `-l` to list all windows.")?;
+                let win_id = api.get_active_window()?;
                 Ok((win_id, None))
             }
         }

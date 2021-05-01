@@ -47,8 +47,13 @@ impl PlatformApi for QuartzApi {
 
     fn get_active_window(&self) -> Result<u64> {
         env::var("WINDOWID")
-            .context("Env variable 'WINDOWID' was not set.")
-            .unwrap()
+            .context(
+                r#"Cannot determine the active window. 
+ - Please set either env variable `TERM_PROGRAM` e.g. `TERM_PROGRAM=alacritty t-rec`
+ - Or set `WINDOWID` see also `t-rec -l` to list all windows with their id
+ - If you're using alacritty: https://github.com/sassman/t-rec-rs/issues/44#issuecomment-830630348
+"#,
+            )?
             .parse::<u64>()
             .context("Cannot parse env variable 'WINDOWID' as number")
     }
