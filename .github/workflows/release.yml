@@ -163,7 +163,7 @@ jobs:
         with:
           # https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./target/debian/t-rec_${{ github.ref }}_amd64.deb
+          asset_path: ./target/debian/t-rec_${{ steps.tag_name.outputs.current_version }}_amd64.deb
           asset_name: t-rec_${{ steps.tag_name.outputs.current_version }}_amd64.deb
           asset_content_type: application/vnd.debian.binary-package
 
