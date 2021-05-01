@@ -1,6 +1,6 @@
 ---
 name: Bug report MacOS
-about: Create a report to help us improve
+about: Create a report to help us improve the MacOS version
 title: 'MacOS based bug template'
 labels: ['Type: Bug', 'OS: MacOS']
 assignees: ''
