@@ -6,6 +6,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.2] - 2021-05-01
+### Changed
+- [chore(ci:release): change machine to ubuntu for fixing the deb build](https://github.com/sassman/t-rec-rs/pull/67)
+- [fix(WINDOWID): handle a missing window id graceful see #65](https://github.com/sassman/t-rec-rs/pull/66)
+- [Upgrade to GitHub-native Dependabot](https://github.com/sassman/t-rec-rs/pull/64)
+- [README: add Macports install instructions](https://github.com/sassman/t-rec-rs/pull/63)
+
+### Contributors
+- [dependabot-preview[bot]](https://github.com/apps/dependabot-preview)
+- [herbygillot](https://github.com/herbygillot)
+- [sassman](https://github.com/sassman)
+
 ## [0.5.1] - 2021-04-03
 ### Changed
 - [chore(deps): bump anyhow from 1.0.39 to 1.0.40](https://github.com/sassman/t-rec-rs/pull/60)
@@ -145,7 +157,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 [issue/4]: https://github.com/sassman/t-rec-rs/issues/4
 
-[Unreleased]: https://github.com/sassman/t-rec-rs/compare/v0.5.1...HEAD
+[Unreleased]: https://github.com/sassman/t-rec-rs/compare/v0.5.2...HEAD
+[0.5.2]: https://github.com/sassman/t-rec-rs/compare/v0.5.2...v0.5.1
 [0.5.1]: https://github.com/sassman/t-rec-rs/compare/v0.5.1...v0.5.0
 [0.5.0]: https://github.com/sassman/t-rec-rs/compare/v0.5.0...v0.4.3
 [0.4.3]: https://github.com/sassman/t-rec-rs/compare/v0.4.2...v0.4.3
