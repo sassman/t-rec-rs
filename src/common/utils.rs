@@ -1,5 +1,5 @@
 use anyhow::Context;
-use humantime::parse_duration;
+use humantime::{format_duration, parse_duration};
 use std::time::Duration;
 
 const ONE_MIN: Duration = Duration::from_secs(60);
@@ -12,18 +12,11 @@ pub trait HumanReadable {
 
 impl HumanReadable for Duration {
     fn as_human_readable(&self) -> String {
-        if self >= &ONE_MIN {
-            let time = (self.as_secs() / 60) as u128;
-            let seconds = self.as_secs() - (time * 60) as u64;
-            return format!("{}m {}s", time, seconds);
-        } else if self >= &ONE_SEC {
-            let unit = "s";
-            return format!("~{}{}", self.as_secs_f32().round(), unit);
+        if self >= &ONE_SEC && self < &ONE_MIN {
+            format!("~{}s", self.as_secs_f32().round())
+        } else {
+            format_duration(*self).to_string()
         }
-        let time = self.as_millis();
-        let unit = "ms";
-
-        format!("{}{}", time, unit)
     }
 }
 
@@ -38,7 +31,7 @@ pub fn parse_delay(s: Option<&str>, t: &str) -> crate::Result<Option<Duration>> 
     if let Some(d) = s.map(parse_duration) {
         let d =
             d.with_context(|| format!("{} had an valid format, allowed is 0ms < XXs <= 5m", t))?;
-        if d.as_millis() <= 0 || d > MAX_DELAY {
+        if d > MAX_DELAY {
             anyhow::bail!("{} was out of range, allowed is 0ms < XXs <= 5m", t)
         } else {
             Ok(Some(d))
@@ -54,9 +47,15 @@ mod tests {
 
     #[test]
     fn should_format_time() {
+        assert_eq!(
+            Duration::from_secs(60 * 60 + 1).as_human_readable(),
+            "1h 1s"
+        );
         assert_eq!(Duration::from_secs(100).as_human_readable(), "1m 40s");
         assert_eq!(Duration::from_millis(1200).as_human_readable(), "~1s");
         assert_eq!(Duration::from_millis(1800).as_human_readable(), "~2s");
         assert_eq!(Duration::from_millis(100).as_human_readable(), "100ms");
+        assert_eq!(Duration::from_micros(10).as_human_readable(), "10us");
+        assert_eq!(Duration::from_nanos(10).as_human_readable(), "10ns");
     }
 }
