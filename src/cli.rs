@@ -23,9 +23,7 @@ pub fn launch<'a>() -> ArgMatches<'a> {
         )
         .arg(
             Arg::with_name("video")
-                .takes_value(true)
-                .possible_values(&["mp4"])
-                .default_value("mp4")
+                .takes_value(false)
                 .short("m")
                 .long("video")
                 .required(false)
@@ -68,6 +66,24 @@ pub fn launch<'a>() -> ArgMatches<'a> {
                 .short("l")
                 .long("ls-win")
                 .help("If you want to see a list of windows available for recording by their id, you can set env var 'WINDOWID' to record this specific window only"),
+        )
+        .arg(
+            Arg::with_name("end-pause")
+                .value_name("s | ms | m")
+                .takes_value(true)
+                .required(false)
+                .short("e")
+                .long("end-pause")
+                .help("to specify the pause time at the end of the animation, that time the gif will show the last frame"),
+        )
+        .arg(
+            Arg::with_name("start-pause")
+                .value_name("s | ms | m")
+                .takes_value(true)
+                .required(false)
+                .short("s")
+                .long("start-pause")
+                .help("to specify the pause time at the start of the animation, that time the gif will show the first frame"),
         )
         .arg(
             Arg::with_name("program")

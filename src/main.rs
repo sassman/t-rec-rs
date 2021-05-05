@@ -2,6 +2,7 @@ mod cli;
 mod common;
 mod decor_effect;
 mod generators;
+mod tips;
 
 #[cfg(target_os = "linux")]
 mod linux;
@@ -18,10 +19,11 @@ use crate::macos::*;
 use crate::win::*;
 
 use crate::cli::launch;
-use crate::common::utils::{clear_screen, HumanReadable};
+use crate::common::utils::{clear_screen, parse_delay, HumanReadable};
 use crate::common::{Margin, PlatformApi};
 use crate::decor_effect::{apply_big_sur_corner_effect, apply_shadow_effect};
 use crate::generators::{check_for_gif, check_for_mp4, generate_gif, generate_mp4};
+use crate::tips::show_tip;
 
 use anyhow::{bail, Context};
 use image::{save_buffer, FlatSamples};
@@ -76,6 +78,10 @@ fn main() -> Result<()> {
 
     let force_natural = args.is_present("natural-mode");
     let with_video = args.is_present("video");
+    let (start_delay, end_delay) = (
+        parse_delay(args.value_of("start-pause"), "start-pause")?,
+        parse_delay(args.value_of("end-pause"), "end-pause")?,
+    );
 
     check_for_gif()?;
     if with_video {
@@ -113,7 +119,7 @@ fn main() -> Result<()> {
     if args.is_present("quiet") {
         println!();
     } else {
-        println!("Press Ctrl+D to end recording");
+        println!("[t-rec]: Press Ctrl+D to end recording");
     }
     thread::sleep(Duration::from_millis(1250));
     clear_screen();
@@ -128,10 +134,13 @@ fn main() -> Result<()> {
         .unwrap()
         .context("Cannot launch the recording thread")?;
 
+    println!();
     println!(
-        "\n🎆 Applying effects to {} frames (might take a bit)",
+        "🎆 Applying effects to {} frames (might take a bit)",
         time_codes.lock().unwrap().borrow().len()
     );
+    show_tip();
+
     apply_big_sur_corner_effect(
         &time_codes.lock().unwrap(),
         tempdir.lock().unwrap().borrow(),
@@ -151,7 +160,9 @@ fn main() -> Result<()> {
         generate_gif(
             &time_codes.lock().unwrap(),
             tempdir.lock().unwrap().borrow(),
-            &gif_target
+            &gif_target,
+            start_delay,
+            end_delay
         )?;
     };
 

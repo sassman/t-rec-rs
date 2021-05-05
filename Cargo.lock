@@ -616,6 +616,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d29ab0c6d3fc0ee92fe66e2d99f700eab17a8d57d1c1d3b748380fb20baa78cd"
 
 [[package]]
+name = "simplerand"
+version = "1.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "70455a0a21cb984df0f86033ca19f37cced497deb779603e7fa7b032f5b8897b"
+dependencies = [
+ "lazy_static",
+]
+
+[[package]]
 name = "strsim"
 version = "0.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -631,11 +640,13 @@ dependencies = [
  "core-foundation-sys",
  "core-graphics",
  "env_logger",
+ "humantime",
  "image",
  "log",
  "objc-foundation",
  "objc_id",
  "rayon",
+ "simplerand",
  "tempfile",
  "x11rb",
 ]

@@ -1,7 +1,10 @@
+use anyhow::Context;
+use humantime::parse_duration;
 use std::time::Duration;
 
 const ONE_MIN: Duration = Duration::from_secs(60);
 const ONE_SEC: Duration = Duration::from_secs(1);
+const MAX_DELAY: Duration = Duration::from_secs(5 * 60);
 
 pub trait HumanReadable {
     fn as_human_readable(&self) -> String;
@@ -28,6 +31,21 @@ impl HumanReadable for Duration {
 pub fn clear_screen() {
     print!("{esc}[2J", esc = 27 as char);
     print!("{esc}[H", esc = 27 as char);
+}
+
+/// parses a human duration string into something valid
+pub fn parse_delay(s: Option<&str>, t: &str) -> crate::Result<Option<Duration>> {
+    if let Some(d) = s.map(parse_duration) {
+        let d =
+            d.with_context(|| format!("{} had an valid format, allowed is 0ms < XXs <= 5m", t))?;
+        if d.as_millis() <= 0 || d > MAX_DELAY {
+            anyhow::bail!("{} was out of range, allowed is 0ms < XXs <= 5m", t)
+        } else {
+            Ok(Some(d))
+        }
+    } else {
+        Ok(None)
+    }
 }
 
 #[cfg(test)]
