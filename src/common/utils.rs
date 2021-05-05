@@ -30,7 +30,7 @@ pub fn clear_screen() {
 pub fn parse_delay(s: Option<&str>, t: &str) -> crate::Result<Option<Duration>> {
     if let Some(d) = s.map(parse_duration) {
         let d =
-            d.with_context(|| format!("{} had an valid format, allowed is 0ms < XXs <= 5m", t))?;
+            d.with_context(|| format!("{} had an invalid format, allowed is 0ms < XXs <= 5m", t))?;
         if d > MAX_DELAY {
             anyhow::bail!("{} was out of range, allowed is 0ms < XXs <= 5m", t)
         } else {
@@ -57,5 +57,29 @@ mod tests {
         assert_eq!(Duration::from_millis(100).as_human_readable(), "100ms");
         assert_eq!(Duration::from_micros(10).as_human_readable(), "10us");
         assert_eq!(Duration::from_nanos(10).as_human_readable(), "10ns");
+    }
+
+    #[test]
+    fn should_parse_time() -> crate::Result<()> {
+        let s = parse_delay(Some("1m"), "foo")?.unwrap();
+        assert_eq!(s, Duration::from_secs(60));
+        let s = parse_delay(Some("60s"), "foo")?.unwrap();
+        assert_eq!(s, Duration::from_secs(60));
+        let s = parse_delay(Some("500ms"), "foo")?.unwrap();
+        assert_eq!(s, Duration::from_millis(500));
+
+        Ok(())
+    }
+
+    #[test]
+    #[should_panic(expected = "foo was out of range, allowed is 0ms < XXs <= 5m")]
+    fn should_not_parse_time_that_is_too_long() {
+        parse_delay(Some("5m 1s"), "foo").unwrap();
+    }
+
+    #[test]
+    #[should_panic(expected = "time unit needed, for example 1sec or 1ms")]
+    fn should_not_parse_time_that_is_invalid() {
+        parse_delay(Some("1"), "foo").unwrap();
     }
 }
