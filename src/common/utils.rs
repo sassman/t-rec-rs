@@ -1,5 +1,6 @@
 use anyhow::Context;
 use humantime::{format_duration, parse_duration};
+use std::ops::Add;
 use std::time::Duration;
 
 const ONE_MIN: Duration = Duration::from_secs(60);
@@ -15,7 +16,13 @@ impl HumanReadable for Duration {
         if self >= &ONE_SEC && self < &ONE_MIN {
             format!("~{}s", self.as_secs_f32().round())
         } else {
-            format_duration(*self).to_string()
+            let mut less = Duration::from_millis(self.as_millis() as u64);
+            let mut prefix = "";
+            if less < *self {
+                prefix = "~";
+                less = less.add(Duration::from_millis(1))
+            }
+            format!("{}{}", prefix, format_duration(less).to_string())
         }
     }
 }
@@ -55,8 +62,10 @@ mod tests {
         assert_eq!(Duration::from_millis(1200).as_human_readable(), "~1s");
         assert_eq!(Duration::from_millis(1800).as_human_readable(), "~2s");
         assert_eq!(Duration::from_millis(100).as_human_readable(), "100ms");
-        assert_eq!(Duration::from_micros(10).as_human_readable(), "10us");
-        assert_eq!(Duration::from_nanos(10).as_human_readable(), "10ns");
+        assert_eq!(Duration::from_micros(10).as_human_readable(), "~1ms");
+        assert_eq!(Duration::from_nanos(10).as_human_readable(), "~1ms");
+        // this is 1.12ms so ~2ms
+        assert_eq!(Duration::from_micros(1120).as_human_readable(), "~2ms");
     }
 
     #[test]
