@@ -77,14 +77,17 @@ fn main() -> Result<()> {
     api.calibrate(win_id)?;
 
     let force_natural = args.is_present("natural-mode");
-    let with_video = args.is_present("video");
+    let should_generate_gif = !args.is_present("video-only");
+    let should_generate_video = args.is_present("video") || args.is_present("video-only");
     let (start_delay, end_delay) = (
         parse_delay(args.value_of("start-pause"), "start-pause")?,
         parse_delay(args.value_of("end-pause"), "end-pause")?,
     );
 
-    check_for_gif()?;
-    if with_video {
+    if should_generate_gif {
+        check_for_gif()?;
+    }
+    if should_generate_video {
         check_for_mp4()?;
     }
 
@@ -155,24 +158,26 @@ fn main() -> Result<()> {
     }
 
     let target = target_file();
-    let gif_target = format!("{}.{}", target, "gif");
-    let mut time = prof! {
-        generate_gif(
-            &time_codes.lock().unwrap(),
-            tempdir.lock().unwrap().borrow(),
-            &gif_target,
-            start_delay,
-            end_delay
-        )?;
-    };
+    let mut time = Duration::default();
 
-    if with_video {
-        let mp4_target = format!("{}.{}", target, "mp4");
+    if should_generate_gif {
+        time += prof! {
+            generate_gif(
+                &time_codes.lock().unwrap(),
+                tempdir.lock().unwrap().borrow(),
+                &format!("{}.{}", target, "gif"),
+                start_delay,
+                end_delay
+            )?;
+        };
+    }
+
+    if should_generate_video {
         time += prof! {
             generate_mp4(
                 &time_codes.lock().unwrap(),
                 tempdir.lock().unwrap().borrow(),
-                &mp4_target,
+                &format!("{}.{}", target, "mp4"),
             )?;
         }
     }

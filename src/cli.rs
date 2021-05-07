@@ -30,6 +30,15 @@ pub fn launch<'a>() -> ArgMatches<'a> {
                 .help("Generates additionally to the gif a mp4 video of the recording")
         )
         .arg(
+            Arg::with_name("video-only")
+                .takes_value(false)
+                .short("M")
+                .long("video-only")
+                .required(false)
+                .conflicts_with("video")
+                .help("Generates only a mp4 video and not gif")
+        )
+        .arg(
             Arg::with_name("decor")
                 .takes_value(true)
                 .possible_values(&["shadow", "none"])
