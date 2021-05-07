@@ -132,22 +132,26 @@ USAGE:
     t-rec [FLAGS] [OPTIONS] [shell or program to launch]
 
 FLAGS:
-    -h, --help       Prints help information
-    -l, --ls-win     If you want to see a list of windows available for recording by their id, you can set env var
-                     'WINDOWID' to record this specific window only
-    -n, --natural    If you want a very natural typing experience and disable the idle detection and sampling
-                     optimization
-    -q, --quiet      Quiet mode, suppresses the banner: 'Press Ctrl+D to end recording'
-    -V, --version    Prints version information
-    -v, --verbose    Enable verbose insights for the curious
+    -h, --help          Prints help information
+    -l, --ls-win        If you want to see a list of windows available for recording by their id, you can set env var
+                        'WINDOWID' to record this specific window only
+    -n, --natural       If you want a very natural typing experience and disable the idle detection and sampling
+                        optimization
+    -q, --quiet         Quiet mode, suppresses the banner: 'Press Ctrl+D to end recording'
+    -V, --version       Prints version information
+    -v, --verbose       Enable verbose insights for the curious
+    -m, --video         Generates additionally to the gif a mp4 video of the recording
+    -M, --video-only    Generates only a mp4 video and not gif
 
 OPTIONS:
-    -b, --bg <bg>          Background color when decors are used [default: transparent]  [possible values: white, black,
-                           transparent]
-    -d, --decor <decor>    Decorates the animation with certain, mostly border effects [default: shadow]  [possible
-                           values: shadow, none]
-    -m, --video <video>    Generates additionally to the gif a mp4 video of the recording [default: mp4]  [possible
-                           values: mp4]
+    -b, --bg <bg>                     Background color when decors are used [default: transparent]  [possible values:
+                                      white, black, transparent]
+    -d, --decor <decor>               Decorates the animation with certain, mostly border effects [default: shadow]
+                                      [possible values: shadow, none]
+    -e, --end-pause <s | ms | m>      to specify the pause time at the end of the animation, that time the gif will show
+                                      the last frame
+    -s, --start-pause <s | ms | m>    to specify the pause time at the start of the animation, that time the gif will
+                                      show the first frame
 
 ARGS:
     <shell or program to launch>    If you want to start a different program than $SHELL you can pass it here. For
