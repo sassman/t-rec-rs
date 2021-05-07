@@ -5,6 +5,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+## [0.6.0] - 2021-05-07
+### Changed
+- [feat(video-only): add command line parameter `--video-only | -M`](https://github.com/sassman/t-rec-rs/pull/73)
+- [refactor(human-readable): time display](https://github.com/sassman/t-rec-rs/pull/72)
+- [feat(pre/post-pause): mainly pre-post pause feature](https://github.com/sassman/t-rec-rs/pull/70)
+- [chore(ci:release): change machine to ubuntu for fixing the deb build](https://github.com/sassman/t-rec-rs/pull/67)
+
+### Contributors
+- [sassman](https://github.com/sassman)
 
 ## [0.5.2] - 2021-05-01
 ### Changed
@@ -157,7 +166,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 [issue/4]: https://github.com/sassman/t-rec-rs/issues/4
 
-[Unreleased]: https://github.com/sassman/t-rec-rs/compare/v0.5.2...HEAD
+[Unreleased]: https://github.com/sassman/t-rec-rs/compare/v0.6.0...HEAD
+[0.6.0]: https://github.com/sassman/t-rec-rs/compare/v0.6.0...v0.5.2
 [0.5.2]: https://github.com/sassman/t-rec-rs/compare/v0.5.2...v0.5.1
 [0.5.1]: https://github.com/sassman/t-rec-rs/compare/v0.5.1...v0.5.0
 [0.5.0]: https://github.com/sassman/t-rec-rs/compare/v0.5.0...v0.4.3
