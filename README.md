@@ -166,7 +166,7 @@ In this case there will be no optimizations performed.
 
 ### Disable shadow border decor
 
-In order to disable the drop shadow border decor you have to pass `-p none` as an argument. If your only want to change 
+In order to disable the drop shadow border decor you have to pass `-d none` as an argument. If your only want to change 
 the color of the background you can use `-b black` for example to have a black background.
 
 ## Hidden Gems
