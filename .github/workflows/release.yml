@@ -176,7 +176,7 @@ jobs:
           # https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: target/x86_64-unknown-linux-musl/debian/t-rec*.deb
-          asset_name: t-rec_${{ steps.tag_name.outputs.current_version }}_amd64.deb
+          asset_name: t-rec-${{ steps.tag_name.outputs.current_version }}-amd64-static.deb
           asset_content_type: application/vnd.debian.binary-package
 
   # https://github.com/mislav/bump-homebrew-formula-action
