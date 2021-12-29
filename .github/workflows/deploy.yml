@@ -1,9 +1,4 @@
-## references:
-# cache: https://github.com/actions/cache/blob/main/examples.md#rust---cargo
-# audit: https://github.com/actions-rs/audit-check
-# "needs": https://docs.github.com/en/actions/reference/workflow-syntax-for-github-actions#jobsjob_idneeds
-
-name: Release
+name: Deploy
 on:
   push:
     tags: 
@@ -12,109 +7,14 @@ on:
       - "**/docs/**"
       - "**.md"
 
-# NOTE: needs to stay in sync with ./build.yml
 jobs:
-  check:
-    name: check
-    strategy:
-      fail-fast: false
-      matrix:
-        version: [ 'macos-latest', 'ubuntu-latest']
-    runs-on: ${{ matrix.version }}
-    steps:
-      - uses: actions/checkout@v2
-      - name: setup | rust
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
-          default: true
-          profile: minimal
-          components: clippy, rustfmt
-      - uses: Swatinem/rust-cache@v1
-      - run: cargo check
-
-  lint:
-    name: lint
-    needs: check
-    strategy:
-      fail-fast: false
-      matrix:
-        version: [ 'macos-latest', 'ubuntu-latest']
-        cargo-cmd:
-          - fmt --all -- --check
-          - clippy --all-targets --all-features -- -D warnings
-    runs-on: ${{ matrix.version }}
-    steps:
-      - uses: actions/checkout@v2
-      - name: setup | rust
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
-          default: true
-          profile: minimal
-          components: clippy, rustfmt
-      - uses: Swatinem/rust-cache@v1
-      - run: cargo ${{ matrix['cargo-cmd'] }}
-
-  tests:
-    name: test
-    needs: check
-    strategy:
-      fail-fast: false
-      matrix:
-#        version: [ 'macos-11.0', 'macos-10.15', 'macos-10.14', 'ubuntu-latest']
-        version: [ 'macos-latest', 'ubuntu-latest']
-        rust: [ nightly, stable ]
-    runs-on: ${{ matrix.version }}
-    continue-on-error: ${{ matrix.rust == 'nightly' }}
-    steps:
-      - uses: actions/checkout@v2
-      - name: setup | rust
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: ${{ matrix.rust }}
-          default: true
-          profile: minimal
-      - uses: Swatinem/rust-cache@v1
-      - name: cargo test
-        run: cargo test --all --locked -- -Z unstable-options
-
-  pkg-deb:
-    name: binaray package .deb
-    needs: check
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - name: build .deb file
-        uses: sassman/rust-deb-builder@v1.57.0
-      - name: Archive deb artifact
-        uses: actions/upload-artifact@v2
-        with:
-          name: t-rec-amd64-static.deb
-          path: target/x86_64-unknown-linux-musl/debian/t-rec*.deb
-
-  audit:
-    name: security audit
-    needs: check
-    runs-on: macos-latest
-    steps:
-      - uses: actions/checkout@v2
-      - name: setup | rust
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
-          default: true
-          profile: minimal
-      - uses: Swatinem/rust-cache@v1
-      - name: audit
-        uses: actions-rs/audit-check@v1
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-  # END of build.yml
+  # call out to build.yml
+  doing-a-build:
+    uses: sassman/t-rec-rs/.github/workflows/build.yml@7dfca05926ed20ff656cec72f94f41f21f348fc6
 
   publish:
     name: post / cargo publish
-    needs: [audit, lint, tests]
+    needs: [doing-a-build]
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v2
