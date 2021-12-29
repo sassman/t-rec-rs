@@ -92,7 +92,7 @@ impl X11Api {
             let (_, _, width, height) = self.get_window_geometry(&window_id)?;
             if width > 1 && height > 1 {
                 let attr = conn.get_window_attributes(window)?.reply()?;
-                if let MapState::Viewable = attr.map_state {
+                if let MapState::VIEWABLE = attr.map_state {
                     result.push(window as WindowId);
                 } else {
                     debug!(
@@ -166,7 +166,7 @@ impl PlatformApi for X11Api {
             .conn
             // NOTE: x and y are not the absolute coordinates but relative to the windows dimensions, that is why 0, 0
             .get_image(
-                ImageFormat::ZPixmap,
+                ImageFormat::Z_PIXMAP,
                 window_id as Drawable,
                 x,
                 y,
@@ -433,7 +433,7 @@ mod test {
         for win in tree.children {
             let attr = conn.get_window_attributes(win)?.reply()?;
 
-            if let MapState::Viewable = attr.map_state {
+            if let MapState::VIEWABLE = attr.map_state {
                 let geometry = conn.get_geometry(win)?.reply()?;
 
                 let class = conn
