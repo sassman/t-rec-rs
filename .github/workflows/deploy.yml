@@ -10,7 +10,7 @@ on:
 jobs:
   # call out to build.yml
   doing-a-build:
-    uses: sassman/t-rec-rs/.github/workflows/build.yml@7dfca05926ed20ff656cec72f94f41f21f348fc6
+    uses: sassman/t-rec-rs/.github/workflows/build.yml@main
 
   publish:
     name: post / cargo publish
