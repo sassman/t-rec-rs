@@ -5,7 +5,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+[Unreleased]: https://github.com/sassman/t-rec-rs/compare/v0.6.2...HEAD
+
+## [0.6.2] - 2021-12-29
+[0.6.2]: https://github.com/sassman/t-rec-rs/compare/v0.6.2...v0.6.1
+### Changed
+- [chore(deps): bump dependencies](https://github.com/sassman/t-rec-rs/pull/92)
+
 ## [0.6.1] - 2021-08-30
+[0.6.1]: https://github.com/sassman/t-rec-rs/compare/v0.6.1...v0.6.0
 ### Changed
 - [chore(deps): bump anyhow from 1.0.42 to 1.0.43](https://github.com/sassman/t-rec-rs/pull/80)
 - ["-p" option is not exist](https://github.com/sassman/t-rec-rs/pull/79)
@@ -179,8 +187,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 [issue/4]: https://github.com/sassman/t-rec-rs/issues/4
 
-[Unreleased]: https://github.com/sassman/t-rec-rs/compare/v0.6.1...HEAD
-[0.6.1]: https://github.com/sassman/t-rec-rs/compare/v0.6.1...v0.6.0
 [0.6.0]: https://github.com/sassman/t-rec-rs/compare/v0.6.0...v0.5.2
 [0.5.2]: https://github.com/sassman/t-rec-rs/compare/v0.5.2...v0.5.1
 [0.5.1]: https://github.com/sassman/t-rec-rs/compare/v0.5.1...v0.5.0
