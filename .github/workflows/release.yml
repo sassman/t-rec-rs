@@ -79,6 +79,20 @@ jobs:
       - name: cargo test
         run: cargo test --all --locked -- -Z unstable-options
 
+  pkg-deb:
+    name: binaray package .deb
+    needs: check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: build .deb file
+        uses: sassman/rust-deb-builder@v1.57.0
+      - name: Archive deb artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: t-rec-amd64-static.deb
+          path: target/x86_64-unknown-linux-musl/debian/t-rec*.deb
+
   audit:
     name: security audit
     needs: check
@@ -128,7 +142,6 @@ jobs:
           default: true
           profile: minimal
       - uses: Swatinem/rust-cache@v1
-      - run: cargo install cargo-deb
       - name: Get version from tag
         id: tag_name
         run: echo ::set-output name=current_version::${GITHUB_REF#refs/tags/v}
@@ -140,7 +153,6 @@ jobs:
           validation_depth: 10
           version: ${{ steps.tag_name.outputs.current_version }}
           path: ./CHANGELOG.md
-      - run: cargo deb
       - name: Create Release
         # https://github.com/marketplace/actions/changelog-reader
         id: create_release
@@ -163,7 +175,7 @@ jobs:
         with:
           # https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./target/debian/t-rec_${{ steps.tag_name.outputs.current_version }}_amd64.deb
+          asset_path: target/x86_64-unknown-linux-musl/debian/t-rec*.deb
           asset_name: t-rec_${{ steps.tag_name.outputs.current_version }}_amd64.deb
           asset_content_type: application/vnd.debian.binary-package
 
