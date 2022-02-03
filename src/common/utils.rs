@@ -22,7 +22,7 @@ impl HumanReadable for Duration {
                 prefix = "~";
                 less = less.add(Duration::from_millis(1))
             }
-            format!("{}{}", prefix, format_duration(less).to_string())
+            format!("{}{}", prefix, format_duration(less))
         }
     }
 }
