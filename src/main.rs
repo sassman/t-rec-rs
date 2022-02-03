@@ -4,10 +4,12 @@ mod decor_effect;
 mod generators;
 mod tips;
 
+mod capture;
 #[cfg(target_os = "linux")]
 mod linux;
 #[cfg(target_os = "macos")]
 mod macos;
+mod utils;
 #[cfg(target_os = "windows")]
 mod win;
 
@@ -25,13 +27,12 @@ use crate::decor_effect::{apply_big_sur_corner_effect, apply_shadow_effect};
 use crate::generators::{check_for_gif, check_for_mp4, generate_gif, generate_mp4};
 use crate::tips::show_tip;
 
+use crate::capture::capture_thread;
+use crate::utils::{sub_shell_thread, target_file};
 use anyhow::{bail, Context};
-use image::{save_buffer, FlatSamples};
+use clap::ArgMatches;
+use image::FlatSamples;
 use std::borrow::Borrow;
-use std::ffi::OsStr;
-use std::ops::{Add, Sub};
-use std::process::{Command, ExitStatus};
-use std::sync::mpsc::Receiver;
 use std::sync::{mpsc, Arc, Mutex};
 use std::time::{Duration, Instant};
 use std::{env, thread};
@@ -72,7 +73,7 @@ fn main() -> Result<()> {
             env::var("SHELL").unwrap_or(default)
         }
     };
-    let (win_id, window_name) = current_win_id()?;
+    let (win_id, window_name) = current_win_id(&args)?;
     let mut api = setup()?;
     api.calibrate(win_id)?;
 
@@ -188,100 +189,12 @@ fn main() -> Result<()> {
 }
 
 ///
-/// captures screenshots as file on disk
-/// collects also the timecodes when they have been captured
-/// stops once receiving something in rx
-fn capture_thread(
-    rx: &Receiver<()>,
-    api: Box<dyn PlatformApi>,
-    win_id: WindowId,
-    time_codes: Arc<Mutex<Vec<u128>>>,
-    tempdir: Arc<Mutex<TempDir>>,
-    force_natural: bool,
-) -> Result<()> {
-    let duration = Duration::from_millis(250);
-    let start = Instant::now();
-    let mut idle_duration = Duration::from_millis(0);
-    let mut last_frame: Option<ImageOnHeap> = None;
-    let mut identical_frames = 0;
-    let mut last_now = Instant::now();
-    loop {
-        // blocks for a timeout
-        if rx.recv_timeout(duration).is_ok() {
-            break;
-        }
-        let now = Instant::now();
-        let effective_now = now.sub(idle_duration);
-        let tc = effective_now.saturating_duration_since(start).as_millis();
-        let image = api.capture_window_screenshot(win_id)?;
-        if !force_natural {
-            if last_frame.is_some()
-                && image
-                    .samples
-                    .as_slice()
-                    .eq(last_frame.as_ref().unwrap().samples.as_slice())
-            {
-                identical_frames += 1;
-            } else {
-                identical_frames = 0;
-            }
-        }
-
-        if identical_frames > 0 {
-            // let's track now the duration as idle
-            idle_duration = idle_duration.add(now.duration_since(last_now));
-        } else {
-            if let Err(e) = save_frame(&image, tc, tempdir.lock().unwrap().borrow(), file_name_for)
-            {
-                eprintln!("{}", &e);
-                return Err(e);
-            }
-            time_codes.lock().unwrap().push(tc);
-            last_frame = Some(image);
-            identical_frames = 0;
-        }
-        last_now = now;
-    }
-
-    Ok(())
-}
-
-///
-/// saves a frame as a tga file
-pub fn save_frame(
-    image: &ImageOnHeap,
-    time_code: u128,
-    tempdir: &TempDir,
-    file_name_for: fn(&u128, &str) -> String,
-) -> Result<()> {
-    save_buffer(
-        tempdir.path().join(file_name_for(&time_code, "tga")),
-        &image.samples,
-        image.layout.width,
-        image.layout.height,
-        image.color_hint.unwrap(),
-    )
-    .context("Cannot save frame")
-}
-
-///
-/// starts the main program and keeps interacting with the user
-/// blocks until termination
-fn sub_shell_thread<T: AsRef<OsStr> + Clone>(program: T) -> Result<ExitStatus> {
-    Command::new(program.clone())
-        .spawn()
-        .context(format!("failed to start {:?}", program.as_ref()))?
-        .wait()
-        .context("Something went wrong waiting for the sub shell.")
-}
-
-///
 /// determines the WindowId either by env var 'WINDOWID'
 /// or by the env var 'TERM_PROGRAM' and then asking the window manager for all visible windows
 /// and finding the Terminal in that list
 /// panics if WindowId was not was not there
-fn current_win_id() -> Result<(WindowId, Option<String>)> {
-    match env::var("WINDOWID") {
+fn current_win_id(args: &ArgMatches) -> Result<(WindowId, Option<String>)> {
+    match args.value_of("win-id").ok_or_else(|| env::var("WINDOWID")) {
         Ok(win_id) => {
             let win_id = win_id
                 .parse::<u64>()
@@ -304,31 +217,6 @@ fn current_win_id() -> Result<(WindowId, Option<String>)> {
             }
         }
     }
-}
-
-///
-/// returns a new filename that does not yet exists.
-/// Note: returns without extension, but checks with extension
-/// like `t-rec` or `t-rec_1`
-pub fn target_file() -> String {
-    let mut suffix = "".to_string();
-    let default_ext = "gif";
-    let movie_ext = "mp4";
-    let mut i = 0;
-    while std::path::Path::new(format!("t-rec{}.{}", suffix, default_ext).as_str()).exists()
-        || std::path::Path::new(format!("t-rec{}.{}", suffix, movie_ext).as_str()).exists()
-    {
-        i += 1;
-        suffix = format!("_{}", i).to_string();
-    }
-
-    format!("t-rec{}", suffix)
-}
-
-///
-/// encapsulate the file naming convention
-pub fn file_name_for(tc: &u128, ext: &str) -> String {
-    format!("t-rec-frame-{:09}.{}", tc, ext)
 }
 
 ///

@@ -14,8 +14,8 @@ use window_id::window_list;
 
 pub const DEFAULT_SHELL: &str = "/bin/sh";
 
-pub fn setup() -> Result<Box<dyn PlatformApi>> {
-    Ok(Box::new(QuartzApi { margin: None }))
+pub fn setup() -> Result<impl PlatformApi> {
+    Ok(QuartzApi { margin: None })
 }
 
 struct QuartzApi {

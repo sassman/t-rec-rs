@@ -42,7 +42,7 @@ pub fn launch() -> ArgMatches {
             Arg::new("decor")
                 .takes_value(true)
                 .possible_values(&["shadow", "none"])
-                .default_value("shadow")
+                .default_value("none")
                 .required(false)
                 .short('d')
                 .long("decor")
@@ -74,7 +74,15 @@ pub fn launch() -> ArgMatches {
                 .required(false)
                 .short('l')
                 .long("ls-win")
-                .help("If you want to see a list of windows available for recording by their id, you can set env var 'WINDOWID' to record this specific window only"),
+                .help("If you want to see a list of windows available for recording by their id, you can set env var 'WINDOWID' or `--win-id` to record this specific window only"),
+        )
+        .arg(
+            Arg::new("win-id")
+                .takes_value(true)
+                .short('w')
+                .long("win-id")
+                .required(false)
+                .help("Window Id (see --ls-win) that should be captured, instead of the current terminal")
         )
         .arg(
             Arg::new("end-pause")

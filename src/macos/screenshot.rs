@@ -1,4 +1,5 @@
 use crate::ImageOnHeap;
+
 use anyhow::{ensure, Context, Result};
 use core_graphics::display::*;
 use core_graphics::image::CGImageRef;
@@ -69,6 +70,8 @@ mod tests {
     #[test]
     #[cfg(feature = "e2e_tests")]
     fn should_capture_with_cropped_transparent_area() -> Result<()> {
+        use crate::common::PlatformApi;
+
         let mut api = setup()?;
         let win = 5308;
         let image = api.capture_window_screenshot(win)?;
