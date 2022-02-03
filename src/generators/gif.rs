@@ -1,4 +1,5 @@
-use crate::file_name_for;
+use crate::utils::file_name_for;
+
 use anyhow::{Context, Result};
 use std::ops::Div;
 use std::process::{Command, Output};
@@ -6,6 +7,10 @@ use std::time::Duration;
 use tempfile::TempDir;
 
 const PROGRAM: &str = "convert";
+#[cfg(target_os = "macos")]
+const INST_CMD: &str = "brew install imagemagick";
+#[cfg(not(target_os = "macos"))]
+const INST_CMD: &str = "apt-get install imagemagick";
 
 ///
 /// checks for imagemagick
@@ -16,8 +21,8 @@ pub fn check_for_imagemagick() -> Result<Output> {
         .output()
         .with_context(|| {
             format!(
-                "There is an issue with '{}', please install: `brew install imagemagick`",
-                PROGRAM
+                "There is an issue with '{}', please install: `{}`",
+                PROGRAM, INST_CMD,
             )
         })
 }
