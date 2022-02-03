@@ -5,7 +5,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
-[Unreleased]: https://github.com/sassman/t-rec-rs/compare/v0.6.2...HEAD
+[Unreleased]: https://github.com/sassman/t-rec-rs/compare/v0.7.0...HEAD
+
+## [0.7.0] - 2022-02-03
+[0.7.0]: https://github.com/sassman/t-rec-rs/compare/v0.7.0...v0.6.2
+
+### Changed
+- [feat(#100): dedicating an own cli argument for external window recording](https://github.com/sassman/t-rec-rs/pull/102)
+  with this PR also the default decor has changed to `none`. 
+  If you want the previous behaviour please pass `-d shadow` as cli argument. 
+- [chore(deps): bump dependencies + clap3 migration](https://github.com/sassman/t-rec-rs/pull/101)
+- [chore(deps): bump versions](https://github.com/sassman/t-rec-rs/pull/92)
+
+## Contributors
+- [sassman](https://github.com/sassman)
 
 ## [0.6.2] - 2021-12-29
 [0.6.2]: https://github.com/sassman/t-rec-rs/compare/v0.6.2...v0.6.1
