@@ -1,0 +1,102 @@
+name: Release Binary Assets
+on:
+  release:
+    types:
+      - published
+jobs:
+  # https://github.com/mislav/bump-homebrew-formula-action
+  publish-to-brew:
+    name: post / homebrew
+    runs-on: macos-latest
+    steps:
+      - uses: mislav/bump-homebrew-formula-action@v1
+        with:
+          formula-name: t-rec
+        env:
+          COMMITTER_TOKEN: ${{ secrets.COMMITTER_TOKEN }}
+
+  release:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: x86_64-unknown-linux-musl
+            os: ubuntu-latest
+            cross: true
+            binName: t-rec
+          - target: aarch64-unknown-linux-musl
+            os: ubuntu-latest
+            cross: true
+            binName: t-rec
+          - target: x86_64-apple-darwin
+            os: macos-latest
+            cross: false
+            binName: t-rec
+    steps:
+      - uses: actions/checkout@v2
+      - name: Setup Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          target: ${{ matrix.target }}
+          override: true
+      - uses: Swatinem/rust-cache@v1
+      - name: Build
+        uses: actions-rs/cargo@v1
+        with:
+          command: build
+          use-cross: ${{ matrix.cross }}
+          args: --release --target=${{ matrix.target }}
+      - name: Smoke Test
+        uses: actions-rs/cargo@v1
+        with:
+          command: run
+          use-cross: ${{ matrix.cross }}
+          args: --release --target=${{ matrix.target }} -- --help
+      - name: Create Archive
+        id: archive
+        shell: bash
+        env:
+          TARGET: ${{ matrix.target }}
+          TAG: ${{ github.event.release.tag_name }}
+        run: |
+          filename="t-rec-$TAG-$TARGET.tar.gz"
+          tar -czvf "$filename" README.md LICENSE -C "target/$TARGET/release" "${{ matrix.binName }}"
+          echo "::set-output name=filename::$filename"
+      - name: Upload Archive
+        uses: ncipollo/release-action@v1.8.7
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          allowUpdates: true
+          artifactErrorsFailBuild: true
+          artifacts: ${{ steps.archive.outputs.filename }}
+          artifactContentType: application/octet-stream
+          omitBodyDuringUpdate: true
+          omitNameDuringUpdate: true
+          omitPrereleaseDuringUpdate: true
+
+  pkg-deb:
+    name: binary package .deb
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: build .deb file
+        uses: sassman/rust-deb-builder@v1.57.0
+      - name: Archive deb artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: t-rec-amd64-static.deb
+          path: target/x86_64-unknown-linux-musl/debian/t-rec*.deb
+      - name: upload deb file
+        uses: ncipollo/release-action@v1.8.7
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          allowUpdates: true
+          artifactErrorsFailBuild: true
+          artifacts: target/x86_64-unknown-linux-musl/debian/t-rec*.deb
+          artifactContentType: application/octet-stream
+          omitBodyDuringUpdate: true
+          omitNameDuringUpdate: true
+          omitPrereleaseDuringUpdate: true
+

@@ -1,6 +1,6 @@
 [package]
 name = "t-rec"
-version = "0.6.2"
+version = "0.6.3"
 authors = ["Sven Assmann <sven.assmann.it@gmail.com>"]
 edition = "2018"
 license = "GPL-3.0-only"
@@ -19,15 +19,21 @@ github-actions = { repository = "sassman/t-rec-rs", branch = "main", workflow = 
 maintenance = { status = "actively-developed" }
 
 [dependencies]
-clap = "2.34.0"
-image = { version = "0.23.14", features = ["tga"] }
-anyhow = "1.0.52"
-tempfile = "3.2.0"
+anyhow = "1.0.53"
+tempfile = "3.3.0"
 rayon = "1.5.1"
 log = "0.4.14"
 env_logger = "0.9.0"
 simplerand = "1.3.0"
 humantime = "2.1.0"
+
+[dependencies.clap]
+version = "3.0.14"
+features = ["cargo"]
+
+[dependencies.image]
+version = "0.23.14"
+features = ["tga"]
 
 [target.'cfg(target_os = "macos")'.dependencies]
 objc_id = "0.1.1"
