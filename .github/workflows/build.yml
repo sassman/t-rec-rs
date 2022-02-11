@@ -89,7 +89,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: build .deb file
-        uses: sassman/rust-deb-builder@v1.57.0
+        uses: sassman/rust-deb-builder@v1
       - name: Archive deb artifact
         uses: actions/upload-artifact@v2
         with:
