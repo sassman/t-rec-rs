@@ -2,6 +2,9 @@ use anyhow::{Context, Result};
 use std::ffi::OsStr;
 use std::process::{Command, ExitStatus};
 
+pub const DEFAULT_EXT: &str = "gif";
+pub const MOVIE_EXT: &str = "mp4";
+
 /// encapsulate the file naming convention
 pub fn file_name_for(tc: &u128, ext: &str) -> String {
     format!("t-rec-frame-{:09}.{}", tc, ext)
@@ -20,17 +23,16 @@ pub fn sub_shell_thread<T: AsRef<OsStr> + Clone>(program: T) -> Result<ExitStatu
 /// returns a new filename that does not yet exists.
 /// Note: returns without extension, but checks with extension
 /// like `t-rec` or `t-rec_1`
-pub fn target_file() -> String {
+pub fn target_file(basename: impl AsRef<str>) -> String {
+    let basename = basename.as_ref();
     let mut suffix = "".to_string();
-    let default_ext = "gif";
-    let movie_ext = "mp4";
     let mut i = 0;
-    while std::path::Path::new(format!("t-rec{}.{}", suffix, default_ext).as_str()).exists()
-        || std::path::Path::new(format!("t-rec{}.{}", suffix, movie_ext).as_str()).exists()
+    while std::path::Path::new(format!("{basename}{suffix}.{DEFAULT_EXT}").as_str()).exists()
+        || std::path::Path::new(format!("{basename}{suffix}.{MOVIE_EXT}").as_str()).exists()
     {
         i += 1;
         suffix = format!("_{}", i).to_string();
     }
 
-    format!("t-rec{}", suffix)
+    format!("{basename}{suffix}")
 }
