@@ -103,6 +103,15 @@ pub fn launch() -> ArgMatches {
                 .help("to specify the pause time at the start of the animation, that time the gif will show the first frame"),
         )
         .arg(
+            Arg::new("file")
+                .takes_value(true)
+                .required(false)
+                .short('o')
+                .long("output")
+                .default_value("t-rec")
+                .help("to specify the output file (without extension)"),
+        )
+        .arg(
             Arg::new("program")
                 .value_name("shell or program to launch")
                 .takes_value(true)

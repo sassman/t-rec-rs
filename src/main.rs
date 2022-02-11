@@ -28,7 +28,7 @@ use crate::generators::{check_for_gif, check_for_mp4, generate_gif, generate_mp4
 use crate::tips::show_tip;
 
 use crate::capture::capture_thread;
-use crate::utils::{sub_shell_thread, target_file};
+use crate::utils::{sub_shell_thread, target_file, DEFAULT_EXT, MOVIE_EXT};
 use anyhow::{bail, Context};
 use clap::ArgMatches;
 use image::FlatSamples;
@@ -158,7 +158,7 @@ fn main() -> Result<()> {
         )
     }
 
-    let target = target_file();
+    let target = target_file(args.value_of("file").unwrap());
     let mut time = Duration::default();
 
     if should_generate_gif {
@@ -166,7 +166,7 @@ fn main() -> Result<()> {
             generate_gif(
                 &time_codes.lock().unwrap(),
                 tempdir.lock().unwrap().borrow(),
-                &format!("{}.{}", target, "gif"),
+                &format!("{}.{}", target, DEFAULT_EXT),
                 start_delay,
                 end_delay
             )?;
@@ -178,7 +178,7 @@ fn main() -> Result<()> {
             generate_mp4(
                 &time_codes.lock().unwrap(),
                 tempdir.lock().unwrap().borrow(),
-                &format!("{}.{}", target, "mp4"),
+                &format!("{}.{}", target, MOVIE_EXT),
             )?;
         }
     }
