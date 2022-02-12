@@ -7,8 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 [Unreleased]: https://github.com/sassman/t-rec-rs/compare/v0.7.0...HEAD
 
+## [0.7.1] - 2022-02-12
+[0.7.1]: https://github.com/sassman/t-rec-rs/compare/v0.7.0...v0.7.1
+
+### Changed
+- [feat(#105): add support configuring output](https://github.com/sassman/t-rec-rs/pull/107)
+- [feat(#100): dedicating an own cli argument for external window recording](https://github.com/sassman/t-rec-rs/pull/102)
+- [fix(#103): fix release binaries for linux](https://github.com/sassman/t-rec-rs/pull/106)
+- [chore(deps): bump image from 0.23.14 to 0.24.0](https://github.com/sassman/t-rec-rs/pull/108)
+- [chore(deps): bump dependencies + clap3 migration](https://github.com/sassman/t-rec-rs/pull/101)
+
+## Contributors
+- [sassman](https://github.com/sassman)
+
 ## [0.7.0] - 2022-02-03
-[0.7.0]: https://github.com/sassman/t-rec-rs/compare/v0.7.0...v0.6.2
+[0.7.0]: https://github.com/sassman/t-rec-rs/compare/v0.6.2...v0.7.0
 
 ### Changed
 - [feat(#100): dedicating an own cli argument for external window recording](https://github.com/sassman/t-rec-rs/pull/102)
