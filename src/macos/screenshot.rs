@@ -1,3 +1,4 @@
+use crate::common::image::convert_bgra_to_rgba;
 use crate::ImageOnHeap;
 
 use anyhow::{ensure, Context, Result};
@@ -7,7 +8,7 @@ use image::flat::SampleLayout;
 use image::{ColorType, FlatSamples};
 
 pub fn capture_window_screenshot(win_id: u64) -> Result<ImageOnHeap> {
-    let (w, h, channels, raw_data) = {
+    let (w, h, channels, mut raw_data) = {
         let image = unsafe {
             CGDisplay::screenshot(
                 CGRectNull,
@@ -43,7 +44,9 @@ pub fn capture_window_screenshot(win_id: u64) -> Result<ImageOnHeap> {
         (w, h, byte_per_pixel, raw_data)
     };
 
-    let color = ColorType::Bgra8;
+    convert_bgra_to_rgba(&mut raw_data);
+
+    let color = ColorType::Rgba8;
     let buffer = FlatSamples {
         samples: raw_data,
         layout: SampleLayout::row_major_packed(channels, w, h),

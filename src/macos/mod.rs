@@ -64,7 +64,7 @@ impl PlatformApi for QuartzApi {
 mod test {
     use super::*;
     use image::flat::View;
-    use image::{save_buffer, Bgra, GenericImageView};
+    use image::{save_buffer, GenericImageView, Rgba};
 
     ///
     /// for terminals with odd dimensions, like: 93x17
@@ -73,16 +73,16 @@ mod test {
         let mut api = setup()?;
         let win = api.get_active_window()?;
         let image_raw = api.capture_window_screenshot(win)?;
-        let image: View<_, Bgra<u8>> = image_raw.as_view().unwrap();
+        let image: View<_, Rgba<u8>> = image_raw.as_view().unwrap();
         let (width, height) = image.dimensions();
 
         api.calibrate(win)?;
         let image_calibrated_raw = api.capture_window_screenshot(win)?;
-        let image_calibrated: View<_, Bgra<u8>> = image_calibrated_raw.as_view().unwrap();
+        let image_calibrated: View<_, Rgba<u8>> = image_calibrated_raw.as_view().unwrap();
         let (width_new, height_new) = image_calibrated.dimensions();
         dbg!(width, width_new, height, height_new);
 
-        let Bgra([_, _, _, alpha]) = image.get_pixel(width / 2, 0);
+        let Rgba([_, _, _, alpha]) = image.get_pixel(width / 2, 0);
         dbg!(alpha);
         if alpha == 0 {
             // if that pixel was full transparent, for example on ubuntu / GNOME, caused by the drop shadow

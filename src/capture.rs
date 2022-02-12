@@ -1,5 +1,6 @@
 use anyhow::{Context, Result};
 use image::save_buffer;
+use image::ColorType::Rgba8;
 use std::borrow::Borrow;
 use std::ops::{Add, Sub};
 use std::sync::mpsc::Receiver;
@@ -80,7 +81,7 @@ pub fn save_frame(
         &image.samples,
         image.layout.width,
         image.layout.height,
-        image.color_hint.unwrap(),
+        image.color_hint.unwrap_or(Rgba8),
     )
     .context("Cannot save frame")
 }
