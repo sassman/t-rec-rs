@@ -33,7 +33,7 @@ features = ["cargo"]
 
 [dependencies.image]
 version = "0.24.0"
-features = ["tga"]
+features = ["bmp"]
 
 [target.'cfg(target_os = "macos")'.dependencies]
 objc_id = "0.1.1"

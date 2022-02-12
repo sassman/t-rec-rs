@@ -3,7 +3,14 @@ use std::process::Command;
 use anyhow::{Context, Result};
 use tempfile::TempDir;
 
+use crate::utils::IMG_EXT;
+
 const PROGRAM: &str = "ffmpeg";
+
+#[cfg(target_os = "macos")]
+const INST_CMD: &str = "brew install ffmpeg";
+#[cfg(not(target_os = "macos"))]
+const INST_CMD: &str = "apt-get install ffmpeg";
 
 /// checks if ffmpeg is available
 pub fn check_for_ffmpeg() -> Result<()> {
@@ -11,14 +18,11 @@ pub fn check_for_ffmpeg() -> Result<()> {
         .arg("-version")
         .output()
         .with_context(|| {
-            format!(
-                "There is an issue with '{}', please install: `brew install {}`",
-                PROGRAM, PROGRAM
-            )
+            format!("There is an issue with '{PROGRAM}', please install: `{INST_CMD}`")
         })?;
 
     if !String::from_utf8(out.stdout.to_vec())
-        .with_context(|| format!("Unable to parse the `{} -version`", PROGRAM))
+        .with_context(|| format!("Unable to parse the `{PROGRAM} -version`"))
         .unwrap()
         .contains("--enable-libx264")
     {
@@ -37,7 +41,7 @@ pub fn generate_mp4_with_ffmpeg(
     tempdir: &TempDir,
     target: &str,
 ) -> Result<()> {
-    println!("🎉 🎬 Generating {}", &target);
+    println!("🎉 🎬 Generating {target}");
     Command::new(PROGRAM)
         .arg("-y")
         .arg("-r")
@@ -48,7 +52,7 @@ pub fn generate_mp4_with_ffmpeg(
         .arg("-pattern_type")
         .arg("glob")
         .arg("-i")
-        .arg(tempdir.path().join("*.tga"))
+        .arg(tempdir.path().join(format!("*.{IMG_EXT}")))
         .arg("-vcodec")
         .arg("libx264")
         .arg("-pix_fmt")
@@ -59,6 +63,6 @@ pub fn generate_mp4_with_ffmpeg(
         // end of fix
         .arg(target)
         .output()
-        .with_context(|| format!("Cannot start '{}' to generate the final video", PROGRAM))
+        .with_context(|| format!("Cannot start '{PROGRAM}' to generate the final video"))
         .map(|_| ())
 }

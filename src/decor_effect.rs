@@ -5,6 +5,7 @@ use anyhow::Context;
 use rayon::prelude::*;
 use tempfile::TempDir;
 
+use crate::utils::IMG_EXT;
 use crate::Result;
 
 ///
@@ -100,7 +101,9 @@ fn apply_effect(
     effect: Box<dyn Fn(PathBuf) -> Result<()> + Send + Sync>,
 ) {
     time_codes.into_par_iter().for_each(|tc| {
-        let file = tempdir.path().join(crate::utils::file_name_for(tc, "tga"));
+        let file = tempdir
+            .path()
+            .join(crate::utils::file_name_for(tc, IMG_EXT));
         if let Err(e) = effect(file) {
             eprintln!("{}", e);
         }

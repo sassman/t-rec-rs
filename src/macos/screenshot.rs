@@ -74,6 +74,7 @@ mod tests {
     #[cfg(feature = "e2e_tests")]
     fn should_capture_with_cropped_transparent_area() -> Result<()> {
         use crate::common::PlatformApi;
+        use crate::utils::IMG_EXT;
 
         let mut api = setup()?;
         let win = 5308;
@@ -83,7 +84,7 @@ mod tests {
 
         // Note: visual validation is sometimes helpful:
         save_buffer(
-            format!("frame-org-{}.tga", win),
+            format!("frame-org-{win}.{IMG_EXT}"),
             &image.samples,
             image.layout.width,
             image.layout.height,
@@ -97,7 +98,7 @@ mod tests {
         assert!(width > image_cropped.layout.width);
         // Note: visual validation is sometimes helpful:
         save_buffer(
-            format!("frame-cropped-{}.tga", win),
+            format!("frame-cropped-{win}.{IMG_EXT}"),
             &image_cropped.samples,
             image_cropped.layout.width,
             image_cropped.layout.height,

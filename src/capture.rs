@@ -8,7 +8,7 @@ use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
 use tempfile::TempDir;
 
-use crate::utils::file_name_for;
+use crate::utils::{file_name_for, IMG_EXT};
 use crate::{ImageOnHeap, PlatformApi, WindowId};
 
 /// captures screenshots as file on disk
@@ -77,7 +77,7 @@ pub fn save_frame(
     file_name_for: fn(&u128, &str) -> String,
 ) -> Result<()> {
     save_buffer(
-        tempdir.path().join(file_name_for(&time_code, "tga")),
+        tempdir.path().join(file_name_for(&time_code, IMG_EXT)),
         &image.samples,
         image.layout.width,
         image.layout.height,

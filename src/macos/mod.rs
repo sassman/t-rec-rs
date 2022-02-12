@@ -2,11 +2,11 @@ mod core_foundation_sys_patches;
 mod screenshot;
 mod window_id;
 
+use crate::common::identify_transparency::identify_transparency;
+use crate::common::image::crop;
 use crate::PlatformApi;
 use crate::{ImageOnHeap, Margin, Result, WindowList};
 
-use crate::common::identify_transparency::identify_transparency;
-use crate::common::image::crop;
 use anyhow::Context;
 use screenshot::capture_window_screenshot;
 use std::env;
@@ -63,6 +63,7 @@ impl PlatformApi for QuartzApi {
 #[cfg(test)]
 mod test {
     use super::*;
+    use crate::utils::IMG_EXT;
     use image::flat::View;
     use image::{save_buffer, GenericImageView, Rgba};
 
@@ -99,7 +100,7 @@ mod test {
 
         // Note: visual validation is sometimes helpful:
         save_buffer(
-            format!("frame-raw-{}.tga", win),
+            format!("frame-raw-{win}.{IMG_EXT}"),
             &image_raw.samples,
             image_raw.layout.width,
             image_raw.layout.height,
