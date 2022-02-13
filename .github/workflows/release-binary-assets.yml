@@ -3,6 +3,8 @@ on:
   release:
     types:
       - published
+  workflow_dispatch:
+
 jobs:
   # https://github.com/mislav/bump-homebrew-formula-action
   publish-to-brew:
@@ -22,10 +24,6 @@ jobs:
       matrix:
         include:
           - target: x86_64-unknown-linux-musl
-            os: ubuntu-latest
-            cross: false
-            binName: t-rec
-          - target: aarch64-unknown-linux-musl
             os: ubuntu-latest
             cross: false
             binName: t-rec
@@ -82,7 +80,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: build .deb file
-        uses: sassman/rust-deb-builder@v1.57.0
+        uses: sassman/rust-deb-builder@v1
       - name: Archive deb artifact
         uses: actions/upload-artifact@v2
         with:
