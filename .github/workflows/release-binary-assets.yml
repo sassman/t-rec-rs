@@ -6,17 +6,6 @@ on:
   workflow_dispatch:
 
 jobs:
-  # https://github.com/mislav/bump-homebrew-formula-action
-  publish-to-brew:
-    name: post / homebrew
-    runs-on: macos-latest
-    steps:
-      - uses: mislav/bump-homebrew-formula-action@v1
-        with:
-          formula-name: t-rec
-        env:
-          COMMITTER_TOKEN: ${{ secrets.COMMITTER_TOKEN }}
-
   release:
     runs-on: ${{ matrix.os }}
     strategy:
@@ -58,10 +47,10 @@ jobs:
         env:
           TARGET: ${{ matrix.target }}
           TAG: ${{ github.event.release.tag_name }}
+          FILENAME: ${{ matrix.binName }}-$TAG-$TARGET.tar.gz
         run: |
-          filename="t-rec-$TAG-$TARGET.tar.gz"
-          tar -czvf "$filename" README.md LICENSE -C "target/$TARGET/release" "${{ matrix.binName }}"
-          echo "::set-output name=filename::$filename"
+          tar -czvf "$FILENAME" README.md LICENSE -C "target/$TARGET/release" "${{ matrix.binName }}"
+          echo "::set-output name=filename::$FILENAME"
       - name: Upload Archive
         uses: ncipollo/release-action@v1.8.7
         with:
@@ -80,19 +69,22 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: build .deb file
+        env:
+          TARGET: x86_64-unknown-linux-musl
+          TAG: ${{ github.event.release.tag_name }}
         uses: sassman/rust-deb-builder@v1
       - name: Archive deb artifact
         uses: actions/upload-artifact@v2
         with:
-          name: t-rec-amd64-static.deb
-          path: target/x86_64-unknown-linux-musl/debian/t-rec*.deb
+          name: t-rec-$TAG-$TARGET.deb
+          path: target/$TARGET/debian/t-rec*.deb
       - name: upload deb file
         uses: ncipollo/release-action@v1.8.7
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           allowUpdates: true
           artifactErrorsFailBuild: true
-          artifacts: target/x86_64-unknown-linux-musl/debian/t-rec*.deb
+          artifacts: target/$TARGET/debian/t-rec*.deb
           artifactContentType: application/octet-stream
           omitBodyDuringUpdate: true
           omitNameDuringUpdate: true
