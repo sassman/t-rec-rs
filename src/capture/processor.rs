@@ -44,7 +44,7 @@ pub fn capture_thread(
     api: impl PlatformApi + Sync,
     win_id: WindowId,
     time_codes: Arc<Mutex<Vec<u128>>>,
-    tempdir: Arc<TempDir>,
+    tempdir: Arc<Mutex<TempDir>>,
     frame_drop_strategy: &FrameDropStrategy,
     framerate: &Framerate,
 ) -> Result<()> {
@@ -126,19 +126,6 @@ pub fn capture_thread(
             last_time = now;
         }
     });
-
-    Ok(())
-}
-
-fn capture_and_save_frame(
-    api: Arc<impl PlatformApi + Sync>,
-    win_id: WindowId,
-    timecode: u128,
-    tempdir: Arc<Mutex<TempDir>>,
-    file_name_fn: fn(&u128, &str) -> String,
-) -> Result<()> {
-    let mut result: Result<()> = Ok(());
-    rayon::scope(|s| s.spawn(|_| {}));
 
     Ok(())
 }

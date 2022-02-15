@@ -81,7 +81,7 @@ fn main() -> Result<()> {
     let frame_drop_strategy = args
         .is_present("natural-mode")
         .then(|| FrameDropStrategy::DoNotDropAny)
-        .unwrap_or_else(|| FrameDropStrategy::DropIdenticalFrames);
+        .unwrap_or(FrameDropStrategy::DropIdenticalFrames);
     let should_generate_gif = !args.is_present("video-only");
     let should_generate_video = args.is_present("video") || args.is_present("video-only");
     let (start_delay, end_delay) = (
@@ -92,7 +92,7 @@ fn main() -> Result<()> {
         .value_of("framerate")
         .unwrap()
         .parse::<u32>()
-        .map(|f| Framerate::new(f))
+        .map(Framerate::new)
         .context("Invalid value for framerate")?;
 
     if should_generate_gif {
