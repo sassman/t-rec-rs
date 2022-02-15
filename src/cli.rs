@@ -91,7 +91,7 @@ pub fn launch() -> ArgMatches {
                 .required(false)
                 .short('e')
                 .long("end-pause")
-                .help("to specify the pause time at the end of the animation, that time the gif will show the last frame"),
+                .help("Specify the pause time at the end of the animation, that time the gif will show the last frame"),
         )
         .arg(
             Arg::new("start-pause")
@@ -100,7 +100,7 @@ pub fn launch() -> ArgMatches {
                 .required(false)
                 .short('s')
                 .long("start-pause")
-                .help("to specify the pause time at the start of the animation, that time the gif will show the first frame"),
+                .help("Specify the pause time at the start of the animation, that time the gif will show the first frame"),
         )
         .arg(
             Arg::new("file")
@@ -109,7 +109,18 @@ pub fn launch() -> ArgMatches {
                 .short('o')
                 .long("output")
                 .default_value("t-rec")
-                .help("to specify the output file (without extension)"),
+                .help("Specify the output file (without extension)"),
+        )
+        .arg(
+            Arg::new("framerate")
+                .value_name("frames per second")
+                .takes_value(true)
+                .required(false)
+                .short('f')
+                .long("framerate")
+                .default_value("4")
+                // .possible_values(&["4", "8"])
+                .help("Increase the screen capturing rate (framerate)"),
         )
         .arg(
             Arg::new("program")

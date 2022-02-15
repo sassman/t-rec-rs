@@ -809,6 +809,7 @@ dependencies = [
  "core-foundation",
  "core-foundation-sys",
  "core-graphics",
+ "crossbeam-channel",
  "env_logger",
  "humantime",
  "image",

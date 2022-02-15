@@ -1,15 +1,15 @@
+mod capture;
 mod cli;
 mod common;
 mod decor_effect;
 mod generators;
 mod tips;
+mod utils;
 
-mod capture;
 #[cfg(target_os = "linux")]
 mod linux;
 #[cfg(target_os = "macos")]
 mod macos;
-mod utils;
 #[cfg(target_os = "windows")]
 mod win;
 
@@ -27,13 +27,13 @@ use crate::decor_effect::{apply_big_sur_corner_effect, apply_shadow_effect};
 use crate::generators::{check_for_gif, check_for_mp4, generate_gif, generate_mp4};
 use crate::tips::show_tip;
 
-use crate::capture::capture_thread;
+use crate::capture::{capture_thread, FrameDropStrategy, Framerate};
 use crate::utils::{sub_shell_thread, target_file, DEFAULT_EXT, MOVIE_EXT};
 use anyhow::{bail, Context};
 use clap::ArgMatches;
 use image::FlatSamples;
 use std::borrow::Borrow;
-use std::sync::{mpsc, Arc, Mutex};
+use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
 use std::{env, thread};
 use tempfile::TempDir;
@@ -64,7 +64,8 @@ fn main() -> Result<()> {
     if args.is_present("list-windows") {
         return ls_win();
     }
-
+    let quiet = args.is_present("quiet");
+    let verbose = args.is_present("verbose");
     let program: String = {
         if args.is_present("program") {
             args.value_of("program").unwrap().to_owned()
@@ -77,13 +78,22 @@ fn main() -> Result<()> {
     let mut api = setup()?;
     api.calibrate(win_id)?;
 
-    let force_natural = args.is_present("natural-mode");
+    let frame_drop_strategy = args
+        .is_present("natural-mode")
+        .then(|| FrameDropStrategy::DoNotDropAny)
+        .unwrap_or_else(|| FrameDropStrategy::DropIdenticalFrames);
     let should_generate_gif = !args.is_present("video-only");
     let should_generate_video = args.is_present("video") || args.is_present("video-only");
     let (start_delay, end_delay) = (
         parse_delay(args.value_of("start-pause"), "start-pause")?,
         parse_delay(args.value_of("end-pause"), "end-pause")?,
     );
+    let framerate = args
+        .value_of("framerate")
+        .unwrap()
+        .parse::<u32>()
+        .map(|f| Framerate::new(f))
+        .context("Invalid value for framerate")?;
 
     if should_generate_gif {
         check_for_gif()?;
@@ -93,34 +103,38 @@ fn main() -> Result<()> {
     }
 
     // the nice thing is the cleanup on drop
-    let tempdir = Arc::new(Mutex::new(
-        TempDir::new().context("Cannot create tempdir.")?,
-    ));
+    let tempdir = Arc::new(TempDir::new().context("Cannot create tempdir.")?);
     let time_codes = Arc::new(Mutex::new(Vec::new()));
-    let (tx, rx) = mpsc::channel();
+    let (tx, rx) = crossbeam_channel::bounded(1);
     let photograph = {
         let tempdir = tempdir.clone();
         let time_codes = time_codes.clone();
-        let force_natural = force_natural;
+        let framerate = framerate.clone();
         thread::spawn(move || -> Result<()> {
-            capture_thread(&rx, api, win_id, time_codes, tempdir, force_natural)
+            capture_thread(
+                &rx,
+                api,
+                win_id,
+                time_codes,
+                tempdir,
+                &frame_drop_strategy,
+                &framerate,
+            )
         })
     };
     let interact = thread::spawn(move || -> Result<()> { sub_shell_thread(&program).map(|_| ()) });
 
     clear_screen();
-    if args.is_present("verbose") {
-        println!(
-            "Frame cache dir: {:?}",
-            tempdir.lock().expect("Cannot lock tempdir resource").path()
-        );
+    if verbose {
+        println!("Frame cache dir: {:?}", tempdir.path());
+        let fr = format!(" @ {}", &framerate);
         if let Some(window) = window_name {
-            println!("Recording window: {:?}", window);
+            println!("Recording window: {window}{fr}");
         } else {
-            println!("Recording window id: {}", win_id);
+            println!("Recording window id: {win_id}{fr}");
         }
     }
-    if args.is_present("quiet") {
+    if quiet {
         println!();
     } else {
         println!("[t-rec]: Press Ctrl+D to end recording");
@@ -145,15 +159,12 @@ fn main() -> Result<()> {
     );
     show_tip();
 
-    apply_big_sur_corner_effect(
-        &time_codes.lock().unwrap(),
-        tempdir.lock().unwrap().borrow(),
-    );
+    apply_big_sur_corner_effect(&time_codes.lock().unwrap(), tempdir.borrow());
 
     if let Some("shadow") = args.value_of("decor") {
         apply_shadow_effect(
             &time_codes.lock().unwrap(),
-            tempdir.lock().unwrap().borrow(),
+            tempdir.borrow(),
             args.value_of("bg").unwrap().to_string(),
         )
     }
@@ -165,7 +176,7 @@ fn main() -> Result<()> {
         time += prof! {
             generate_gif(
                 &time_codes.lock().unwrap(),
-                tempdir.lock().unwrap().borrow(),
+                tempdir.borrow(),
                 &format!("{}.{}", target, DEFAULT_EXT),
                 start_delay,
                 end_delay
@@ -177,7 +188,7 @@ fn main() -> Result<()> {
         time += prof! {
             generate_mp4(
                 &time_codes.lock().unwrap(),
-                tempdir.lock().unwrap().borrow(),
+                tempdir.borrow(),
                 &format!("{}.{}", target, MOVIE_EXT),
             )?;
         }
