@@ -1,4 +1,4 @@
-use crate::utils::file_name_for;
+use crate::utils::{file_name_for, IMG_EXT};
 
 use anyhow::{Context, Result};
 use std::ops::Div;
@@ -20,10 +20,7 @@ pub fn check_for_imagemagick() -> Result<Output> {
         .arg("--version")
         .output()
         .with_context(|| {
-            format!(
-                "There is an issue with '{}', please install: `{}`",
-                PROGRAM, INST_CMD,
-            )
+            format!("There is an issue with '{PROGRAM}', please install: `{INST_CMD}`")
         })
 }
 
@@ -36,14 +33,18 @@ pub fn generate_gif_with_convert(
     start_pause: Option<Duration>,
     end_pause: Option<Duration>,
 ) -> Result<()> {
-    println!("🎉 🚀 Generating {}", target);
+    println!("🎉 🚀 Generating {target}");
     let mut cmd = Command::new(PROGRAM);
     cmd.arg("-loop").arg("0");
     let mut delay = 0;
+    let temp = tempdir.path();
     let last_frame_i = time_codes.len() - 1;
     for (i, tc) in time_codes.iter().enumerate() {
         delay = *tc - delay;
-        let frame = tempdir.path().join(file_name_for(tc, "tga"));
+        let frame = temp.join(file_name_for(tc, IMG_EXT));
+        if !frame.exists() {
+            continue;
+        }
         let mut frame_delay = (delay as f64 * 0.1) as u64;
         match (i, start_pause, end_pause) {
             (0, Some(delay), _) => {

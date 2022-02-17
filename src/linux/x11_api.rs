@@ -261,6 +261,7 @@ impl PlatformApi for X11Api {
 #[cfg(test)]
 mod test {
     use super::*;
+    use crate::utils::IMG_EXT;
     use image::flat::View;
     use image::{save_buffer, GenericImageView, Rgba};
 
@@ -345,7 +346,7 @@ mod test {
         assert_ne!(alpha, 0, "alpha is unexpected");
 
         // Note: visual validation is sometimes helpful:
-        let file = format!("frame-{}.tga", win);
+        let file = format!("frame-{win}.{IMG_EXT}");
         save_buffer(
             file,
             &image_raw.samples,
