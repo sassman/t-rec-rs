@@ -1,5 +1,5 @@
 use crate::common::Margin;
-use crate::{Image, ImageOnHeap, Result};
+use crate::{ImageOnHeap, Result};
 use image::flat::View;
 use image::{imageops, GenericImageView, ImageBuffer, Rgba};
 
@@ -7,11 +7,11 @@ use image::{imageops, GenericImageView, ImageBuffer, Rgba};
 /// specialized version of crop for [`ImageOnHeap`] and [`Margin`]
 ///
 #[cfg_attr(not(macos), allow(dead_code))]
-pub fn crop(image: Image, margin: &Margin) -> Result<ImageOnHeap> {
+pub fn crop(image: crate::Image, margin: &Margin) -> Result<ImageOnHeap> {
     let mut img2: View<_, Rgba<u8>> = image.as_view()?;
     let (width, height) = (
-        img2.width() - (margin.left + margin.right) as u32,
-        img2.height() - (margin.top + margin.bottom) as u32,
+        img2.dimensions().0 - (margin.left + margin.right) as u32,
+        img2.dimensions().1 - (margin.top + margin.bottom) as u32,
     );
     let image_cropped = imageops::crop(
         &mut img2,

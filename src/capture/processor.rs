@@ -1,7 +1,5 @@
-use anyhow::Context;
+use blockhash::{blockhash256, Blockhash256};
 use crossbeam_channel::Receiver;
-use image::save_buffer;
-use image::ColorType::Rgba8;
 use rayon::ThreadPoolBuilder;
 use std::borrow::Borrow;
 use std::ops::Sub;
@@ -9,28 +7,34 @@ use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
 use tempfile::TempDir;
 
-use crate::capture::Framerate;
-use crate::utils::{file_name_for, IMG_EXT};
-use crate::{ImageOnHeap, PlatformApi, Result, WindowId};
+use crate::capture::{Framerate, Timecode};
+use crate::utils::file_name_for;
+use crate::{Frame, PlatformApi, Result, WindowId};
 
-#[derive(Eq, PartialEq)]
+#[derive(Eq, PartialEq, Clone)]
 pub enum FrameDropStrategy {
     DoNotDropAny,
     DropIdenticalFrames,
 }
 
 #[derive(Clone)]
-struct FrameComparator<'a> {
-    last_frame: Option<ImageOnHeap>,
-    strategy: &'a FrameDropStrategy,
+struct FrameComparator {
+    last_frames: Vec<(Timecode, Timecode, Blockhash256)>,
+    _strategy: FrameDropStrategy,
 }
 
-impl<'a> FrameComparator<'a> {
-    pub fn drop_frame(&mut self, frame: ImageOnHeap) -> bool {
-        if self.last_frame.is_none() {
-            self.last_frame = Some(frame);
-            false
+impl FrameComparator {
+    pub fn should_drop_frame(&mut self, timecode: &Timecode, frame: &Frame) -> bool {
+        let hash = blockhash256(frame);
+        if let Some((_last_time_code, _other_time_code, last_hash)) = self.last_frames.last() {
+            let last_eq = last_hash == &hash;
+            if !last_eq {
+                self.last_frames.pop();
+                self.last_frames.push((timecode.clone(), hash));
+            }
+            last_eq
         } else {
+            self.last_frames.push((timecode.clone(), hash));
             false
         }
     }
@@ -43,23 +47,23 @@ pub fn capture_thread(
     rx: &Receiver<()>,
     api: impl PlatformApi + Sync,
     win_id: WindowId,
-    time_codes: Arc<Mutex<Vec<u128>>>,
-    tempdir: Arc<Mutex<TempDir>>,
+    time_codes: Arc<Mutex<Vec<Timecode>>>,
+    tempdir: Arc<TempDir>,
     frame_drop_strategy: &FrameDropStrategy,
     framerate: &Framerate,
 ) -> Result<()> {
     let pool = ThreadPoolBuilder::default().build()?;
     let duration = Duration::from_secs(1) / *framerate.as_ref();
     let start = Instant::now();
-    let mut idle_duration = Duration::from_millis(0);
-    let mut last_frame: Option<ImageOnHeap> = None;
-    let mut identical_frames = 0;
+    // let mut idle_duration = Duration::from_millis(0);
+    // let mut last_frame: Option<ImageOnHeap> = None;
+    // let mut identical_frames = 0;
     let mut last_time = Instant::now();
     let api = Arc::new(api);
-    let comp = Arc::new(FrameComparator {
-        last_frame: None,
-        strategy: frame_drop_strategy,
-    });
+    let comp = Arc::new(Mutex::new(FrameComparator {
+        last_frames: Vec::new(),
+        _strategy: frame_drop_strategy.clone(),
+    }));
     // let rx = Arc::new(rx);
     // let mut results: Arc<Mutex<Vec<Result<()>>>> = Arc::new(Mutex::new(Vec::new()));
 
@@ -72,26 +76,32 @@ pub fn capture_thread(
             if rx.recv_timeout(sleep_time).is_ok() {
                 if pool.current_thread_has_pending_tasks().unwrap_or(false) {
                     println!(
-                        "there is a backlog of frames that needs to be persisted, this may take a bit ...",
+                        "there is a backlog of frames that needs to be stored, this may take a bit ...",
                     );
                 }
                 return;
             }
             let now = Instant::now();
-            let timecode = now.saturating_duration_since(start).as_millis();
-            // let effective_now = now.sub(idle_duration);
-            let api = api.clone();
-            let tempdir = tempdir.clone();
-            time_codes.lock().unwrap().push(timecode);
+            s.spawn({
+                let api = api.clone();
+                let tempdir = tempdir.clone();
+                let comp = comp.clone();
+                let time_codes = time_codes.clone();
+                move |_| {
+                    let tc: Timecode = now.saturating_duration_since(start).as_millis().into();
 
-            s.spawn(move |_| {
-                let frame = api.capture_window_screenshot(win_id);
-
-                if let Ok(frame) = frame {
-                    save_frame(&frame, timecode, tempdir.borrow(), file_name_for).unwrap();
-                    // results.borrow_mut().lock().unwrap().push(result);
+                    let frame = api.capture_window_screenshot(win_id);
+                    if let Ok(frame) = frame {
+                        let frame: Frame = frame.into();
+                        if comp.lock().unwrap().should_drop_frame(&tc, &frame) {
+                            return;
+                        }
+                        frame.save(&tc, tempdir.borrow(), file_name_for).unwrap();
+                        time_codes.lock().unwrap().push(tc);
+                        // results.borrow_mut().lock().unwrap().push(result);
+                    }
                 }
-            });
+           });
 
             /*
             let image = api.capture_window_screenshot(win_id)?;
@@ -128,21 +138,4 @@ pub fn capture_thread(
     });
 
     Ok(())
-}
-
-/// saves a frame as a tga file
-pub fn save_frame(
-    image: &ImageOnHeap,
-    time_code: u128,
-    tempdir: &TempDir,
-    file_name_for: fn(&u128, &str) -> String,
-) -> Result<()> {
-    save_buffer(
-        tempdir.path().join(file_name_for(&time_code, IMG_EXT)),
-        &image.samples,
-        image.layout.width,
-        image.layout.height,
-        image.color_hint.unwrap_or(Rgba8),
-    )
-    .context("Cannot save frame")
 }

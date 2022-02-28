@@ -27,7 +27,7 @@ use crate::decor_effect::{apply_big_sur_corner_effect, apply_shadow_effect};
 use crate::generators::{check_for_gif, check_for_mp4, generate_gif, generate_mp4};
 use crate::tips::show_tip;
 
-use crate::capture::{capture_thread, FrameDropStrategy, Framerate};
+use crate::capture::{capture_thread, Frame, FrameDropStrategy, Framerate};
 use crate::utils::{sub_shell_thread, target_file, DEFAULT_EXT, MOVIE_EXT};
 use anyhow::{bail, Context};
 use clap::ArgMatches;

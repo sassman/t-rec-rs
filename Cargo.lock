@@ -65,6 +65,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0d8c1fef690941d3e7788d328517591fecc684c084084702d6ff1641e993699a"
 
 [[package]]
+name = "blockhash"
+version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9fa8e2f31be6f788907cafda9ef15035d8a43edb20bca881a307bbc31333fe7c"
+
+[[package]]
 name = "bumpalo"
 version = "3.9.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -805,6 +811,7 @@ name = "t-rec"
 version = "0.7.3"
 dependencies = [
  "anyhow",
+ "blockhash",
  "clap",
  "core-foundation",
  "core-foundation-sys",

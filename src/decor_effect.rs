@@ -1,6 +1,7 @@
 use std::path::PathBuf;
 use std::process::Command;
 
+use crate::capture::Timecode;
 use anyhow::Context;
 use rayon::prelude::*;
 use tempfile::TempDir;
@@ -18,7 +19,7 @@ use crate::Result;
 ///     -layers merge \
 ///     t-rec-frame-000000251.tga
 /// ```
-pub fn apply_shadow_effect(time_codes: &[u128], tempdir: &TempDir, bg_color: String) {
+pub fn apply_shadow_effect(time_codes: &[Timecode], tempdir: &TempDir, bg_color: String) {
     apply_effect(
         time_codes,
         tempdir,
@@ -56,7 +57,7 @@ pub fn apply_shadow_effect(time_codes: &[u128], tempdir: &TempDir, bg_color: Str
 ///      \) -alpha off -compose CopyOpacity -composite \
 ///    t-rec-frame-000000251.tga
 /// ```
-pub fn apply_big_sur_corner_effect(time_codes: &[u128], tempdir: &TempDir) {
+pub fn apply_big_sur_corner_effect(time_codes: &[Timecode], tempdir: &TempDir) {
     let radius = 13;
     apply_effect(
         time_codes,
@@ -96,7 +97,7 @@ pub fn apply_big_sur_corner_effect(time_codes: &[u128], tempdir: &TempDir) {
 /// apply a given effect (closure) to all frames
 ///
 fn apply_effect(
-    time_codes: &[u128],
+    time_codes: &[Timecode],
     tempdir: &TempDir,
     effect: Box<dyn Fn(PathBuf) -> Result<()> + Send + Sync>,
 ) {
