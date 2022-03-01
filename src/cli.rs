@@ -1,11 +1,11 @@
-use clap::{crate_authors, crate_description, crate_version, App, AppSettings, Arg, ArgMatches};
+use clap::{crate_authors, crate_description, crate_version, Arg, ArgMatches, Command};
 
 pub fn launch() -> ArgMatches {
-    App::new("t-rec")
+    Command::new("t-rec")
+        .allow_missing_positional(true)
         .version(crate_version!())
         .author(crate_authors!())
         .about(crate_description!())
-        .setting(AppSettings::AllowMissingPositional)
         .arg(
             Arg::new("verbose")
                 .takes_value(false)
