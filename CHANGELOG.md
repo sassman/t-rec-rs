@@ -5,7 +5,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
-[Unreleased]: https://github.com/sassman/t-rec-rs/compare/v0.7.0...HEAD
+[Unreleased]: https://github.com/sassman/t-rec-rs/compare/v0.7.2...HEAD
+
+## [0.7.2] - 2022-03-02
+[0.7.2]: https://github.com/sassman/t-rec-rs/compare/v0.7.1...v0.7.2
+
+### Changed
+- [chore(deps): bump clap from 3.0.14 to 3.1.3](https://github.com/sassman/t-rec-rs/pull/121)
+- [chore(deps): bump image from 0.24.0 to 0.24.1](https://github.com/sassman/t-rec-rs/pull/114)
+- [fix(clippy): fix enum variant names lint](https://github.com/sassman/t-rec-rs/pull/119)
+- [fix(ci): release-binary-assets.yml](https://github.com/sassman/t-rec-rs/pull/111)
+
+### Contributors
+- [dependabot[bot]](https://github.com/apps/dependabot)
+- [sassman](https://github.com/sassman)
 
 ## [0.7.1] - 2022-02-12
 [0.7.1]: https://github.com/sassman/t-rec-rs/compare/v0.7.0...v0.7.1
@@ -18,7 +31,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [chore(deps): bump image from 0.23.14 to 0.24.0](https://github.com/sassman/t-rec-rs/pull/108)
 - [chore(deps): bump dependencies + clap3 migration](https://github.com/sassman/t-rec-rs/pull/101)
 
-## Contributors
+### Contributors
 - [sassman](https://github.com/sassman)
 
 ## [0.7.0] - 2022-02-03
