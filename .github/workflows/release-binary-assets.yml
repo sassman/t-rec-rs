@@ -45,11 +45,9 @@ jobs:
         id: archive
         shell: bash
         env:
-          TARGET: ${{ matrix.target }}
-          TAG: ${{ github.event.release.tag_name }}
-          FILENAME: ${{ matrix.binName }}-$TAG-$TARGET.tar.gz
+          FILENAME: ${{ matrix.binName }}-${{ github.event.release.tag_name }}-${{ matrix.target }}.tar.gz
         run: |
-          tar -czvf "$FILENAME" README.md LICENSE -C "target/$TARGET/release" "${{ matrix.binName }}"
+          tar -czvf "$FILENAME" README.md LICENSE -C "target/${{ matrix.target }}/release" "${{ matrix.binName }}"
           echo "::set-output name=filename::$FILENAME"
       - name: Upload Archive
         uses: ncipollo/release-action@v1.8.7
@@ -76,15 +74,15 @@ jobs:
       - name: Archive deb artifact
         uses: actions/upload-artifact@v2
         with:
-          name: t-rec-$TAG-$TARGET.deb
-          path: target/$TARGET/debian/t-rec*.deb
+          name: t-rec-${{ github.event.release.tag_name }}-x86_64-unknown-linux-musl.deb
+          path: target/x86_64-unknown-linux-musl/debian/t-rec*.deb
       - name: upload deb file
         uses: ncipollo/release-action@v1.8.7
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           allowUpdates: true
           artifactErrorsFailBuild: true
-          artifacts: target/$TARGET/debian/t-rec*.deb
+          artifacts: target/x86_64-unknown-linux-musl/debian/t-rec*.deb
           artifactContentType: application/octet-stream
           omitBodyDuringUpdate: true
           omitNameDuringUpdate: true
