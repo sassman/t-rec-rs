@@ -5,7 +5,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
-[Unreleased]: https://github.com/sassman/t-rec-rs/compare/v0.7.2...HEAD
+[Unreleased]: https://github.com/sassman/t-rec-rs/compare/v0.7.3...HEAD
+
+## [0.7.3] - 2022-03-15
+[0.7.3]: https://github.com/sassman/t-rec-rs/compare/v0.7.2...v0.7.3
+
+### Changed
+- [chore(deps): bump clap from 3.1.3 to 3.1.5](https://github.com/sassman/t-rec-rs/pull/124)
+- [chore(deps): bump clap from 3.1.5 to 3.1.6](https://github.com/sassman/t-rec-rs/pull/126)
+- [chore(deps): bump anyhow from 1.0.55 to 1.0.56](https://github.com/sassman/t-rec-rs/pull/125)
+- [fix(ci): fix undefined variables on release asset builds](https://github.com/sassman/t-rec-rs/pull/123)
+
+## Contributors
+- [dependabot[bot]](https://github.com/apps/dependabot)
+- [sassman](https://github.com/sassman)
 
 ## [0.7.2] - 2022-03-02
 [0.7.2]: https://github.com/sassman/t-rec-rs/compare/v0.7.1...v0.7.2
