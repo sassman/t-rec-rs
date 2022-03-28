@@ -37,7 +37,7 @@ pub fn generate_gif_with_convert(
     println!("🎉 🚀 Generating {target}");
     let mut cmd = Command::new(PROGRAM);
     cmd.arg("-loop").arg("0");
-    let mut delay = 0;
+    let mut delay: u32 = 0;
     let temp = tempdir.path();
     let last_frame_i = time_codes.last();
     if last_frame_i.is_none() {

@@ -171,6 +171,7 @@ fn main() -> Result<()> {
 
     let target = target_file(args.value_of("file").unwrap());
     let mut time = Duration::default();
+    time_codes.lock().unwrap().sort_unstable();
 
     if should_generate_gif {
         time += prof! {
