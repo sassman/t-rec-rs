@@ -1,22 +1,17 @@
-winrt::import!(
-    dependencies
-        "os"
-    modules
-        "windows.graphics"
-        "windows.graphics.capture"
-        "windows.graphics.directx"
-        "windows.graphics.directx.direct3d11"
-);
-
 use std::sync::{Arc, Mutex};
 
 use winapi::shared::minwindef::{BOOL, FALSE, INT, LPARAM, MAX_PATH, TRUE};
-// use winapi::shared::ntdef::LONG;
 use winapi::shared::windef::{HWND, RECT};
 use winapi::um::winnt::WCHAR;
 use winapi::um::winuser::{
     EnumWindows, GetForegroundWindow, GetWindowLongPtrW, GetWindowRect, GetWindowTextLengthW,
     GetWindowTextW, GWL_STYLE, WS_SYSMENU, WS_VISIBLE,
+};
+use windows::{
+    Win32::Foundation::*, Win32::Graphics::Direct3D::Fxc::*, Win32::Graphics::Direct3D::*,
+    Win32::Graphics::Direct3D12::*, Win32::Graphics::Dxgi::Common::*, Win32::Graphics::Dxgi::*,
+    Win32::System::LibraryLoader::*, Win32::System::Threading::*,
+    Win32::System::WindowsProgramming::*, Win32::UI::WindowsAndMessaging::*,
 };
 
 use crate::common::identify_transparency::identify_transparency;
@@ -81,7 +76,7 @@ pub struct WinApi {
 impl WinApi {
     pub fn new() -> Result<Self> {
         // let factory =
-        //     winrt::activation::factory::<GraphicsCaptureItem, winrt::IActivationFactory>()?;
+        //     windows::core::activation::factory::<GraphicsCaptureItem, windows::core::IActivationFactory>()?;
         // cap = factory.try_into()?;
 
         Ok(WinApi {
@@ -91,8 +86,8 @@ impl WinApi {
     }
 }
 
-pub fn setup() -> Result<Box<dyn PlatformApi>> {
-    Ok(Box::new(WinApi::new()?))
+pub fn setup() -> Result<impl PlatformApi> {
+    Ok(WinApi::new()?)
 }
 
 impl PlatformApi for WinApi {
@@ -109,6 +104,7 @@ impl PlatformApi for WinApi {
     fn window_list(&self) -> Result<WindowList> {
         use std::ffi::OsString;
         use std::os::windows::prelude::*;
+
         let mut wins = vec![];
         enumerate_windows(|hwnd| {
             // Skip invisible windows

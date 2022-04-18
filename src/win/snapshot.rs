@@ -1,14 +1,19 @@
 use super::d3d::{D3D11Device, D3D11Texture2D};
-use crate::win::windows::graphics::capture::{
+
+use std::sync::mpsc::{channel, Receiver, Sender};
+
+use windows::Graphics::Capture::{
     Direct3D11CaptureFramePool, GraphicsCaptureItem, GraphicsCaptureSession,
 };
-use crate::win::windows::graphics::directx::direct3d11::IDirect3DDevice;
-use crate::win::windows::graphics::directx::DirectXPixelFormat;
-use std::sync::mpsc::{channel, Receiver, Sender};
+use windows::Graphics::DirectX::Direct3D11::IDirect3DDevice;
+use windows::Graphics::DirectX::DirectXPixelFormat;
+
 use winapi::um::d3d11::{D3D11_CPU_ACCESS_READ, D3D11_USAGE_STAGING};
 
-type FrameArrivedHandler =
-    crate::windows::foundation::TypedEventHandler<Direct3D11CaptureFramePool, winrt::Object>;
+type FrameArrivedHandler = windows::Foundation::TypedEventHandler<
+    Direct3D11CaptureFramePool,
+    windows::Win32::System::Com::IDataObject,
+>;
 
 enum TriggerCommand {
     Capture,
@@ -25,7 +30,7 @@ impl CaptureSnapshot {
     pub fn create_session(
         device: &IDirect3DDevice,
         item: &GraphicsCaptureItem,
-    ) -> winrt::Result<CaptureSnapshot> {
+    ) -> windows::core::Result<CaptureSnapshot> {
         let d3d_device = D3D11Device::from_direct3d_device(device)?;
         let d3d_context = d3d_device.get_immediate_context();
         let item_size = item.size()?;
@@ -105,7 +110,7 @@ impl CaptureSnapshot {
         })
     }
 
-    pub fn snapshot(&self) -> winrt::Result<image::FlatSamples<Vec<u8>>> {
+    pub fn snapshot(&self) -> windows::core::Result<image::FlatSamples<Vec<u8>>> {
         // Trigger a capture -- cause the next frame to get sent
         self.trigger_capture.send(TriggerCommand::Capture).unwrap();
 

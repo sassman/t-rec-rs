@@ -1,4 +1,3 @@
-use crate::windows::graphics::directx::direct3d11::{IDirect3DDevice, IDirect3DSurface};
 use winapi::{
     shared::{
         dxgi::{IDXGIDeviceVtbl, IDXGISurfaceVtbl},
@@ -10,21 +9,23 @@ use winapi::{
         D3D11_SDK_VERSION, D3D11_SUBRESOURCE_DATA, D3D11_TEXTURE2D_DESC,
     },
 };
-use winrt::{Guid, RuntimeType, TryInto};
+use windows::Foundation::Com
+use windows::core::{Interface, RawPtr, RuntimeType, GUID, HRESULT};
+use windows::Graphics::DirectX::Direct3D11::{IDirect3DDevice, IDirect3DSurface};
 
 #[repr(C)]
 pub struct abi_IDirect3DDxgiInterfaceAccess {
     __base: [usize; 3],
     get_interface: extern "system" fn(
         *const *const abi_IDirect3DDxgiInterfaceAccess,
-        &Guid,
-        *mut winrt::RawPtr,
-    ) -> winrt::ErrorCode,
+        &GUID,
+        *mut RawPtr,
+    ) -> HRESULT,
 }
 
-unsafe impl winrt::ComInterface for Direct3DDxgiInterfaceAccess {
+unsafe impl Interface for Direct3DDxgiInterfaceAccess {
     type VTable = abi_IDirect3DDxgiInterfaceAccess;
-    const IID: winrt::Guid = winrt::Guid::from_values(
+    const IID: GUID = GUID::from_values(
         2847133714,
         15858,
         20195,
@@ -35,11 +36,11 @@ unsafe impl winrt::ComInterface for Direct3DDxgiInterfaceAccess {
 #[repr(transparent)]
 #[derive(Default, Clone)]
 pub struct Direct3DDxgiInterfaceAccess {
-    ptr: winrt::ComPtr<Direct3DDxgiInterfaceAccess>,
+    ptr: windows::core::ComPtr<Direct3DDxgiInterfaceAccess>,
 }
 
 impl Direct3DDxgiInterfaceAccess {
-    pub fn get_interface<Into: winrt::ComInterface>(&self) -> winrt::Result<Into> {
+    pub fn get_interface<Into: Interface>(&self) -> windows::core::Result<Into> {
         let this = self.ptr.abi();
         if this.is_null() {
             panic!("`this` was null");
@@ -56,12 +57,12 @@ impl Direct3DDxgiInterfaceAccess {
 #[repr(transparent)]
 #[derive(Default, Clone)]
 pub struct D3D11Texture2D {
-    ptr: winrt::ComPtr<D3D11Texture2D>,
+    ptr: windows::core::ComPtr<D3D11Texture2D>,
 }
 
-unsafe impl winrt::ComInterface for D3D11Texture2D {
+unsafe impl Interface for D3D11Texture2D {
     type VTable = ID3D11Texture2DVtbl;
-    const IID: winrt::Guid = winrt::Guid::from_values(
+    const IID: GUID = GUID::from_values(
         1863690994,
         53768,
         20105,
@@ -72,12 +73,12 @@ unsafe impl winrt::ComInterface for D3D11Texture2D {
 #[repr(transparent)]
 #[derive(Default, Clone)]
 pub struct D3D11Device {
-    ptr: winrt::ComPtr<D3D11Device>,
+    ptr: windows::core::ComPtr<D3D11Device>,
 }
 
-unsafe impl winrt::ComInterface for D3D11Device {
+unsafe impl Interface for D3D11Device {
     type VTable = ID3D11DeviceVtbl;
-    const IID: winrt::Guid = winrt::Guid::from_values(
+    const IID: GUID = GUID::from_values(
         3681512923,
         44151,
         20104,
@@ -88,12 +89,12 @@ unsafe impl winrt::ComInterface for D3D11Device {
 #[repr(transparent)]
 #[derive(Default, Clone)]
 pub struct D3D11DeviceContext {
-    ptr: winrt::ComPtr<D3D11DeviceContext>,
+    ptr: windows::core::ComPtr<D3D11DeviceContext>,
 }
 
-unsafe impl winrt::ComInterface for D3D11DeviceContext {
+unsafe impl Interface for D3D11DeviceContext {
     type VTable = ID3D11DeviceContextVtbl;
-    const IID: winrt::Guid = winrt::Guid::from_values(
+    const IID: GUID = GUID::from_values(
         3233786220,
         57481,
         17659,
@@ -104,12 +105,12 @@ unsafe impl winrt::ComInterface for D3D11DeviceContext {
 #[repr(transparent)]
 #[derive(Default, Clone)]
 pub struct DXGISurface {
-    ptr: winrt::ComPtr<DXGISurface>,
+    ptr: windows::core::ComPtr<DXGISurface>,
 }
 
-unsafe impl winrt::ComInterface for DXGISurface {
+unsafe impl Interface for DXGISurface {
     type VTable = IDXGISurfaceVtbl;
-    const IID: winrt::Guid = winrt::Guid::from_values(
+    const IID: GUID = GUID::from_values(
         3405559148,
         27331,
         18569,
@@ -120,12 +121,12 @@ unsafe impl winrt::ComInterface for DXGISurface {
 #[repr(transparent)]
 #[derive(Default, Clone)]
 pub struct DXGIDevice {
-    ptr: winrt::ComPtr<DXGIDevice>,
+    ptr: windows::core::ComPtr<DXGIDevice>,
 }
 
-unsafe impl winrt::ComInterface for DXGIDevice {
+unsafe impl Interface for DXGIDevice {
     type VTable = IDXGIDeviceVtbl;
-    const IID: winrt::Guid = winrt::Guid::from_values(
+    const IID: GUID = GUID::from_values(
         1424783354,
         4983,
         17638,
@@ -147,17 +148,17 @@ impl D3D11Resource for D3D11Texture2D {
 #[link(name = "d3d11")]
 extern "stdcall" {
     fn CreateDirect3D11DeviceFromDXGIDevice(
-        device: winrt::RawComPtr<DXGIDevice>,
+        device: RawComPtr<DXGIDevice>,
         graphics_device: *mut <IDirect3DDevice as RuntimeType>::Abi,
-    ) -> winrt::ErrorCode;
+    ) -> HRESULT;
 }
 
 #[link(name = "d3d11")]
 extern "stdcall" {
     fn CreateDirect3D11SurfaceFromDXGISurface(
-        surface: winrt::RawComPtr<DXGISurface>,
+        surface: winrt::core::ComPtr<DXGISurface>,
         graphics_surface: *mut <IDirect3DSurface as RuntimeType>::Abi,
-    ) -> winrt::ErrorCode;
+    ) -> HRESULT;
 }
 
 #[allow(dead_code)]
@@ -172,16 +173,16 @@ pub enum D3DDriverType {
 }
 
 impl D3D11Device {
-    pub fn from_direct3d_device(device: &IDirect3DDevice) -> winrt::Result<Self> {
+    pub fn from_direct3d_device(device: &IDirect3DDevice) -> windows::core::Result<Self> {
         let access: Direct3DDxgiInterfaceAccess = device.try_into()?;
         access.get_interface()
     }
 
-    pub fn new_of_type(driver_type: D3DDriverType) -> winrt::Result<Self> {
+    pub fn new_of_type(driver_type: D3DDriverType) -> windows::core::Result<Self> {
         let flags = D3D11_CREATE_DEVICE_BGRA_SUPPORT;
         let device = unsafe {
-            let mut device = winrt::IUnknown::default();
-            winrt::ErrorCode(D3D11CreateDevice(
+            let mut device = windows::core::IUnknown::default();
+            HRESULT(D3D11CreateDevice(
                 std::ptr::null_mut(),
                 driver_type as u32,
                 std::ptr::null_mut(),
@@ -199,7 +200,7 @@ impl D3D11Device {
         Ok(Self { ptr: device })
     }
 
-    pub fn new() -> winrt::Result<Self> {
+    pub fn new() -> windows::core::Result<Self> {
         let result = Self::new_of_type(D3DDriverType::Hardware);
         match result {
             Ok(device) => Ok(device),
@@ -213,7 +214,7 @@ impl D3D11Device {
         }
     }
 
-    pub fn to_direct3d_device(&self) -> winrt::Result<IDirect3DDevice> {
+    pub fn to_direct3d_device(&self) -> windows::core::Result<IDirect3DDevice> {
         let this = self.ptr.abi();
         if this.is_null() {
             panic!("`this` was null");
@@ -231,7 +232,7 @@ impl D3D11Device {
         &self,
         desc: &D3D11_TEXTURE2D_DESC,
         initial_data: Option<&D3D11_SUBRESOURCE_DATA>,
-    ) -> winrt::Result<D3D11Texture2D> {
+    ) -> windows::core::Result<D3D11Texture2D> {
         let this = self.ptr.abi();
         if this.is_null() {
             panic!("`this` was null");
@@ -245,7 +246,7 @@ impl D3D11Device {
                 None => std::ptr::null(),
             };
 
-            winrt::ErrorCode(((*(*(this))).CreateTexture2D)(
+            HRESULT(((*(*(this))).CreateTexture2D)(
                 this as *mut _,
                 desc,
                 initial_data,
@@ -279,7 +280,7 @@ impl D3D11DeviceContext {
         map_type: D3D11_MAP,
         map_flags: u32,
         mapped_resource: &mut D3D11_MAPPED_SUBRESOURCE,
-    ) -> winrt::Result<()> {
+    ) -> windows::core::Result<()> {
         let this = self.ptr.abi();
         if this.is_null() {
             panic!("`this` was null");
@@ -291,7 +292,7 @@ impl D3D11DeviceContext {
         }
 
         unsafe {
-            winrt::ErrorCode(((*(*(this))).Map)(
+            HRESULT(((*(*(this))).Map)(
                 this as *mut _,
                 resource,
                 subresource,
@@ -344,12 +345,12 @@ impl D3D11DeviceContext {
 }
 
 impl D3D11Texture2D {
-    pub fn from_direct3d_surface(surface: &IDirect3DSurface) -> winrt::Result<Self> {
+    pub fn from_direct3d_surface(surface: &IDirect3DSurface) -> windows::core::Result<Self> {
         let access: Direct3DDxgiInterfaceAccess = surface.try_into()?;
         access.get_interface()
     }
 
-    pub fn to_direct3d_surface(&self) -> winrt::Result<IDirect3DSurface> {
+    pub fn to_direct3d_surface(&self) -> windows::core::Result<IDirect3DSurface> {
         let this = self.ptr.abi();
         if this.is_null() {
             panic!("`this` was null");
@@ -379,7 +380,7 @@ impl D3D11Texture2D {
 }
 
 #[test]
-fn test_d3d_device() -> winrt::Result<()> {
+fn test_d3d_device() -> windows::core::Result<()> {
     use crate::windows::graphics::capture::Direct3D11CaptureFramePool;
     use crate::windows::graphics::directx::DirectXPixelFormat;
     use crate::windows::graphics::SizeInt32;
@@ -402,7 +403,7 @@ fn test_d3d_device() -> winrt::Result<()> {
 }
 
 #[test]
-fn test_d3d_texture_2d() -> winrt::Result<()> {
+fn test_d3d_texture_2d() -> windows::core::Result<()> {
     use winapi::{
         shared::{dxgiformat::DXGI_FORMAT_B8G8R8A8_UNORM, dxgitype::DXGI_SAMPLE_DESC},
         um::d3d11::{

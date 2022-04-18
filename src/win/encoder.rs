@@ -1,7 +1,7 @@
 use super::d3d::{D3D11Device, D3D11Texture2D};
-use crate::win::windows::graphics::directx::direct3d11::IDirect3DSurface;
-// use std::path::Path;
+use windows::Graphics::DirectX::Direct3D11::IDirect3DSurface;
 
+use crate::common::image::convert_bgra_to_rgba;
 use winapi::{
     shared::dxgiformat::DXGI_FORMAT_B8G8R8A8_UNORM,
     um::d3d11::{
@@ -12,7 +12,7 @@ use winapi::{
 pub fn encode_d3d_surface_with_device(
     d3d_device: &D3D11Device,
     surface: &IDirect3DSurface,
-) -> winrt::Result<image::FlatSamples<Vec<u8>>> {
+) -> windows::core::Result<image::FlatSamples<Vec<u8>>> {
     let d3d_context = d3d_device.get_immediate_context();
     let d3d_texture = D3D11Texture2D::from_direct3d_surface(surface)?;
 
@@ -61,8 +61,10 @@ pub fn encode_d3d_surface_with_device(
     // Unmap the texture
     d3d_context.unmap(&d3d_texture, 0);
 
+    convert_bgra_to_rgba(&mut data[..]);
+
     // Save the bits
-    let image: image::ImageBuffer<image::Bgra<u8>, _> =
+    let image: image::ImageBuffer<image::Rgba<u8>, _> =
         image::ImageBuffer::from_raw(width, height, data).unwrap();
 
     Ok(image.into_flat_samples())

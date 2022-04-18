@@ -1,6 +1,8 @@
-use crate::windows::graphics::capture::GraphicsCaptureItem;
 use winapi::shared::windef::{HMONITOR, HWND};
-use winrt::{ComInterface, Guid, TryInto};
+use winapi::Interface;
+
+use windows::core::{RawPtr, GUID, HRESULT};
+use windows::Graphics::Capture::GraphicsCaptureItem;
 
 #[repr(C)]
 pub struct abi_IGraphicsCaptureItemInterop {
@@ -8,31 +10,31 @@ pub struct abi_IGraphicsCaptureItemInterop {
     create_for_window: extern "system" fn(
         *const *const abi_IGraphicsCaptureItemInterop,
         HWND,
-        &Guid,
-        *mut winrt::RawPtr,
-    ) -> winrt::ErrorCode,
+        &GUID,
+        *mut RawPtr,
+    ) -> HRESULT,
     create_for_monitor: extern "system" fn(
         *const *const abi_IGraphicsCaptureItemInterop,
         HMONITOR,
-        &Guid,
-        *mut winrt::RawPtr,
-    ) -> winrt::ErrorCode,
+        &GUID,
+        *mut RawPtr,
+    ) -> HRESULT,
 }
 
-unsafe impl winrt::ComInterface for GraphicsCaptureItemInterop {
+unsafe impl Interface for GraphicsCaptureItemInterop {
     type VTable = abi_IGraphicsCaptureItemInterop;
-    const IID: winrt::Guid =
-        winrt::Guid::from_values(908650523, 15532, 19552, [183, 244, 35, 206, 14, 12, 51, 86]);
+    const IID: GUID =
+        GUID::from_values(908650523, 15532, 19552, [183, 244, 35, 206, 14, 12, 51, 86]);
 }
 
 #[repr(transparent)]
 #[derive(Default, Clone)]
 pub struct GraphicsCaptureItemInterop {
-    ptr: winrt::ComPtr<GraphicsCaptureItemInterop>,
+    ptr: windows::core::ComPtr<GraphicsCaptureItemInterop>,
 }
 
 impl GraphicsCaptureItemInterop {
-    // pub fn create_for_monitor(&self, monitor: HMONITOR) -> winrt::Result<GraphicsCaptureItem> {
+    // pub fn create_for_monitor(&self, monitor: HMONITOR) -> windows::core::Result<GraphicsCaptureItem> {
     //     let this = self.ptr.abi();
     //     if this.is_null() {
     //         panic!("`this` was null");
@@ -51,7 +53,7 @@ impl GraphicsCaptureItemInterop {
     //     }
     // }
 
-    pub fn create_for_window(&self, window: HWND) -> winrt::Result<GraphicsCaptureItem> {
+    pub fn create_for_window(&self, window: HWND) -> windows::core::Result<GraphicsCaptureItem> {
         let this = self.ptr.abi();
         if this.is_null() {
             panic!("`this` was null");
@@ -71,15 +73,18 @@ impl GraphicsCaptureItemInterop {
     }
 }
 
-// pub fn create_capture_item_for_monitor(monitor: HMONITOR) -> winrt::Result<GraphicsCaptureItem> {
-//     let factory = winrt::activation::factory::<GraphicsCaptureItem, winrt::IActivationFactory>()?;
+// pub fn create_capture_item_for_monitor(monitor: HMONITOR) -> windows::core::Result<GraphicsCaptureItem> {
+//     let factory = windows::core::activation::factory::<GraphicsCaptureItem, windows::core::IActivationFactory>()?;
 //     let interop: GraphicsCaptureItemInterop = factory.try_into()?;
 //     let item = interop.create_for_monitor(monitor)?;
 //     Ok(item)
 // }
 
-pub fn create_capture_item_for_window(window: HWND) -> winrt::Result<GraphicsCaptureItem> {
-    let factory = winrt::activation::factory::<GraphicsCaptureItem, winrt::IActivationFactory>()?;
+pub fn create_capture_item_for_window(window: HWND) -> windows::core::Result<GraphicsCaptureItem> {
+    let factory = windows::core::activation::factory::<
+        GraphicsCaptureItem,
+        windows::core::IActivationFactory,
+    >()?;
     let interop: GraphicsCaptureItemInterop = factory.try_into()?;
     let item = interop.create_for_window(window)?;
     Ok(item)

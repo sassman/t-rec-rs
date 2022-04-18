@@ -46,12 +46,14 @@ core-foundation-sys = "0.8.3"
 x11rb = "0.9.0"
 
 [target.'cfg(target_os = "windows")'.dependencies]
-winapi = { version = "0.3.8", features = [ "std", "winuser", "d3d11", "d2d1", "dxgi", "d3dcommon", "impl-default", "dwmapi", "wincon" ] }
-winrt = { git = "https://github.com/microsoft/winrt-rs", rev = "a036b8e61c0859ba9b72e9fe5c913cd4439c6ed3" }
 uuid = { version = "0.8", features = ["v4"] }
+winapi = { version = "0.3", features = [ "std", "winuser", "d3d11", "d2d1", "dxgi", "d3dcommon", "impl-default", "dwmapi", "wincon" ] }
+#winrt = { git = "https://github.com/microsoft/winrt-rs", rev = "a036b8e61c0859ba9b72e9fe5c913cd4439c6ed3" }
 
-# [target.'cfg(target_os = "windows")'.build-dependencies]
-# winrt = { git = "https://github.com/microsoft/winrt-rs", rev = "bacab1e162987fe5974f74425419d11f0c686ccf" }
+#[target.'cfg(target_os = "windows")'.build-dependencies]
+#winrt = { git = "https://github.com/microsoft/winrt-rs", rev = "bacab1e162987fe5974f74425419d11f0c686ccf" }
+
+windows = { version  = "0.35.0", features = [ "Graphics", "Graphics_DirectX_Direct3D11", "Graphics_Capture", "Graphics_DirectX", "Foundation", "Win32_System_Com"]}
 
 [features]
 e2e_tests = []
