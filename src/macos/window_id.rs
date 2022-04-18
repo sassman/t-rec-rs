@@ -16,10 +16,10 @@ use std::os::raw::c_void;
 
 #[derive(Debug)]
 enum DictEntryValue {
-    _Number(i64),
-    _Bool(bool),
-    _String(String),
-    _Unknown,
+    Number(i64),
+    Bool(bool),
+    String(String),
+    Unknown,
 }
 
 ///
@@ -56,7 +56,7 @@ pub fn window_list() -> Result<WindowList> {
         }
         let window_owner = get_from_dict(dic_ref, "kCGWindowOwnerName");
         let window_id = get_from_dict(dic_ref, "kCGWindowNumber");
-        if let (DictEntryValue::_String(name), DictEntryValue::_Number(win_id)) =
+        if let (DictEntryValue::String(name), DictEntryValue::Number(win_id)) =
             (window_owner, window_id)
         {
             win_list.push((Some(name), win_id as u64));
@@ -83,7 +83,7 @@ fn get_from_dict(dict: CFDictionaryRef, key: &str) -> DictEntryValue {
                     let out_value: *mut i64 = &mut value_i64;
                     let converted = unsafe { CFNumberGetValue(value, I64, out_value.cast()) };
                     if converted {
-                        return DictEntryValue::_Number(value_i64);
+                        return DictEntryValue::Number(value_i64);
                     }
                 }
                 I32 => {
@@ -91,7 +91,7 @@ fn get_from_dict(dict: CFDictionaryRef, key: &str) -> DictEntryValue {
                     let out_value: *mut i32 = &mut value_i32;
                     let converted = unsafe { CFNumberGetValue(value, I32, out_value.cast()) };
                     if converted {
-                        return DictEntryValue::_Number(value_i32 as i64);
+                        return DictEntryValue::Number(value_i32 as i64);
                     }
                 }
                 n => {
@@ -99,13 +99,13 @@ fn get_from_dict(dict: CFDictionaryRef, key: &str) -> DictEntryValue {
                 }
             }
         } else if type_id == unsafe { CFBooleanGetTypeID() } {
-            return DictEntryValue::_Bool(unsafe { CFBooleanGetValue(value.cast()) });
+            return DictEntryValue::Bool(unsafe { CFBooleanGetValue(value.cast()) });
         } else if type_id == unsafe { CFStringGetTypeID() } {
             let c_ptr = unsafe { CFStringGetCStringPtr(value.cast(), kCFStringEncodingUTF8) };
             return if !c_ptr.is_null() {
                 let c_result = unsafe { CStr::from_ptr(c_ptr) };
                 let result = String::from(c_result.to_str().unwrap());
-                DictEntryValue::_String(result)
+                DictEntryValue::String(result)
             } else {
                 // in this case there is a high chance we got a `NSString` instead of `CFString`
                 // we have to use the objc runtime to fetch it
@@ -115,8 +115,8 @@ fn get_from_dict(dict: CFDictionaryRef, key: &str) -> DictEntryValue {
                 let str = std::str::from_utf8(nss.deref().as_str().as_bytes());
 
                 match str {
-                    Ok(s) => DictEntryValue::_String(s.to_owned()),
-                    Err(_) => DictEntryValue::_Unknown,
+                    Ok(s) => DictEntryValue::String(s.to_owned()),
+                    Err(_) => DictEntryValue::Unknown,
                 }
             };
         } else {
@@ -124,5 +124,5 @@ fn get_from_dict(dict: CFDictionaryRef, key: &str) -> DictEntryValue {
         }
     }
 
-    DictEntryValue::_Unknown
+    DictEntryValue::Unknown
 }

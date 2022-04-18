@@ -2,11 +2,11 @@ mod core_foundation_sys_patches;
 mod screenshot;
 mod window_id;
 
+use crate::common::identify_transparency::identify_transparency;
+use crate::common::image::crop;
 use crate::PlatformApi;
 use crate::{ImageOnHeap, Margin, Result, WindowList};
 
-use crate::common::identify_transparency::identify_transparency;
-use crate::common::image::crop;
 use anyhow::Context;
 use screenshot::capture_window_screenshot;
 use std::env;
@@ -14,8 +14,8 @@ use window_id::window_list;
 
 pub const DEFAULT_SHELL: &str = "/bin/sh";
 
-pub fn setup() -> Result<Box<dyn PlatformApi>> {
-    Ok(Box::new(QuartzApi { margin: None }))
+pub fn setup() -> Result<impl PlatformApi> {
+    Ok(QuartzApi { margin: None })
 }
 
 struct QuartzApi {
@@ -47,8 +47,13 @@ impl PlatformApi for QuartzApi {
 
     fn get_active_window(&self) -> Result<u64> {
         env::var("WINDOWID")
-            .context("Env variable 'WINDOWID' was not set.")
-            .unwrap()
+            .context(
+                r#"Cannot determine the active window. 
+ - Please set either env variable `TERM_PROGRAM` e.g. `TERM_PROGRAM=alacritty t-rec`
+ - Or set `WINDOWID` see also `t-rec -l` to list all windows with their id
+ - If you're using alacritty: https://github.com/sassman/t-rec-rs/issues/44#issuecomment-830630348
+"#,
+            )?
             .parse::<u64>()
             .context("Cannot parse env variable 'WINDOWID' as number")
     }
@@ -58,8 +63,9 @@ impl PlatformApi for QuartzApi {
 #[cfg(test)]
 mod test {
     use super::*;
+    use crate::utils::IMG_EXT;
     use image::flat::View;
-    use image::{save_buffer, Bgra, GenericImageView};
+    use image::{save_buffer, GenericImageView, Rgba};
 
     ///
     /// for terminals with odd dimensions, like: 93x17
@@ -68,16 +74,16 @@ mod test {
         let mut api = setup()?;
         let win = api.get_active_window()?;
         let image_raw = api.capture_window_screenshot(win)?;
-        let image: View<_, Bgra<u8>> = image_raw.as_view().unwrap();
+        let image: View<_, Rgba<u8>> = image_raw.as_view().unwrap();
         let (width, height) = image.dimensions();
 
         api.calibrate(win)?;
         let image_calibrated_raw = api.capture_window_screenshot(win)?;
-        let image_calibrated: View<_, Bgra<u8>> = image_calibrated_raw.as_view().unwrap();
+        let image_calibrated: View<_, Rgba<u8>> = image_calibrated_raw.as_view().unwrap();
         let (width_new, height_new) = image_calibrated.dimensions();
         dbg!(width, width_new, height, height_new);
 
-        let Bgra([_, _, _, alpha]) = image.get_pixel(width / 2, 0);
+        let Rgba([_, _, _, alpha]) = image.get_pixel(width / 2, 0);
         dbg!(alpha);
         if alpha == 0 {
             // if that pixel was full transparent, for example on ubuntu / GNOME, caused by the drop shadow
@@ -94,7 +100,7 @@ mod test {
 
         // Note: visual validation is sometimes helpful:
         save_buffer(
-            format!("frame-raw-{}.tga", win),
+            format!("frame-raw-{win}.{IMG_EXT}"),
             &image_raw.samples,
             image_raw.layout.width,
             image_raw.layout.height,

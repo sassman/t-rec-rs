@@ -1,4 +1,6 @@
+use crate::common::image::convert_bgra_to_rgba;
 use crate::ImageOnHeap;
+
 use anyhow::{ensure, Context, Result};
 use core_graphics::display::*;
 use core_graphics::image::CGImageRef;
@@ -6,7 +8,7 @@ use image::flat::SampleLayout;
 use image::{ColorType, FlatSamples};
 
 pub fn capture_window_screenshot(win_id: u64) -> Result<ImageOnHeap> {
-    let (w, h, channels, raw_data) = {
+    let (w, h, channels, mut raw_data) = {
         let image = unsafe {
             CGDisplay::screenshot(
                 CGRectNull,
@@ -42,7 +44,9 @@ pub fn capture_window_screenshot(win_id: u64) -> Result<ImageOnHeap> {
         (w, h, byte_per_pixel, raw_data)
     };
 
-    let color = ColorType::Bgra8;
+    convert_bgra_to_rgba(&mut raw_data);
+
+    let color = ColorType::Rgba8;
     let buffer = FlatSamples {
         samples: raw_data,
         layout: SampleLayout::row_major_packed(channels, w, h),
@@ -69,6 +73,9 @@ mod tests {
     #[test]
     #[cfg(feature = "e2e_tests")]
     fn should_capture_with_cropped_transparent_area() -> Result<()> {
+        use crate::common::PlatformApi;
+        use crate::utils::IMG_EXT;
+
         let mut api = setup()?;
         let win = 5308;
         let image = api.capture_window_screenshot(win)?;
@@ -77,7 +84,7 @@ mod tests {
 
         // Note: visual validation is sometimes helpful:
         save_buffer(
-            format!("frame-org-{}.tga", win),
+            format!("frame-org-{win}.{IMG_EXT}"),
             &image.samples,
             image.layout.width,
             image.layout.height,
@@ -91,7 +98,7 @@ mod tests {
         assert!(width > image_cropped.layout.width);
         // Note: visual validation is sometimes helpful:
         save_buffer(
-            format!("frame-cropped-{}.tga", win),
+            format!("frame-cropped-{win}.{IMG_EXT}"),
             &image_cropped.samples,
             image_cropped.layout.width,
             image_cropped.layout.height,

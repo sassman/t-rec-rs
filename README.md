@@ -30,13 +30,19 @@ Blazingly fast terminal recorder that generates animated gif images for the web 
 - No issues with curses based programs
 - No issues with escape sequences
 - No record and replay - just one simple command to rule them all
-- Hidden feature: Record every window you want
+- Can record every arbitrary window you want (e.g. browser, ide)
 - Written in Rust 🦀
 
 ## Installation on MacOS
 ### with homebrew
 ```sh
 brew install t-rec
+```
+
+### with macports
+```sh
+sudo port selfupdate
+sudo port install t-rec
 ```
 
 ### with cargo
@@ -117,35 +123,40 @@ t-rec /bin/sh
 ### Full Options
 
 ```sh
-t-rec --help
-t-rec 0.5.0
+t-rec 0.7.0
 Sven Assmann <sven.assmann.it@gmail.com>
 Blazingly fast terminal recorder that generates animated gif images for the web written in rust.
 
 USAGE:
-    t-rec [FLAGS] [OPTIONS] [shell or program to launch]
-
-FLAGS:
-    -h, --help       Prints help information
-    -l, --ls-win     If you want to see a list of windows available for recording by their id, you can set env var
-                     'WINDOWID' to record this specific window only
-    -n, --natural    If you want a very natural typing experience and disable the idle detection and sampling
-                     optimization
-    -q, --quiet      Quiet mode, suppresses the banner: 'Press Ctrl+D to end recording'
-    -V, --version    Prints version information
-    -v, --verbose    Enable verbose insights for the curious
-
-OPTIONS:
-    -b, --bg <bg>          Background color when decors are used [default: transparent]  [possible values: white, black,
-                           transparent]
-    -d, --decor <decor>    Decorates the animation with certain, mostly border effects [default: shadow]  [possible
-                           values: shadow, none]
-    -m, --video <video>    Generates additionally to the gif a mp4 video of the recording [default: mp4]  [possible
-                           values: mp4]
+    t-rec [OPTIONS] [shell or program to launch]
 
 ARGS:
-    <shell or program to launch>    If you want to start a different program than $SHELL you can pass it here. For
-                                    example '/bin/sh'
+    <shell or program to launch>    If you want to start a different program than $SHELL you can
+                                    pass it here. For example '/bin/sh'
+
+OPTIONS:
+    -b, --bg <bg>                     Background color when decors are used [default: transparent]
+                                      [possible values: white, black, transparent]
+    -d, --decor <decor>               Decorates the animation with certain, mostly border effects
+                                      [default: none] [possible values: shadow, none]
+    -e, --end-pause <s | ms | m>      to specify the pause time at the end of the animation, that
+                                      time the gif will show the last frame
+    -h, --help                        Print help information
+    -l, --ls-win                      If you want to see a list of windows available for recording
+                                      by their id, you can set env var 'WINDOWID' or `--win-id` to
+                                      record this specific window only
+    -m, --video                       Generates additionally to the gif a mp4 video of the recording
+    -M, --video-only                  Generates only a mp4 video and not gif
+    -n, --natural                     If you want a very natural typing experience and disable the
+                                      idle detection and sampling optimization
+    -q, --quiet                       Quiet mode, suppresses the banner: 'Press Ctrl+D to end
+                                      recording'
+    -s, --start-pause <s | ms | m>    to specify the pause time at the start of the animation, that
+                                      time the gif will show the first frame
+    -v, --verbose                     Enable verbose insights for the curious
+    -V, --version                     Print version information
+    -w, --win-id <win-id>             Window Id (see --ls-win) that should be captured, instead of
+                                      the current terminal
 ```
 
 ### Disable idle detection & optimization
@@ -154,19 +165,26 @@ If you are not happy with the idle detection and optimization, you can disable i
 By doing so, you would get the very natural timeline of typing and recording as you do it. 
 In this case there will be no optimizations performed.
 
-### Disable shadow border decor
+### Enable shadow border decor
 
-In order to disable the drop shadow border decor you have to pass `-p none` as an argument. If your only want to change 
+In order to enable the drop shadow border decor you have to pass `-d shadow` as an argument. If you only want to change 
 the color of the background you can use `-b black` for example to have a black background.
 
-## Hidden Gems
+### Record Arbitrary windows
 
-You can record not only the terminal but also every other window. There 2 ways to do so:
+You can record not only the terminal but also every other window. There 3 ways to do so:
 
-1) abuse the env var `TERM_PROGRAM` like this:
+1) use `-w | --win-id` argument to name the Window Id that should be recorded
+```sh
+t-rec --ls-win | grep -i calc
+Calculator | 45007
+
+t-rec -w 45007 
+```
+
+2) use the env var `TERM_PROGRAM` like this:
 - for example lets record a window 'Google Chrome'
 - make sure chrome is running and visible on screen
-
 ```sh
 TERM_PROGRAM="google chrome" t-rec
 
@@ -179,7 +197,7 @@ Press Ctrl+D to end recording
 this is how it looks then:
 ![demo-chrome](./docs/demo-chrome.gif)
 
-2) use the env var `WINDOWID` like this:
+3) use the env var `WINDOWID` like this:
 - for example let's record a `VSCode` window
 - figure out the window id program, and make it 
 - make sure the window is visible on screen

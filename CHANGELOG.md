@@ -5,6 +5,118 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+[Unreleased]: https://github.com/sassman/t-rec-rs/compare/v0.7.3...HEAD
+
+## [0.7.3] - 2022-03-15
+[0.7.3]: https://github.com/sassman/t-rec-rs/compare/v0.7.2...v0.7.3
+
+### Changed
+- [chore(deps): bump clap from 3.1.3 to 3.1.5](https://github.com/sassman/t-rec-rs/pull/124)
+- [chore(deps): bump clap from 3.1.5 to 3.1.6](https://github.com/sassman/t-rec-rs/pull/126)
+- [chore(deps): bump anyhow from 1.0.55 to 1.0.56](https://github.com/sassman/t-rec-rs/pull/125)
+- [fix(ci): fix undefined variables on release asset builds](https://github.com/sassman/t-rec-rs/pull/123)
+
+## Contributors
+- [dependabot[bot]](https://github.com/apps/dependabot)
+- [sassman](https://github.com/sassman)
+
+## [0.7.2] - 2022-03-02
+[0.7.2]: https://github.com/sassman/t-rec-rs/compare/v0.7.1...v0.7.2
+
+### Changed
+- [chore(deps): bump clap from 3.0.14 to 3.1.3](https://github.com/sassman/t-rec-rs/pull/121)
+- [chore(deps): bump image from 0.24.0 to 0.24.1](https://github.com/sassman/t-rec-rs/pull/114)
+- [fix(clippy): fix enum variant names lint](https://github.com/sassman/t-rec-rs/pull/119)
+- [fix(ci): release-binary-assets.yml](https://github.com/sassman/t-rec-rs/pull/111)
+
+### Contributors
+- [dependabot[bot]](https://github.com/apps/dependabot)
+- [sassman](https://github.com/sassman)
+
+## [0.7.1] - 2022-02-12
+[0.7.1]: https://github.com/sassman/t-rec-rs/compare/v0.7.0...v0.7.1
+
+### Changed
+- [feat(#105): add support configuring output](https://github.com/sassman/t-rec-rs/pull/107)
+- [feat(#100): dedicating an own cli argument for external window recording](https://github.com/sassman/t-rec-rs/pull/102)
+- [fix(#103): fix release binaries for linux](https://github.com/sassman/t-rec-rs/pull/106)
+- [fix(#109): on ubuntu 20.04 for arm the recording is upside down](https://github.com/sassman/t-rec-rs/pull/110)
+- [chore(deps): bump image from 0.23.14 to 0.24.0](https://github.com/sassman/t-rec-rs/pull/108)
+- [chore(deps): bump dependencies + clap3 migration](https://github.com/sassman/t-rec-rs/pull/101)
+
+### Contributors
+- [sassman](https://github.com/sassman)
+
+## [0.7.0] - 2022-02-03
+[0.7.0]: https://github.com/sassman/t-rec-rs/compare/v0.6.2...v0.7.0
+
+### Changed
+- [feat(#100): dedicating an own cli argument for external window recording](https://github.com/sassman/t-rec-rs/pull/102)
+  with this PR also the default decor has changed to `none`. 
+  If you want the previous behaviour please pass `-d shadow` as cli argument. 
+- [chore(deps): bump dependencies + clap3 migration](https://github.com/sassman/t-rec-rs/pull/101)
+- [chore(deps): bump versions](https://github.com/sassman/t-rec-rs/pull/92)
+
+## Contributors
+- [sassman](https://github.com/sassman)
+
+## [0.6.2] - 2021-12-29
+[0.6.2]: https://github.com/sassman/t-rec-rs/compare/v0.6.2...v0.6.1
+### Changed
+- [chore(deps): bump dependencies](https://github.com/sassman/t-rec-rs/pull/92)
+
+## [0.6.1] - 2021-08-30
+[0.6.1]: https://github.com/sassman/t-rec-rs/compare/v0.6.1...v0.6.0
+### Changed
+- [chore(deps): bump anyhow from 1.0.42 to 1.0.43](https://github.com/sassman/t-rec-rs/pull/80)
+- ["-p" option is not exist](https://github.com/sassman/t-rec-rs/pull/79)
+- [chore(deps): bump env_logger from 0.8.3 to 0.9.0](https://github.com/sassman/t-rec-rs/pull/78)
+- [chore(deps): bump anyhow from 1.0.40 to 1.0.42](https://github.com/sassman/t-rec-rs/pull/77)
+- [chore(deps): bump rayon from 1.5.0 to 1.5.1](https://github.com/sassman/t-rec-rs/pull/75)
+
+### Contributors
+- [dependabot[bot]](https://github.com/apps/dependabot)
+- [kuy](https://github.com/kuy)
+- [sassman](https://github.com/sassman)
+
+## [0.6.0] - 2021-05-07
+### Changed
+- [feat(video-only): add command line parameter `--video-only | -M`](https://github.com/sassman/t-rec-rs/pull/73)
+- [refactor(human-readable): time display](https://github.com/sassman/t-rec-rs/pull/72)
+- [feat(pre/post-pause): mainly pre-post pause feature](https://github.com/sassman/t-rec-rs/pull/70)
+- [chore(ci:release): change machine to ubuntu for fixing the deb build](https://github.com/sassman/t-rec-rs/pull/67)
+
+### Contributors
+- [sassman](https://github.com/sassman)
+
+## [0.5.2] - 2021-05-01
+### Changed
+- [chore(ci:release): change machine to ubuntu for fixing the deb build](https://github.com/sassman/t-rec-rs/pull/67)
+- [fix(WINDOWID): handle a missing window id graceful see #65](https://github.com/sassman/t-rec-rs/pull/66)
+- [Upgrade to GitHub-native Dependabot](https://github.com/sassman/t-rec-rs/pull/64)
+- [README: add Macports install instructions](https://github.com/sassman/t-rec-rs/pull/63)
+
+### Contributors
+- [dependabot-preview[bot]](https://github.com/apps/dependabot-preview)
+- [herbygillot](https://github.com/herbygillot)
+- [sassman](https://github.com/sassman)
+
+## [0.5.1] - 2021-04-03
+### Changed
+- [chore(deps): bump anyhow from 1.0.39 to 1.0.40](https://github.com/sassman/t-rec-rs/pull/60)
+- [chore(deps): bump anyhow from 1.0.38 to 1.0.39](https://github.com/sassman/t-rec-rs/pull/59)
+- [chore(deps): bump image from 0.23.13 to 0.23.14](https://github.com/sassman/t-rec-rs/pull/58)
+- [chore(clippy): make clippy happy](https://github.com/sassman/t-rec-rs/pull/56)
+- [feat(ci): add .deb as regular build artifact](https://github.com/sassman/t-rec-rs/pull/54)
+- [chore(deps): bump image from 0.23.12 to 0.23.13](https://github.com/sassman/t-rec-rs/pull/53)
+- [chore(deps): bump log from 0.4.13 to 0.4.14](https://github.com/sassman/t-rec-rs/pull/52)
+- [docs(README): add AUR installation instructions](https://github.com/sassman/t-rec-rs/pull/50)
+- [feat(mp4): add cli option for generating a video](https://github.com/sassman/t-rec-rs/pull/49)
+
+### Contributors
+- [dependabot-preview[bot]](https://github.com/apps/dependabot-preview)
+- [orhun](https://github.com/orhun)
+- [sassman](https://github.com/sassman)
 
 ## [0.5.0] - 2021-01-24
 ### Added
@@ -128,7 +240,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 [issue/4]: https://github.com/sassman/t-rec-rs/issues/4
 
-[Unreleased]: https://github.com/sassman/t-rec-rs/compare/v0.5.0...HEAD
+[0.6.0]: https://github.com/sassman/t-rec-rs/compare/v0.6.0...v0.5.2
+[0.5.2]: https://github.com/sassman/t-rec-rs/compare/v0.5.2...v0.5.1
+[0.5.1]: https://github.com/sassman/t-rec-rs/compare/v0.5.1...v0.5.0
 [0.5.0]: https://github.com/sassman/t-rec-rs/compare/v0.5.0...v0.4.3
 [0.4.3]: https://github.com/sassman/t-rec-rs/compare/v0.4.2...v0.4.3
 [0.4.2]: https://github.com/sassman/t-rec-rs/compare/v0.4.1...v0.4.2

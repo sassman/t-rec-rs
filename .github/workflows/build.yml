@@ -15,6 +15,7 @@ on:
     paths-ignore:
       - "**/docs/**"
       - "**.md"
+  workflow_call:
 
 jobs:
   check:
@@ -65,7 +66,6 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-#        version: [ 'macos-11.0', 'macos-10.15', 'macos-10.14', 'ubuntu-latest']
         version: [ 'macos-latest', 'ubuntu-latest']
         rust: [ nightly, stable ]
     runs-on: ${{ matrix.version }}
@@ -81,6 +81,20 @@ jobs:
       - uses: Swatinem/rust-cache@v1
       - name: cargo test
         run: cargo test --all --locked -- -Z unstable-options
+
+  pkg-deb:
+    name: binary package .deb
+    needs: check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: build .deb file
+        uses: sassman/rust-deb-builder@v1
+      - name: Archive deb artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: t-rec-amd64-static.deb
+          path: target/x86_64-unknown-linux-musl/debian/t-rec*.deb
 
   audit:
     name: security audit

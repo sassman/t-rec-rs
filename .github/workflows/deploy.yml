@@ -1,0 +1,81 @@
+name: Deploy
+on:
+  push:
+    tags: 
+      - 'v[0-9]+.[0-9]+.[0-9]+'
+    paths-ignore:
+      - "**/docs/**"
+      - "**.md"
+
+jobs:
+  # call out to build.yml
+  doing-a-build:
+    uses: sassman/t-rec-rs/.github/workflows/build.yml@main
+
+  publish:
+    name: post / cargo publish
+    needs: [doing-a-build]
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: setup | rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          default: true
+          profile: minimal
+      - uses: Swatinem/rust-cache@v1
+      - uses: katyo/publish-crates@v1
+        with:
+          registry-token: ${{ secrets.CARGO_REGISTRY_TOKEN }}
+
+  # https://github.com/mislav/bump-homebrew-formula-action
+  publish-to-brew:
+    name: post / homebrew
+    needs: [publish]
+    runs-on: macos-latest
+    steps:
+      - uses: mislav/bump-homebrew-formula-action@v1
+        with:
+          formula-name: t-rec
+        env:
+          COMMITTER_TOKEN: ${{ secrets.COMMITTER_TOKEN }}
+
+  release:
+    name: post / github release
+    needs: [publish]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: setup | rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          default: true
+          profile: minimal
+      - uses: Swatinem/rust-cache@v1
+      - name: Get version from tag
+        id: tag_name
+        run: echo ::set-output name=current_version::${GITHUB_REF#refs/tags/v}
+        shell: bash
+      - name: Get Changelog Entry
+        id: changelog_reader
+        uses: mindsers/changelog-reader-action@v2
+        with:
+          validation_depth: 10
+          version: ${{ steps.tag_name.outputs.current_version }}
+          path: ./CHANGELOG.md
+      - name: Create Release
+        # https://github.com/marketplace/actions/changelog-reader
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_PAT }}
+        with:
+          # This pulls from the "Get Changelog Entry" step above, referencing it's ID to get its outputs object.
+          # See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ steps.changelog_reader.outputs.version }}
+          body: ${{ steps.changelog_reader.outputs.changes }}
+          prerelease: ${{ steps.changelog_reader.outputs.status == 'prereleased' }}
+          draft: ${{ steps.changelog_reader.outputs.status == 'unreleased' }}

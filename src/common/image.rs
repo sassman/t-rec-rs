@@ -1,14 +1,14 @@
 use crate::common::Margin;
 use crate::{Image, ImageOnHeap, Result};
 use image::flat::View;
-use image::{imageops, Bgra, GenericImageView, ImageBuffer};
+use image::{imageops, GenericImageView, ImageBuffer, Rgba};
 
 ///
 /// specialized version of crop for [`ImageOnHeap`] and [`Margin`]
 ///
 #[cfg_attr(not(macos), allow(dead_code))]
 pub fn crop(image: Image, margin: &Margin) -> Result<ImageOnHeap> {
-    let mut img2: View<_, Bgra<u8>> = image.as_view()?;
+    let mut img2: View<_, Rgba<u8>> = image.as_view()?;
     let (width, height) = (
         img2.width() - (margin.left + margin.right) as u32,
         img2.height() - (margin.top + margin.bottom) as u32,
@@ -31,6 +31,13 @@ pub fn crop(image: Image, margin: &Margin) -> Result<ImageOnHeap> {
     Ok(Box::new(buf.into_flat_samples()))
 }
 
+///
+pub fn convert_bgra_to_rgba(buffer: &mut [u8]) {
+    for chunk in buffer.chunks_exact_mut(4) {
+        chunk.swap(0, 2);
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -40,7 +47,7 @@ mod tests {
     fn should_crop() -> Result<()> {
         // given
         let image_org = open("tests/frames/frame-macos-right-side-issue.tga")?;
-        let image = image_org.into_bgra8();
+        let image = image_org.into_rgba8();
         let image_raw = ImageOnHeap::new(image.into_flat_samples());
         let (width, height) = (image_raw.layout.width, image_raw.layout.height);
 

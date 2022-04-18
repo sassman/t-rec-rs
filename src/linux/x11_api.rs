@@ -1,5 +1,7 @@
 use crate::common::identify_transparency::identify_transparency;
+use crate::common::image::convert_bgra_to_rgba;
 use crate::{ImageOnHeap, Margin, PlatformApi, Result, WindowId, WindowList};
+
 use anyhow::Context;
 use image::flat::SampleLayout;
 use image::{ColorType, FlatSamples};
@@ -92,7 +94,7 @@ impl X11Api {
             let (_, _, width, height) = self.get_window_geometry(&window_id)?;
             if width > 1 && height > 1 {
                 let attr = conn.get_window_attributes(window)?.reply()?;
-                if let MapState::Viewable = attr.map_state {
+                if let MapState::VIEWABLE = attr.map_state {
                     result.push(window as WindowId);
                 } else {
                     debug!(
@@ -166,7 +168,7 @@ impl PlatformApi for X11Api {
             .conn
             // NOTE: x and y are not the absolute coordinates but relative to the windows dimensions, that is why 0, 0
             .get_image(
-                ImageFormat::ZPixmap,
+                ImageFormat::Z_PIXMAP,
                 window_id as Drawable,
                 x,
                 y,
@@ -180,8 +182,10 @@ impl PlatformApi for X11Api {
                 window_id
             ))?;
 
-        let raw_data = image.data;
-        let color = ColorType::Bgra8;
+        let mut raw_data = image.data;
+        convert_bgra_to_rgba(&mut raw_data);
+
+        let color = ColorType::Rgba8;
         let channels = 4;
         let mut buffer = FlatSamples {
             samples: raw_data,
@@ -257,24 +261,25 @@ impl PlatformApi for X11Api {
 #[cfg(test)]
 mod test {
     use super::*;
+    use crate::utils::IMG_EXT;
     use image::flat::View;
-    use image::{save_buffer, Bgra, GenericImageView};
+    use image::{save_buffer, GenericImageView, Rgba};
 
     #[test]
     fn calibrate() -> Result<()> {
         let mut api = X11Api::new()?;
         let win = api.get_active_window()?;
         let image_raw = api.capture_window_screenshot(win)?;
-        let image: View<_, Bgra<u8>> = image_raw.as_view().unwrap();
+        let image: View<_, Rgba<u8>> = image_raw.as_view().unwrap();
         let (width, height) = image.dimensions();
 
         api.calibrate(win)?;
         let image_calibrated_raw = api.capture_window_screenshot(win)?;
-        let image_calibrated: View<_, Bgra<u8>> = image_calibrated_raw.as_view().unwrap();
+        let image_calibrated: View<_, Rgba<u8>> = image_calibrated_raw.as_view().unwrap();
         let (width_new, height_new) = image_calibrated.dimensions();
         dbg!(width, width_new, height, height_new);
 
-        let Bgra([_, _, _, alpha]) = image.get_pixel(width / 2, 0);
+        let Rgba([_, _, _, alpha]) = image.get_pixel(width / 2, 0);
         dbg!(alpha);
         if alpha == 0 {
             // if that pixel was full transparent, for example on ubuntu / GNOME, caused by the drop shadow
@@ -331,17 +336,17 @@ mod test {
         let api = X11Api::new()?;
         let win = api.get_active_window()?;
         let image_raw = api.capture_window_screenshot(win)?;
-        let image: View<_, Bgra<u8>> = image_raw.as_view().unwrap();
+        let image: View<_, Rgba<u8>> = image_raw.as_view().unwrap();
         let (width, height) = image.dimensions();
 
-        let Bgra([blue, green, red, alpha]) = image.get_pixel(width / 2, height / 2);
+        let Rgba([red, green, blue, alpha]) = image.get_pixel(width / 2, height / 2);
         assert_ne!(blue, 0);
         assert_ne!(green, 0);
         assert_ne!(red, 0);
         assert_ne!(alpha, 0, "alpha is unexpected");
 
         // Note: visual validation is sometimes helpful:
-        let file = format!("frame-{}.tga", win);
+        let file = format!("frame-{win}.{IMG_EXT}");
         save_buffer(
             file,
             &image_raw.samples,
@@ -433,7 +438,7 @@ mod test {
         for win in tree.children {
             let attr = conn.get_window_attributes(win)?.reply()?;
 
-            if let MapState::Viewable = attr.map_state {
+            if let MapState::VIEWABLE = attr.map_state {
                 let geometry = conn.get_geometry(win)?.reply()?;
 
                 let class = conn

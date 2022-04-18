@@ -1,6 +1,6 @@
 ---
-name: Bug report
-about: Create a report to help us improve
+name: Bug report Linux
+about: Create a report to help us improve the linux version
 title: 'Linux based bug template'
 labels: ['Type: Bug', 'OS: Linux']
 assignees: ''
