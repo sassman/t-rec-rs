@@ -256,9 +256,8 @@ pub fn ls_win() -> Result<()> {
     let api = setup()?;
     println!("Window | Id");
     for (window_owner, window_id) in api.window_list()? {
-        match (window_owner, window_id) {
-            (Some(window_owner), window_id) => println!("{} | {}", window_owner, window_id),
-            (_, _) => {}
+        if let (Some(window_owner), window_id) = (window_owner, window_id) {
+            println!("{} | {}", window_owner, window_id)
         }
     }
 
