@@ -1,6 +1,6 @@
 use crate::{ImageOnHeap, Result, WindowId, WindowList};
 
-pub trait PlatformApi: Send {
+pub trait PlatformApi: Send + Unpin + Sized {
     /// 1. it does check for the screenshot
     /// 2. it checks for transparent margins and configures the api
     ///     to cut them away in further screenshots
