@@ -6,8 +6,8 @@ use image::{GenericImageView, Rgba};
 /// this helps to identify outer transparent regions
 /// since some backends provides transparency either from a compositor effect like drop shadow on ubuntu / GNOME
 /// or some strange right side strip on MacOS
-pub fn identify_transparency(image: Image) -> Result<Option<Margin>> {
-    let image: View<_, Rgba<u8>> = image.as_view()?;
+pub fn identify_transparency(image: impl AsRef<Image>) -> Result<Option<Margin>> {
+    let image: View<_, Rgba<u8>> = image.as_ref().as_view()?;
     let (width, height) = image.dimensions();
     let half_width = width / 2;
     let half_height = height / 2;

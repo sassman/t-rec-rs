@@ -1,14 +1,11 @@
-use crate::common::image::convert_bgra_to_rgba;
-use crate::ImageOnHeap;
-
 use anyhow::{ensure, Context, Result};
 use core_graphics::display::*;
 use core_graphics::image::CGImageRef;
-use image::flat::SampleLayout;
-use image::{ColorType, FlatSamples};
 
-pub fn capture_window_screenshot(win_id: u64) -> Result<ImageOnHeap> {
-    let (w, h, channels, mut raw_data) = {
+use crate::common::Frame;
+
+pub fn capture_window_screenshot(win_id: u64) -> Result<Frame> {
+    let (w, h, channels, raw_data) = {
         let image = unsafe {
             CGDisplay::screenshot(
                 CGRectNull,
@@ -44,25 +41,18 @@ pub fn capture_window_screenshot(win_id: u64) -> Result<ImageOnHeap> {
         (w, h, byte_per_pixel, raw_data)
     };
 
-    convert_bgra_to_rgba(&mut raw_data);
-
-    let color = ColorType::Rgba8;
-    let buffer = FlatSamples {
-        samples: raw_data,
-        layout: SampleLayout::row_major_packed(channels, w, h),
-        color_hint: Some(color),
-    };
-
-    Ok(ImageOnHeap::new(buffer))
+    Ok(Frame::from_bgra(raw_data, channels, w, h))
 }
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-    #[cfg(feature = "e2e_tests")]
-    use crate::macos::setup;
     #[cfg(feature = "e2e_tests")]
     use image::save_buffer;
+
+    #[cfg(feature = "e2e_tests")]
+    use crate::macos::setup;
+
+    use super::*;
 
     #[test]
     #[should_panic(expected = "Cannot grab screenshot from CGDisplay of window id 999999")]

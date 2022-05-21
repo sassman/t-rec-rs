@@ -1059,6 +1059,7 @@ dependencies = [
  "core-foundation-sys",
  "core-graphics",
  "env_logger",
+ "flume",
  "humantime",
  "image",
  "log",
