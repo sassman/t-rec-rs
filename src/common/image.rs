@@ -45,6 +45,7 @@ pub fn convert_bgra_to_rgba(buffer: &mut [u8]) {
 
 #[cfg(test)]
 mod tests {
+    use crate::common::Frame;
     use image::open;
 
     use super::*;
@@ -56,9 +57,10 @@ mod tests {
         let image = image_org.into_rgba8();
         let image_raw = image.into_flat_samples();
         let (width, height) = (image_raw.layout.width, image_raw.layout.height);
+        let frame: Frame = image_raw.into();
 
         // when
-        let cropped = crop(image_raw, &Margin::new(1, 1, 1, 1))?;
+        let cropped = crop(&frame, &Margin::new(1, 1, 1, 1))?;
 
         // then
         assert_eq!(cropped.layout.width, width - 2);

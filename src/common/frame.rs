@@ -47,3 +47,12 @@ impl AsRef<Instant> for Frame {
         &self.timecode
     }
 }
+
+impl From<FlatSamples<Vec<u8>>> for Frame {
+    fn from(image: FlatSamples<Vec<u8>>) -> Self {
+        Self {
+            image,
+            timecode: Instant::now(),
+        }
+    }
+}

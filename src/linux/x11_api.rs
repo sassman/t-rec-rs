@@ -1,10 +1,9 @@
 use crate::common::identify_transparency::identify_transparency;
 use crate::common::image::convert_bgra_to_rgba;
-use crate::{ImageOnHeap, Margin, PlatformApi, Result, WindowId, WindowList};
+use crate::{Margin, PlatformApi, Result, WindowId, WindowList};
 
+use crate::common::Frame;
 use anyhow::Context;
-use image::flat::SampleLayout;
-use image::{ColorType, FlatSamples};
 use log::debug;
 use x11rb::connection::Connection;
 use x11rb::protocol::xproto::*;
@@ -117,11 +116,11 @@ impl X11Api {
         self.get_all_sub_windows(&(screen.root as WindowId))
     }
 
-    pub fn get_window_geometry(&self, window: &WindowId) -> Result<(i16, i16, u16, u16)> {
+    pub fn get_window_geometry(&self, window: &WindowId) -> Result<(i32, i32, u32, u32)> {
         let conn = &self.conn;
         let window = *window as Window;
         let geom = conn.get_geometry(window)?.reply()?;
-        Ok((geom.x, geom.y, geom.width, geom.height))
+        Ok((geom.x as _, geom.y as _, geom.width as _, geom.height as _))
     }
 }
 
@@ -131,7 +130,7 @@ impl PlatformApi for X11Api {
     ///     to cut them away in further screenshots
     fn calibrate(&mut self, window_id: WindowId) -> Result<()> {
         let image = self.capture_window_screenshot(window_id)?;
-        self.margin = identify_transparency(*image)?;
+        self.margin = identify_transparency(&image)?;
 
         Ok(())
     }
@@ -153,15 +152,15 @@ impl PlatformApi for X11Api {
         Ok(wins)
     }
 
-    fn capture_window_screenshot(&self, window_id: WindowId) -> Result<ImageOnHeap> {
+    fn capture_window_screenshot(&self, window_id: WindowId) -> Result<Frame> {
         let (_, _, mut width, mut height) = self.get_window_geometry(&window_id)?;
-        let (mut x, mut y) = (0_i16, 0_i16);
+        let (mut x, mut y) = (0_i32, 0_i32);
         if let Some(margin) = self.margin.as_ref() {
             if !margin.is_zero() {
-                width -= margin.left + margin.right;
-                height -= margin.top + margin.bottom;
-                x = margin.left as i16;
-                y = margin.top as i16;
+                width -= (margin.left + margin.right) as u32;
+                height -= (margin.top + margin.bottom) as u32;
+                x = margin.left as _;
+                y = margin.top as _;
             }
         }
         let image = self
@@ -170,10 +169,10 @@ impl PlatformApi for X11Api {
             .get_image(
                 ImageFormat::Z_PIXMAP,
                 window_id as Drawable,
-                x,
-                y,
-                width,
-                height,
+                x as _,
+                y as _,
+                width as _,
+                height as _,
                 !0,
             )?
             .reply()
@@ -182,24 +181,17 @@ impl PlatformApi for X11Api {
                 window_id
             ))?;
 
-        let mut raw_data = image.data;
-        convert_bgra_to_rgba(&mut raw_data);
-
-        let color = ColorType::Rgba8;
-        let channels = 4;
-        let mut buffer = FlatSamples {
-            samples: raw_data,
-            layout: SampleLayout::row_major_packed(channels, width as u32, height as u32),
-            color_hint: Some(color),
-        };
+        let mut samples = image.data;
+        convert_bgra_to_rgba(&mut samples);
 
         if image.depth == 24 {
+            let stride = 3;
             // NOTE: in this case the alpha channel is 0, but should be set to 0xff
             // the index into the alpha channel
-            let mut i = 3;
-            let len = buffer.samples.len();
+            let mut i = stride;
+            let len = samples.len();
             while i < len {
-                let alpha = buffer.samples.get_mut(i).unwrap();
+                let alpha = samples.get_mut(i).unwrap();
                 if alpha == &0 {
                     *alpha = 0xff;
                 } else {
@@ -208,27 +200,36 @@ impl PlatformApi for X11Api {
                 }
 
                 // going one pixel further, still pointing to the alpha channel
-                i += buffer.layout.width_stride;
+                i += stride;
             }
         }
         if self.margin.is_some() {
+            let stride = 3;
             // once first image is captured, we make sure that transparency is removed
             // even in cases where `margin.is_zero()`
             let mut i = 3;
-            let len = buffer.samples.len();
+            let len = samples.len();
             while i < len {
-                let alpha = buffer.samples.get_mut(i).unwrap();
+                let alpha = samples.get_mut(i).unwrap();
                 if alpha != &0xff {
                     *alpha = 0xff;
                 }
 
                 // going one pixel further, still pointing to the alpha channel
-                i += buffer.layout.width_stride;
+                i += stride;
             }
         }
         debug!("Image dimensions: {}x{}", width, height);
 
-        Ok(ImageOnHeap::new(buffer))
+        let channels = 4;
+        Ok(Frame::from_bgra(samples, channels, width, height))
+        // let color = ColorType::Rgba8;
+        // let mut buffer = FlatSamples {
+        //     samples,
+        //     layout: SampleLayout::row_major_packed(channels, width as u32, height as u32),
+        //     color_hint: Some(color),
+        // };
+        // Ok(ImageOnHeap::new(buffer))
     }
 
     fn get_active_window(&self) -> Result<WindowId> {

@@ -58,6 +58,7 @@ pub fn identify_transparency(image: impl AsRef<Image>) -> Result<Option<Margin>>
 #[cfg(test)]
 mod test {
     use super::*;
+    use crate::common::Frame;
 
     #[test]
     fn should_identify_macos_right_side_issue() -> Result<()> {
@@ -72,8 +73,8 @@ mod test {
         assert_eq!(blue, &0, "the test image is not as expected");
 
         // when
-        let image_raw = image.into_flat_samples();
-        let margin = identify_transparency(image_raw)?;
+        let image_raw: Frame = image.into_flat_samples().into();
+        let margin = identify_transparency(&image_raw)?;
 
         // then
         assert_eq!(margin, Some(Margin::new(0, 14, 0, 0)));
