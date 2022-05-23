@@ -263,6 +263,7 @@ impl PlatformApi for X11Api {
 mod test {
     use super::*;
     use crate::utils::IMG_EXT;
+    use crate::Image;
     use image::flat::View;
     use image::{save_buffer, GenericImageView, Rgba};
 
@@ -271,11 +272,13 @@ mod test {
         let mut api = X11Api::new()?;
         let win = api.get_active_window()?;
         let image_raw = api.capture_window_screenshot(win)?;
+        let image_raw: &Image = image_raw.as_ref();
         let image: View<_, Rgba<u8>> = image_raw.as_view().unwrap();
         let (width, height) = image.dimensions();
 
         api.calibrate(win)?;
         let image_calibrated_raw = api.capture_window_screenshot(win)?;
+        let image_calibrated_raw: &Image = image_calibrated_raw.as_ref();
         let image_calibrated: View<_, Rgba<u8>> = image_calibrated_raw.as_view().unwrap();
         let (width_new, height_new) = image_calibrated.dimensions();
         dbg!(width, width_new, height, height_new);
@@ -337,6 +340,7 @@ mod test {
         let api = X11Api::new()?;
         let win = api.get_active_window()?;
         let image_raw = api.capture_window_screenshot(win)?;
+        let image_raw: &Image = image_raw.as_ref();
         let image: View<_, Rgba<u8>> = image_raw.as_view().unwrap();
         let (width, height) = image.dimensions();
 

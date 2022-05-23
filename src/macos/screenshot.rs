@@ -46,6 +46,7 @@ pub fn capture_window_screenshot(win_id: u64) -> Result<Frame> {
 
 #[cfg(test)]
 mod tests {
+    use crate::Image;
     #[cfg(feature = "e2e_tests")]
     use image::save_buffer;
 
@@ -69,6 +70,7 @@ mod tests {
         let mut api = setup()?;
         let win = 5308;
         let image = api.capture_window_screenshot(win)?;
+        let image: &Image = image.as_ref();
         let (width, height) = (image.layout.width, image.layout.height);
         dbg!(width, height);
 
@@ -84,6 +86,7 @@ mod tests {
 
         api.calibrate(win)?;
         let image_cropped = api.capture_window_screenshot(win)?;
+        let image_cropped: &Image = image_cropped.as_ref();
 
         assert!(width > image_cropped.layout.width);
         // Note: visual validation is sometimes helpful:
