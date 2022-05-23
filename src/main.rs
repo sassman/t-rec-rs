@@ -39,7 +39,7 @@ use std::{env, thread};
 use tempfile::TempDir;
 
 pub type Image = FlatSamples<Vec<u8>>;
-pub type ImageOnHeap = Box<Image>;
+pub type ImageOnHeap = Image;
 pub type WindowId = u64;
 pub type WindowList = Vec<WindowListEntry>;
 pub type WindowListEntry = (Option<String>, WindowId);

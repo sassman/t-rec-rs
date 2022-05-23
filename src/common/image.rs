@@ -1,14 +1,19 @@
-use crate::common::Margin;
-use crate::{Image, ImageOnHeap, Result};
 use image::flat::View;
 use image::{imageops, GenericImageView, ImageBuffer, Rgba};
+
+use crate::common::Margin;
+use crate::{Image, ImageOnHeap, Result};
+
+pub trait CropMut {
+    fn crop(&mut self, margin: &Margin) -> Result<()>;
+}
 
 ///
 /// specialized version of crop for [`ImageOnHeap`] and [`Margin`]
 ///
 #[cfg_attr(not(macos), allow(dead_code))]
-pub fn crop(image: Image, margin: &Margin) -> Result<ImageOnHeap> {
-    let mut img2: View<_, Rgba<u8>> = image.as_view()?;
+pub fn crop(image: impl AsRef<Image>, margin: &Margin) -> Result<ImageOnHeap> {
+    let mut img2: View<_, Rgba<u8>> = image.as_ref().as_view()?;
     let (width, height) = (
         img2.width() - (margin.left + margin.right) as u32,
         img2.height() - (margin.top + margin.bottom) as u32,
@@ -28,7 +33,7 @@ pub fn crop(image: Image, margin: &Margin) -> Result<ImageOnHeap> {
         }
     }
 
-    Ok(Box::new(buf.into_flat_samples()))
+    Ok(buf.into_flat_samples())
 }
 
 ///
@@ -40,19 +45,22 @@ pub fn convert_bgra_to_rgba(buffer: &mut [u8]) {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
+    use crate::common::Frame;
     use image::open;
+
+    use super::*;
 
     #[test]
     fn should_crop() -> Result<()> {
         // given
         let image_org = open("tests/frames/frame-macos-right-side-issue.tga")?;
         let image = image_org.into_rgba8();
-        let image_raw = ImageOnHeap::new(image.into_flat_samples());
+        let image_raw = image.into_flat_samples();
         let (width, height) = (image_raw.layout.width, image_raw.layout.height);
+        let frame: Frame = image_raw.into();
 
         // when
-        let cropped = crop(*image_raw, &Margin::new(1, 1, 1, 1))?;
+        let cropped = crop(&frame, &Margin::new(1, 1, 1, 1))?;
 
         // then
         assert_eq!(cropped.layout.width, width - 2);

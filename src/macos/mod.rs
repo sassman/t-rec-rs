@@ -3,10 +3,11 @@ mod screenshot;
 mod window_id;
 
 use crate::common::identify_transparency::identify_transparency;
-use crate::common::image::crop;
+use crate::common::image::CropMut;
 use crate::PlatformApi;
-use crate::{ImageOnHeap, Margin, Result, WindowList};
+use crate::{Margin, Result, WindowList};
 
+use crate::common::Frame;
 use anyhow::Context;
 use screenshot::capture_window_screenshot;
 use std::env;
@@ -25,7 +26,7 @@ struct QuartzApi {
 impl PlatformApi for QuartzApi {
     fn calibrate(&mut self, window_id: u64) -> Result<()> {
         let image = capture_window_screenshot(window_id)?;
-        self.margin = identify_transparency(*image)?;
+        self.margin = identify_transparency(image)?;
 
         Ok(())
     }
@@ -34,15 +35,16 @@ impl PlatformApi for QuartzApi {
         window_list()
     }
 
-    fn capture_window_screenshot(&self, window_id: u64) -> Result<ImageOnHeap> {
-        let img = capture_window_screenshot(window_id)?;
+    fn capture_window_screenshot(&self, window_id: u64) -> Result<Frame> {
+        let mut frame = capture_window_screenshot(window_id)?;
         if let Some(margin) = self.margin.as_ref() {
             if !margin.is_zero() {
                 // in this case we want to crop away the transparent margins
-                return crop(*img, margin);
+                frame.crop(margin)?;
             }
         }
-        Ok(img)
+
+        Ok(frame)
     }
 
     fn get_active_window(&self) -> Result<u64> {
