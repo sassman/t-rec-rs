@@ -19,7 +19,7 @@ github-actions = { repository = "sassman/t-rec-rs", branch = "main", workflow = 
 maintenance = { status = "actively-developed" }
 
 [dependencies]
-anyhow = "1.0.56"
+anyhow = "1.0.58"
 tempfile = "3.3.0"
 rayon = "1.5.2"
 log = "0.4.16"
