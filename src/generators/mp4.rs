@@ -1,5 +1,6 @@
 use std::process::Command;
 
+use crate::capture::Timecode;
 use anyhow::{Context, Result};
 use tempfile::TempDir;
 
@@ -37,7 +38,7 @@ pub fn check_for_ffmpeg() -> Result<()> {
 ///
 /// generating the final mp4 with help of ffmpeg
 pub fn generate_mp4_with_ffmpeg(
-    _time_codes: &[u128],
+    _time_codes: &[Timecode],
     tempdir: &TempDir,
     target: &str,
 ) -> Result<()> {

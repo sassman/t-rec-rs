@@ -18,11 +18,11 @@ Blazingly fast terminal recorder that generates animated gif images for the web 
 ![demo](./docs/demo.gif)
 
 ## Features
-- Screenshotting your terminal with 4 frames per second (every 250ms)
-- Generates high quality small sized animated gif images or mp4 videos
+- Screenshotting your terminal with 4/8 frames per second
+- Generates high-quality small-sized animated gif images or mp4 videos
 - **Build-In idle frames detection and optimization** (for super fluid presentations)
 - Applies (can be disabled) border decor effects like drop shadow
-- Runs on MacOS and Linux
+- Runs on macOS and Linux
 - Uses native efficient APIs
 - Runs without any cloud service and entirely offline
 - No issues with terminal sizes larger than 80x24
@@ -123,7 +123,7 @@ t-rec /bin/sh
 ### Full Options
 
 ```sh
-t-rec 0.7.0
+t-rec 0.7.1
 Sven Assmann <sven.assmann.it@gmail.com>
 Blazingly fast terminal recorder that generates animated gif images for the web written in rust.
 
@@ -135,28 +135,56 @@ ARGS:
                                     pass it here. For example '/bin/sh'
 
 OPTIONS:
-    -b, --bg <bg>                     Background color when decors are used [default: transparent]
-                                      [possible values: white, black, transparent]
-    -d, --decor <decor>               Decorates the animation with certain, mostly border effects
-                                      [default: none] [possible values: shadow, none]
-    -e, --end-pause <s | ms | m>      to specify the pause time at the end of the animation, that
-                                      time the gif will show the last frame
-    -h, --help                        Print help information
-    -l, --ls-win                      If you want to see a list of windows available for recording
-                                      by their id, you can set env var 'WINDOWID' or `--win-id` to
-                                      record this specific window only
-    -m, --video                       Generates additionally to the gif a mp4 video of the recording
-    -M, --video-only                  Generates only a mp4 video and not gif
-    -n, --natural                     If you want a very natural typing experience and disable the
-                                      idle detection and sampling optimization
-    -q, --quiet                       Quiet mode, suppresses the banner: 'Press Ctrl+D to end
-                                      recording'
-    -s, --start-pause <s | ms | m>    to specify the pause time at the start of the animation, that
-                                      time the gif will show the first frame
-    -v, --verbose                     Enable verbose insights for the curious
-    -V, --version                     Print version information
-    -w, --win-id <win-id>             Window Id (see --ls-win) that should be captured, instead of
-                                      the current terminal
+    -b, --bg <bg>
+            Background color when decors are used [default: transparent] [possible values: white,
+            black, transparent]
+
+    -d, --decor <decor>
+            Decorates the animation with certain, mostly border effects [default: none] [possible
+            values: shadow, none]
+
+    -e, --end-pause <s | ms | m>
+            Specify the pause time at the end of the animation, that time the gif will show the last
+            frame
+
+    -f, --framerate <frames per second>
+            Increase the screen capturing rate (framerate) [default: 4] [possible values: 4, 8]
+
+    -h, --help
+            Print help information
+
+    -l, --ls-win
+            If you want to see a list of windows available for recording by their id, you can set
+            env var 'WINDOWID' or `--win-id` to record this specific window only
+
+    -m, --video
+            Generates additionally to the gif a mp4 video of the recording
+
+    -M, --video-only
+            Generates only a mp4 video and not gif
+
+    -n, --natural
+            If you want a very natural typing experience and disable the idle detection and sampling
+            optimization
+
+    -o, --output <file>
+            Specify the output file (without extension) [default: t-rec]
+
+    -q, --quiet
+            Quiet mode, suppresses the banner: 'Press Ctrl+D to end recording'
+
+    -s, --start-pause <s | ms | m>
+            Specify the pause time at the start of the animation, that time the gif will show the
+            first frame
+
+    -v, --verbose
+            Enable verbose insights for the curious
+
+    -V, --version
+            Print version information
+
+    -w, --win-id <win-id>
+            Window Id (see --ls-win) that should be captured, instead of the current terminal
 ```
 
 ### Disable idle detection & optimization

@@ -1,6 +1,7 @@
 use crate::utils::{file_name_for, IMG_EXT};
 
-use anyhow::{Context, Result};
+use crate::capture::Timecode;
+use anyhow::{bail, Context, Result};
 use std::ops::Div;
 use std::process::{Command, Output};
 use std::time::Duration;
@@ -27,7 +28,7 @@ pub fn check_for_imagemagick() -> Result<Output> {
 ///
 /// generating the final gif with help of convert
 pub fn generate_gif_with_convert(
-    time_codes: &[u128],
+    time_codes: &[Timecode],
     tempdir: &TempDir,
     target: &str,
     start_pause: Option<Duration>,
@@ -36,12 +37,18 @@ pub fn generate_gif_with_convert(
     println!("🎉 🚀 Generating {target}");
     let mut cmd = Command::new(PROGRAM);
     cmd.arg("-loop").arg("0");
-    let mut delay = 0;
+    let mut delay: u32 = 0;
     let temp = tempdir.path();
-    let last_frame_i = time_codes.len() - 1;
+    let last_frame_i = time_codes.last();
+    if last_frame_i.is_none() {
+        // houston we have a problem
+        bail!("We got no frames :(");
+    }
+    let last_frame_i = *last_frame_i.unwrap().as_ref();
     for (i, tc) in time_codes.iter().enumerate() {
+        let tc = tc.as_ref();
         delay = *tc - delay;
-        let frame = temp.join(file_name_for(tc, IMG_EXT));
+        let frame = temp.join(file_name_for(&Timecode::from(*tc as u128), IMG_EXT));
         if !frame.exists() {
             continue;
         }
@@ -50,7 +57,7 @@ pub fn generate_gif_with_convert(
             (0, Some(delay), _) => {
                 frame_delay += delay.as_millis().div(10) as u64;
             }
-            (i, _, Some(delay)) if i == last_frame_i => {
+            (i, _, Some(delay)) if i as u32 == last_frame_i => {
                 frame_delay += delay.as_millis().div(10) as u64;
             }
             (_, _, _) => {}

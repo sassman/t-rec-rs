@@ -6,6 +6,7 @@ const TIPS: &[&str] = &[
     "To add a pause at the beginning of the gif loop, use e.g. option `-s 500ms` option",
     "To prevent cutting out stall frames, checkout the `-n` option",
     "To remove the shadow around the gif, use the `-d none` option",
+    "To double the capturing framerate, use the option `-f 8`",
     "For a mp4 video, use the `-m` option",
     "To suppress the 'Ctrl+D' banner, use the `-q` option",
 ];
