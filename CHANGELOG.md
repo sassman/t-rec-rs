@@ -5,7 +5,28 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
-[Unreleased]: https://github.com/sassman/t-rec-rs/compare/v0.7.3...HEAD
+[Unreleased]: https://github.com/sassman/t-rec-rs/compare/v0.7.4...HEAD
+
+## [0.7.4] - 2022-07-04
+[0.7.4]: https://github.com/sassman/t-rec-rs/compare/v0.7.3...v0.7.4
+
+### Changed
+- [chore(deps): bump clap from 3.2.5 to 3.2.8](https://github.com/sassman/t-rec-rs/pull/145)
+- [chore(deps): bump anyhow from 1.0.56 to 1.0.58](https://github.com/sassman/t-rec-rs/pull/143)
+- [chore(deps): bump clap from 3.1.9 to 3.2.5](https://github.com/sassman/t-rec-rs/pull/142)
+- [chore(deps): bump rayon from 1.5.2 to 1.5.3](https://github.com/sassman/t-rec-rs/pull/140)
+- [chore(deps): bump log from 0.4.16 to 0.4.17](https://github.com/sassman/t-rec-rs/pull/137)
+- [chore(deps): bump image from 0.24.1 to 0.24.2](https://github.com/sassman/t-rec-rs/pull/136)
+- [fix: clippy lints with latest rustc](https://github.com/sassman/t-rec-rs/pull/132)
+- [chore(deps): bump rayon from 1.5.1 to 1.5.2](https://github.com/sassman/t-rec-rs/pull/131)
+- [chore(deps): bump clap from 3.1.8 to 3.1.9](https://github.com/sassman/t-rec-rs/pull/130)
+- [chore(deps): bump clap from 3.1.6 to 3.1.8](https://github.com/sassman/t-rec-rs/pull/129)
+- [chore(deps): bump log from 0.4.14 to 0.4.16](https://github.com/sassman/t-rec-rs/pull/127)
+
+## Contributors
+
+- [dependabot[bot]](https://github.com/apps/dependabot)
+- [sassman](https://github.com/sassman)
 
 ## [0.7.3] - 2022-03-15
 [0.7.3]: https://github.com/sassman/t-rec-rs/compare/v0.7.2...v0.7.3
