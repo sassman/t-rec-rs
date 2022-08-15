@@ -28,7 +28,7 @@ simplerand = "1.3.0"
 humantime = "2.1.0"
 
 [dependencies.clap]
-version = "3.2.8"
+version = "3.2.17"
 features = ["cargo"]
 
 [dependencies.image]
