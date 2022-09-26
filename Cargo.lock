@@ -249,16 +249,15 @@ dependencies = [
 
 [[package]]
 name = "exr"
-version = "1.4.2"
+version = "1.5.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "14cc0e06fb5f67e5d6beadf3a382fec9baca1aa751c6d5368fdeee7e5932c215"
+checksum = "c9a7880199e74c6d3fe45579df2f436c5913a71405494cb89d59234d86b47dc5"
 dependencies = [
  "bit_field",
- "deflate",
  "flume",
  "half",
- "inflate",
  "lebe",
+ "miniz_oxide 0.5.4",
  "smallvec",
  "threadpool",
 ]
@@ -386,9 +385,9 @@ checksum = "9a3a5bfb195931eeb336b2a7b4d761daec841b97f947d34394601737a7bba5e4"
 
 [[package]]
 name = "image"
-version = "0.24.2"
+version = "0.24.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "28edd9d7bc256be2502e325ac0628bde30b7001b9b52e0abe31a1a9dc2701212"
+checksum = "bd8e4fb07cf672b1642304e731ef8a6a4c7891d67bb4fd4f5ce58cd6ed86803c"
 dependencies = [
  "bytemuck",
  "byteorder",
@@ -396,7 +395,6 @@ dependencies = [
  "exr",
  "gif",
  "jpeg-decoder 0.2.2",
- "num-iter",
  "num-rational",
  "num-traits",
  "png",
@@ -412,15 +410,6 @@ checksum = "282a6247722caba404c065016bbfa522806e51714c34f5dfc3e4a3a46fcb4223"
 dependencies = [
  "autocfg",
  "hashbrown",
-]
-
-[[package]]
-name = "inflate"
-version = "0.4.5"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1cdb29978cc5797bd8dcc8e5bf7de604891df2a8dc576973d71a281e916db2ff"
-dependencies = [
- "adler32",
 ]
 
 [[package]]
@@ -464,9 +453,9 @@ checksum = "e2abad23fbc42b3700f2f279844dc832adb2b2eb069b2df918f455c4e18cc646"
 
 [[package]]
 name = "lebe"
-version = "0.5.1"
+version = "0.5.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7efd1d698db0759e6ef11a7cd44407407399a910c774dd804c64c032da7826ff"
+checksum = "03087c2bad5e1034e8cace5926dec053fb3790248370865f5117a7d0213354c8"
 
 [[package]]
 name = "libc"
@@ -528,9 +517,9 @@ dependencies = [
 
 [[package]]
 name = "miniz_oxide"
-version = "0.5.1"
+version = "0.5.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d2b29bd4bc3f33391105ebee3589c19197c4271e3e5a9ec9bfe8127eeff8f082"
+checksum = "96590ba8f175222643a85693f33d26e9c8a015f599c216509b1a6894af675d34"
 dependencies = [
  "adler",
 ]
@@ -564,17 +553,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d2cc698a63b549a70bc047073d2949cce27cd1c7b0a4a862d08a8031bc2801db"
 dependencies = [
  "autocfg",
- "num-traits",
-]
-
-[[package]]
-name = "num-iter"
-version = "0.1.42"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b2021c8337a54d21aca0d59a92577a029af9431cb59b909b03252b9c164fad59"
-dependencies = [
- "autocfg",
- "num-integer",
  "num-traits",
 ]
 
@@ -678,7 +656,7 @@ dependencies = [
  "bitflags",
  "crc32fast",
  "deflate",
- "miniz_oxide 0.5.1",
+ "miniz_oxide 0.5.4",
 ]
 
 [[package]]

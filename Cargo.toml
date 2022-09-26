@@ -32,7 +32,7 @@ version = "3.2.8"
 features = ["cargo"]
 
 [dependencies.image]
-version = "0.24.2"
+version = "0.24.4"
 features = ["bmp"]
 
 [target.'cfg(target_os = "macos")'.dependencies]
