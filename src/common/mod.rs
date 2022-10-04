@@ -14,7 +14,7 @@ pub trait PlatformApi: Send {
     fn get_active_window(&self) -> Result<WindowId>;
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Eq)]
 pub struct Margin {
     pub top: u16,
     pub right: u16,
