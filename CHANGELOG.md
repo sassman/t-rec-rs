@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 [Unreleased]: https://github.com/sassman/t-rec-rs/compare/v0.7.4...HEAD
 
+## [0.7.5] - 2022-10-04
+[0.7.5]: https://github.com/sassman/t-rec-rs/compare/v0.7.4...v0.7.5
+
+### Changed
+- update dependencies (#161)
+
+### Contributors
+- [sassman](https://github.com/sassman)
+
 ## [0.7.4] - 2022-07-04
 [0.7.4]: https://github.com/sassman/t-rec-rs/compare/v0.7.3...v0.7.4
 
@@ -23,7 +32,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [chore(deps): bump clap from 3.1.6 to 3.1.8](https://github.com/sassman/t-rec-rs/pull/129)
 - [chore(deps): bump log from 0.4.14 to 0.4.16](https://github.com/sassman/t-rec-rs/pull/127)
 
-## Contributors
+### Contributors
 
 - [dependabot[bot]](https://github.com/apps/dependabot)
 - [sassman](https://github.com/sassman)
