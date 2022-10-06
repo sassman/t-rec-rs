@@ -5,7 +5,7 @@ mod generators;
 mod tips;
 
 mod capture;
-#[cfg(target_os = "linux")]
+#[cfg(any(target_os = "linux", target_os = "netbsd"))]
 mod linux;
 #[cfg(target_os = "macos")]
 mod macos;
@@ -13,7 +13,7 @@ mod utils;
 #[cfg(target_os = "windows")]
 mod win;
 
-#[cfg(target_os = "linux")]
+#[cfg(any(target_os = "linux", target_os = "netbsd"))]
 use crate::linux::*;
 #[cfg(target_os = "macos")]
 use crate::macos::*;
