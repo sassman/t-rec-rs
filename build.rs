@@ -3,8 +3,5 @@ fn main() {
     println!("cargo:rustc-link-lib=X11");
 }
 
-#[cfg(all(
-    not(target_os = "linux"),
-    not(target_os = "netbsd"),
-))]
+#[cfg(all(not(target_os = "linux"), not(target_os = "netbsd")))]
 fn main() {}
