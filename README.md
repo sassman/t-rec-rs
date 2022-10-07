@@ -22,7 +22,7 @@ Blazingly fast terminal recorder that generates animated gif images for the web 
 - Generates high quality small sized animated gif images or mp4 videos
 - **Build-In idle frames detection and optimization** (for super fluid presentations)
 - Applies (can be disabled) border decor effects like drop shadow
-- Runs on MacOS and Linux
+- Runs on MacOS, Linux and NetBSD
 - Uses native efficient APIs
 - Runs without any cloud service and entirely offline
 - No issues with terminal sizes larger than 80x24
@@ -90,6 +90,17 @@ If you prefer, you can clone the [AUR packages](https://aur.archlinux.org/packag
 git clone https://aur.archlinux.org/t-rec.git
 cd t-rec
 makepkg -si
+```
+
+### Installation on NetBSD
+```
+pkgin install t-rec
+```
+
+Or, if you prefer to build from source,
+```
+cd /usr/pkgsrc/multimedia/t-rec
+make install
 ```
 
 ### with cargo
