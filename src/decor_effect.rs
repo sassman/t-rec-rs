@@ -26,10 +26,10 @@ pub fn apply_shadow_effect(time_codes: &[u128], tempdir: &TempDir, bg_color: Str
             let e = Command::new("convert")
                 .arg(file.to_str().unwrap())
                 .arg("(")
-                .args(&["+clone", "-background", "black", "-shadow", "100x20+0+0"])
+                .args(["+clone", "-background", "black", "-shadow", "100x20+0+0"])
                 .arg(")")
-                .args(&["+swap", "-background", bg_color.as_str()])
-                .args(&["-layers", "merge"])
+                .args(["+swap", "-background", bg_color.as_str()])
+                .args(["-layers", "merge"])
                 .arg(file.to_str().unwrap())
                 .output()
                 .context("Cannot apply shadow decor effect")?;
@@ -65,20 +65,20 @@ pub fn apply_big_sur_corner_effect(time_codes: &[u128], tempdir: &TempDir) {
             let e = Command::new("convert")
                 .arg(file.to_str().unwrap())
                 .arg("(")
-                .args(&["+clone", "-alpha", "extract"])
-                .args(&[
+                .args(["+clone", "-alpha", "extract"])
+                .args([
                     "-draw",
                     &format!(
                         "fill black polygon 0,0 0,{r} {r},0 fill white circle {r},{r} {r},0",
                         r = radius
                     ),
                 ])
-                .args(&["(", "+clone", "-flip", ")"])
-                .args(&["-compose", "Multiply", "-composite"])
-                .args(&["(", "+clone", "-flop", ")"])
-                .args(&["-compose", "Multiply", "-composite"])
+                .args(["(", "+clone", "-flip", ")"])
+                .args(["-compose", "Multiply", "-composite"])
+                .args(["(", "+clone", "-flop", ")"])
+                .args(["-compose", "Multiply", "-composite"])
                 .arg(")")
-                .args(&["-alpha", "off", "-compose", "CopyOpacity", "-composite"])
+                .args(["-alpha", "off", "-compose", "CopyOpacity", "-composite"])
                 .arg(file.to_str().unwrap())
                 .output()
                 .context("Cannot apply corner decor effect")?;

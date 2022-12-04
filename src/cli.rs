@@ -41,7 +41,7 @@ pub fn launch() -> ArgMatches {
         .arg(
             Arg::new("decor")
                 .takes_value(true)
-                .possible_values(&["shadow", "none"])
+                .possible_values(["shadow", "none"])
                 .default_value("none")
                 .required(false)
                 .short('d')
@@ -51,7 +51,7 @@ pub fn launch() -> ArgMatches {
         .arg(
             Arg::new("bg")
                 .takes_value(true)
-                .possible_values(&["white", "black", "transparent"])
+                .possible_values(["white", "black", "transparent"])
                 .default_value("transparent")
                 .required(false)
                 .short('b')
