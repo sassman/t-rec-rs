@@ -1,4 +1,5 @@
-use clap::{crate_authors, crate_description, crate_version, Arg, ArgMatches, Command};
+use clap::builder::NonEmptyStringValueParser;
+use clap::{crate_authors, crate_description, crate_version, Arg, ArgAction, ArgMatches, Command};
 
 pub fn launch() -> ArgMatches {
     Command::new("t-rec")
@@ -8,14 +9,15 @@ pub fn launch() -> ArgMatches {
         .about(crate_description!())
         .arg(
             Arg::new("verbose")
-                .takes_value(false)
+                .action(ArgAction::SetTrue)
                 .short('v')
                 .long("verbose")
                 .required(false)
                 .help("Enable verbose insights for the curious")
         )
-        .arg(Arg::new("quiet")
-                .takes_value(false)
+        .arg(
+            Arg::new("quiet")
+                .action(ArgAction::SetTrue)
                 .short('q')
                 .long("quiet")
                 .required(false)
@@ -23,7 +25,7 @@ pub fn launch() -> ArgMatches {
         )
         .arg(
             Arg::new("video")
-                .takes_value(false)
+                .action(ArgAction::SetTrue)
                 .short('m')
                 .long("video")
                 .required(false)
@@ -31,7 +33,7 @@ pub fn launch() -> ArgMatches {
         )
         .arg(
             Arg::new("video-only")
-                .takes_value(false)
+                .action(ArgAction::SetTrue)
                 .short('M')
                 .long("video-only")
                 .required(false)
@@ -40,8 +42,7 @@ pub fn launch() -> ArgMatches {
         )
         .arg(
             Arg::new("decor")
-                .takes_value(true)
-                .possible_values(["shadow", "none"])
+                .value_parser(["shadow", "none"])
                 .default_value("none")
                 .required(false)
                 .short('d')
@@ -50,8 +51,7 @@ pub fn launch() -> ArgMatches {
         )
         .arg(
             Arg::new("bg")
-                .takes_value(true)
-                .possible_values(["white", "black", "transparent"])
+                .value_parser(["white", "black", "transparent"])
                 .default_value("transparent")
                 .required(false)
                 .short('b')
@@ -60,8 +60,8 @@ pub fn launch() -> ArgMatches {
         )
         .arg(
             Arg::new("natural-mode")
+                .action(ArgAction::SetTrue)
                 .value_name("natural")
-                .takes_value(false)
                 .required(false)
                 .short('n')
                 .long("natural")
@@ -69,8 +69,8 @@ pub fn launch() -> ArgMatches {
         )
         .arg(
             Arg::new("list-windows")
+                .action(ArgAction::SetTrue)
                 .value_name("list all visible windows with name and id")
-                .takes_value(false)
                 .required(false)
                 .short('l')
                 .long("ls-win")
@@ -78,7 +78,7 @@ pub fn launch() -> ArgMatches {
         )
         .arg(
             Arg::new("win-id")
-                .takes_value(true)
+                .value_parser(clap::value_parser!(u64))
                 .short('w')
                 .long("win-id")
                 .required(false)
@@ -86,8 +86,8 @@ pub fn launch() -> ArgMatches {
         )
         .arg(
             Arg::new("end-pause")
+                .value_parser(NonEmptyStringValueParser::new())
                 .value_name("s | ms | m")
-                .takes_value(true)
                 .required(false)
                 .short('e')
                 .long("end-pause")
@@ -95,8 +95,8 @@ pub fn launch() -> ArgMatches {
         )
         .arg(
             Arg::new("start-pause")
+                .value_parser(NonEmptyStringValueParser::new())
                 .value_name("s | ms | m")
-                .takes_value(true)
                 .required(false)
                 .short('s')
                 .long("start-pause")
@@ -104,7 +104,7 @@ pub fn launch() -> ArgMatches {
         )
         .arg(
             Arg::new("file")
-                .takes_value(true)
+                .value_parser(NonEmptyStringValueParser::new())
                 .required(false)
                 .short('o')
                 .long("output")
@@ -114,7 +114,7 @@ pub fn launch() -> ArgMatches {
         .arg(
             Arg::new("program")
                 .value_name("shell or program to launch")
-                .takes_value(true)
+                .value_parser(NonEmptyStringValueParser::new())
                 .required(false)
                 .help("If you want to start a different program than $SHELL you can pass it here. For example '/bin/sh'"),
         ).get_matches()
