@@ -34,12 +34,22 @@ pub fn clear_screen() {
 }
 
 /// parses a human duration string into something valid
-pub fn parse_delay(s: Option<&str>, t: &str) -> crate::Result<Option<Duration>> {
-    if let Some(d) = s.map(parse_duration) {
-        let d =
-            d.with_context(|| format!("{} had an invalid format, allowed is 0ms < XXs <= 5m", t))?;
+pub fn parse_delay(
+    s: Option<impl AsRef<str>>,
+    t: impl AsRef<str>,
+) -> crate::Result<Option<Duration>> {
+    if let Some(d) = s.map(|s| parse_duration(s.as_ref())) {
+        let d = d.with_context(|| {
+            format!(
+                "{} had an invalid format, allowed is 0ms < XXs <= 5m",
+                t.as_ref()
+            )
+        })?;
         if d > MAX_DELAY {
-            anyhow::bail!("{} was out of range, allowed is 0ms < XXs <= 5m", t)
+            anyhow::bail!(
+                "{} was out of range, allowed is 0ms < XXs <= 5m",
+                t.as_ref()
+            )
         } else {
             Ok(Some(d))
         }

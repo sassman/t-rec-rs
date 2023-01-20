@@ -61,13 +61,13 @@ fn main() -> Result<()> {
     env_logger::init();
 
     let args = launch();
-    if args.is_present("list-windows") {
+    if args.get_flag("list-windows") {
         return ls_win();
     }
 
     let program: String = {
-        if args.is_present("program") {
-            args.value_of("program").unwrap().to_owned()
+        if args.contains_id("program") {
+            args.get_one::<String>("program").unwrap().to_string()
         } else {
             let default = DEFAULT_SHELL.to_owned();
             env::var("SHELL").unwrap_or(default)
@@ -77,12 +77,12 @@ fn main() -> Result<()> {
     let mut api = setup()?;
     api.calibrate(win_id)?;
 
-    let force_natural = args.is_present("natural-mode");
-    let should_generate_gif = !args.is_present("video-only");
-    let should_generate_video = args.is_present("video") || args.is_present("video-only");
+    let force_natural = args.get_flag("natural-mode");
+    let should_generate_gif = !args.get_flag("video-only");
+    let should_generate_video = args.get_flag("video") || args.get_flag("video-only");
     let (start_delay, end_delay) = (
-        parse_delay(args.value_of("start-pause"), "start-pause")?,
-        parse_delay(args.value_of("end-pause"), "end-pause")?,
+        parse_delay(args.get_one::<String>("start-pause"), "start-pause")?,
+        parse_delay(args.get_one::<String>("end-pause"), "end-pause")?,
     );
 
     if should_generate_gif {
@@ -109,7 +109,7 @@ fn main() -> Result<()> {
     let interact = thread::spawn(move || -> Result<()> { sub_shell_thread(&program).map(|_| ()) });
 
     clear_screen();
-    if args.is_present("verbose") {
+    if args.get_flag("verbose") {
         println!(
             "Frame cache dir: {:?}",
             tempdir.lock().expect("Cannot lock tempdir resource").path()
@@ -120,7 +120,7 @@ fn main() -> Result<()> {
             println!("Recording window id: {}", win_id);
         }
     }
-    if args.is_present("quiet") {
+    if args.get_flag("quiet") {
         println!();
     } else {
         println!("[t-rec]: Press Ctrl+D to end recording");
@@ -150,15 +150,15 @@ fn main() -> Result<()> {
         tempdir.lock().unwrap().borrow(),
     );
 
-    if let Some("shadow") = args.value_of("decor") {
+    if let Some("shadow") = args.get_one::<String>("decor").map(|s| s.as_ref()) {
         apply_shadow_effect(
             &time_codes.lock().unwrap(),
             tempdir.lock().unwrap().borrow(),
-            args.value_of("bg").unwrap().to_string(),
+            args.get_one::<String>("bg").unwrap().to_string(),
         )
     }
 
-    let target = target_file(args.value_of("file").unwrap());
+    let target = target_file(args.get_one::<String>("file").unwrap());
     let mut time = Duration::default();
 
     if should_generate_gif {
@@ -194,13 +194,11 @@ fn main() -> Result<()> {
 /// and finding the Terminal in that list
 /// panics if WindowId was not was not there
 fn current_win_id(args: &ArgMatches) -> Result<(WindowId, Option<String>)> {
-    match args.value_of("win-id").ok_or_else(|| env::var("WINDOWID")) {
-        Ok(win_id) => {
-            let win_id = win_id
-                .parse::<u64>()
-                .context("Cannot parse env variable 'WINDOWID' as number")?;
-            Ok((win_id, None))
-        }
+    match args
+        .get_one::<u64>("win-id")
+        .ok_or_else(|| env::var("WINDOWID"))
+    {
+        Ok(win_id) => Ok((*win_id, None)),
         Err(_) => {
             let terminal = env::var("TERM_PROGRAM").context(
                 "Env variable 'TERM_PROGRAM' was empty but is needed for figure out the WindowId. Please set it to e.g. TERM_PROGRAM=alacitty",

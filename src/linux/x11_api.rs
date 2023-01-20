@@ -146,7 +146,7 @@ impl PlatformApi for X11Api {
                 } else {
                     name
                 };
-                wins.push((Some(name), window as u64));
+                wins.push((Some(name), window));
             }
         }
 
