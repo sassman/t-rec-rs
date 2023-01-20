@@ -44,8 +44,7 @@ pub fn window_list() -> Result<WindowList> {
     }
     let count = unsafe { CFArrayGetCount(window_list_info) };
     for i in 0..count {
-        let dic_ref =
-            unsafe { CFArrayGetValueAtIndex(window_list_info, i as isize) as CFDictionaryRef };
+        let dic_ref = unsafe { CFArrayGetValueAtIndex(window_list_info, i) as CFDictionaryRef };
         if dic_ref.is_null() {
             unsafe {
                 CFRelease(window_list_info.cast());
