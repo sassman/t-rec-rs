@@ -5,7 +5,24 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
-[Unreleased]: https://github.com/sassman/t-rec-rs/compare/v0.7.4...HEAD
+[Unreleased]: https://github.com/sassman/t-rec-rs/compare/v0.7.6...HEAD
+
+## [0.7.6] - 2023-01-21
+[0.7.6]: https://github.com/sassman/t-rec-rs/compare/v0.7.5...v0.7.6
+
+### Changed
+- [chore(deps): bump clap from 3.2.23 to 4.1.1](https://github.com/sassman/t-rec-rs/pull/184)
+- [chore(deps): bump anyhow from 1.0.66 to 1.0.68](https://github.com/sassman/t-rec-rs/pull/181)
+- [chore(deps): bump rayon from 1.6.0 to 1.6.1](https://github.com/sassman/t-rec-rs/pull/180)
+- [chore(clippy): fix clippy lints](https://github.com/sassman/t-rec-rs/pull/178)
+- [chore(deps): bump env_logger from 0.9.1 to 0.10.0](https://github.com/sassman/t-rec-rs/pull/177)
+- [chore(deps): bump anyhow from 1.0.65 to 1.0.66](https://github.com/sassman/t-rec-rs/pull/168)
+- [Allow building on NetBSD](https://github.com/sassman/t-rec-rs/pull/164)
+
+### Contributors
+- [0323pin](https://github.com/0323pin)
+- [dependabot[bot]](https://github.com/apps/dependabot)
+- [sassman](https://github.com/sassman)
 
 ## [0.7.5] - 2022-10-04
 [0.7.5]: https://github.com/sassman/t-rec-rs/compare/v0.7.4...v0.7.5

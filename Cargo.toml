@@ -1,7 +1,7 @@
 [package]
 name = "t-rec"
-version = "0.7.5"
-authors = ["Sven Assmann <sven.assmann.it@gmail.com>"]
+version = "0.7.6"
+authors = ["Sven Kanoldt <sven@d34dl0ck.me>"]
 edition = "2018"
 license = "GPL-3.0-only"
 description = "Blazingly fast terminal recorder that generates animated gif images for the web written in rust."
