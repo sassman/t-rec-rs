@@ -5,6 +5,201 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+## [0.7.6](https://github.com/sassman/t-rec-rs/compare/v0.7.5...v0.7.6) - 2023-01-21
+
+### Added
+- *(ci)* add release-plz pipeline
+- *(netbsd)* Allow building on NetBSD (#164)
+- *(#105)* add support configuring output (#107)
+- *(#100)* dedicating an own cli argument for external window recording (#102)
+- *(ci:deploy)* decommissioning the release.yml action
+- *(ci:deploy)* decommissioning the release.yml action
+- *(ci:build)* allow for calling build from other actions
+- *(ci)* re-align build and release
+- *(video-only)* update README.md
+- *(video-only)* add command line parameter `--video-only | -M`
+- *(pre/post-pause)* mainly pre-post pause feature
+- *(pre/post-pause)* mainly pre-post pause feature
+- *(ci)* add .deb as regular build artifact
+- *(mp4)* final version of video output
+- *(mp4)* first draft of the mp4 output feature
+- *(ci)* fix cache + add cargo deb artifact upload to release
+- *(ci)* change release runner to ubuntu
+- *(pkg:deb)* add .deb build capabilities (for local execution)
+- *(ci)* fix cache + add cargo deb artifact upload to release
+- *(cli)* set default value to transparent, closes #47
+- *(github:issues)* separate linux and MacOS bug reports
+- *(shell)* refactor the default shell to be platform specific
+- *(ci)* extend builds to run on linux
+- *(linux)* linux support for t-rec
+- *(decor:shadow)* add a background cli flag `-b` or `--bg`
+- *(decor:tests)* add some test data for verification purpose
+- *(decor:shadow)* decrease the shadow + increase the border, to be less brutal
+- *(decors)* update docs and changelog
+- *(decor:big-sur)* add decor effect for big sur corners
+- *(decor:shadow)* add first decor effect
+- *(ci)* add a release workflow that
+- *(brew)* add brew formula
+- *(drop-idle-frames)* implement idle frame detection and dropping
+- *(overwriting)* #8 avoid overwriting existing final gif
+- *(check)* check for convert on launch #6
+- *(error-handling)* improve robustness for unkown commands or errors on the recorder thread
+- *(core-foundation-sys)* include missing changes here until the servo team publishes a new version
+- *(unix,win)* let the execution at least fail with an error message
+- *(ci)* add github actions workflow for ci
+- *(ls-win)* add little feature to list the windows with id
+- *(docs)* hidden gems sections part 1
+- *(build)* add multi os support, so that linux builds won't die
+- *(t-rec)* basic terminal recorder functionality
+
+### Fixed
+- clippy lints with latest rustc (#132)
+- *(ci)* fix undefined variables on release asset builds (#123)
+- *(clippy)* fix enum variant names lint (#119)
+- *(#109)* on ubuntu 20.04 for arm the recording is upside down (#113)
+- *(ci)* release-binary-assets.yml (#111)
+- *(ci)* release-binary-assets.yml
+- *(#103)* fix release binaries for linux (#106)
+- *(ci)* fix the release GH token
+- *(x11rb)* new deps have now different enum values
+- *(ci:release)* fix the from tag for the asset
+- *(WINDOWID)* handle a missing window id graceful
+- *(snap)* remove unsupported architecture
+- *(macos)* make sure the right left side pixels are not causing an issue on macos
+- *(transparency)* fix issue #26
+- *(ci)* since macos-11 workers are not reliable on github those days, I skip to use them for now
+- *(effects)* thread count went wild, not it's limited by rayon's reasonable logic
+- *(linux:window-name)* fixing that windows did not had a name shown
+- *(linux:active-window)* make sure that missing active window id yields a proper error message and not panics
+- *(ci)* release pipeline was outdated and lack dependnecies on sucessful tests
+- *(ci)* exclude tests that require a real display
+- *(linux:window-list)* fix that only relevant windows (width && height > 1) are listed
+- *(linux)* fix negative margin calculation issue
+- *(clear-screen)* fix the clear screen
+- *(ci)* fix missing prefix `v` on release tags, that lead recreation of a tag without `v` prefix
+- *(tests)* add a test case for the invalid case
+- *(window-id)* closes #13
+- *(window-list)* fix window list retrieval issue #4
+- *(linux,windows)* make sure a panic message is displayed after start with showing the github issues for contribution
+
+### Other
+- *(deps)* bump anyhow from 1.0.66 to 1.0.68 (#181)
+- *(deps)* bump env_logger from 0.9.1 to 0.10.0 (#177)
+- *(deps)* bump clap from 3.2.23 to 4.1.1 (#184)
+- *(deps)* bump rayon from 1.6.0 to 1.6.1 (#180)
+- *(clippy)* fix clippy lints (#178)
+- *(deps)* bump anyhow from 1.0.65 to 1.0.66 (#168)
+- v0.7.5 version bump + changelog (#162)
+- *(0.7.4)* version bump + changelog
+- *(deps)* bump clap from 3.2.5 to 3.2.8 (#145)
+- *(deps)* bump log from 0.4.16 to 0.4.17 (#137)
+- *(deps)* bump image from 0.24.1 to 0.24.2 (#136)
+- *(deps)* bump rayon from 1.5.2 to 1.5.3 (#140)
+- *(deps)* bump anyhow from 1.0.56 to 1.0.58 (#143)
+- *(deps)* bump clap from 3.1.9 to 3.2.5 (#142)
+- *(deps)* bump clap from 3.1.8 to 3.1.9 (#130)
+- *(deps)* bump rayon from 1.5.1 to 1.5.2 (#131)
+- *(deps)* bump clap from 3.1.6 to 3.1.8 (#129)
+- *(deps)* bump log from 0.4.14 to 0.4.16 (#127)
+- *(0.7.3)* version bump + changelog
+- *(deps)* bump versions
+- *(deps)* bump clap from 3.1.5 to 3.1.6 (#126)
+- *(deps)* bump anyhow from 1.0.55 to 1.0.56 (#125)
+- *(deps)* bump clap from 3.1.3 to 3.1.5 (#124)
+- *(0.7.2)* version bump + changelog (#122)
+- *(deps)* bump clap and anyhow (#121)
+- *(deps)* bump image from 0.24.0 to 0.24.1 (#114)
+- *(CHANGELOG)* adjust CHANGELOG
+- *(0.7.1)* version bump + changelog
+- *(deps)* bump image from 0.23.14 to 0.24.0 (#108)
+- *(CHANGELOG)* add a changelog
+- *(deps)* bump dependencies + clap3 migration (#101)
+- *(ci:artefact)* rename the release artifact
+- *(CHANGELOG)* update changelog
+- *(deps)* upgrade linux deps
+- *(deps)* bump versions
+- release(0.6.1) version bump, readme, changelog
+- *(deps)* bump anyhow from 1.0.42 to 1.0.43
+- *(gardening)* make clippy happy
+- *(deps)* bump anyhow from 1.0.40 to 1.0.42
+- *(deps)* bump env_logger from 0.8.3 to 0.9.0
+- "-p" option is not exist
+- *(deps)* bump rayon from 1.5.0 to 1.5.1
+- *(v0.6.0)* add date+version+changes to the changelog
+- refactor(human-readable):
+- refactor(human-readable):
+- *(release)* prepare v0.5.2
+- *(ci:release)* change machine to ubuntu for fixing the deb build
+- *(issue:template)* refine bugreport labels and feature request
+- *(issue:template)* refine the bugreport template to provide more meaningful context for macos
+- Upgrade to GitHub-native Dependabot
+- add Macports install instructions
+- *(v0.5.1)* add date+version+changes to the changelog
+- *(deps)* bump anyhow from 1.0.39 to 1.0.40
+- *(deps)* bump anyhow from 1.0.38 to 1.0.39
+- *(deps)* bump image from 0.23.13 to 0.23.14
+- *(clippy)* make clippy happy
+- *(deps)* bump image from 0.23.12 to 0.23.13
+- *(deps)* bump log from 0.4.13 to 0.4.14
+- *(README)* add AUR installation instructions
+- *(v0.5.0)* add date and version to the changelog
+- *(README)* remove the video link, since it is not inline anyways
+- *(clippy)* make clippy happy
+- *(CHANGELOG)* fix PR link
+- *(README)* add `--video` to features and usage output
+- *(release)* prepare v0.5.0
+- *(CHANGELOG)* add missing release links
+- *(deps)* bump log from 0.4.11 to 0.4.13
+- *(deps)* bump anyhow from 1.0.37 to 1.0.38
+- *(deps)* bump tempfile from 3.1.0 to 3.2.0
+- *(logo)* refactor pixelart logo a bit further
+- *(README)* add logo and iterate on the headline a bit
+- *(README)* finalize snap installation docs for linux
+- *(cleanse:dbg)* remove left over debug output
+- *(v0.4.3)* buming crate version and finalize CHANGELOG
+- Add Quiet (-q|--quiet) to suppress Ctrl+D banner
+- *(v0.4.2)* buming crate version and finalize CHANGELOG
+- *(clippy)* statisfy clippy
+- *(README)* list ArcoLinux in the tested distro list with a little demo
+- *(tests)* enable the feature gate for x11 tests, so they don't break on headless ci builds
+- *(README)* version number adjusted
+- *(CHANGELOG)* add all merged things to the changelog
+- reduce crate size to 34kb by adjusting the Cargo manifest
+- *(clippy)* statisfy clippy
+- *(deps:logger)* add log and env_logger dependencies, to add little debug output
+- *(issue:template)* refine the bugreport template to provide more meaningful context for linux
+- First attempt to make a snap of t-rec
+- *(README)* minor improvements
+- *(cleanup)* remove unused deps, more clippy fixes and fixed tests
+- *(lint)* make clippy happy
+- *(linix)* remove unnecesary test files
+- *(linix)* remove vagrantfile
+- *(release)* prepare for v0.4.0
+- *(.gitignore)* ignore irrelevant files
+- *(ci)* run cargo fmt and clippy in parallel
+- *(deps)* update dependencies + prep next minor version
+- *(CHANGELOG)* update everything for the next version
+- *(demo)* updated the demo to show latest version
+- *(README)* document the -b and -d a bit
+- add sponsor button
+- *(CHANGELOG)* add issue #10 and pull #11 to the changelog
+- *(CHANGELOG)* add issue #10 to the changelog
+- *(v0.1.2)* buming crate version and finalize CHANGELOG
+- *(deps)* cleanup all unused dependencies
+- *(CHANGELOG)* add PR id for last feature
+- *(release)* first patch 0.1.1
+- *(release)* first final stable 0.1.0
+- *(README)* make dependencies more obious
+- *(README)* add final install section
+- *(info)* improve the info output messges a bit
+- *(cli)* migrate to clap and polish usage hints
+- slice things appart and make clippy happy
+- *(README)* add some more content and of course a demo gif :)
+- Initial commit
+
+### Security
+- *(tempdir)* excahnge unmained tempdir with tempfile
 [Unreleased]: https://github.com/sassman/t-rec-rs/compare/v0.7.4...HEAD
 
 ## [0.7.5] - 2022-10-04
