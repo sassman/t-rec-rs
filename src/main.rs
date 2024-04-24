@@ -101,7 +101,6 @@ fn main() -> Result<()> {
     let photograph = {
         let tempdir = tempdir.clone();
         let time_codes = time_codes.clone();
-        let force_natural = force_natural;
         thread::spawn(move || -> Result<()> {
             capture_thread(&rx, api, win_id, time_codes, tempdir, force_natural)
         })
