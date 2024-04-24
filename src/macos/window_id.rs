@@ -1,15 +1,13 @@
-use crate::macos::core_foundation_sys_patches::{
-    kCFNumberSInt32Type as I32, kCFNumberSInt64Type as I64, CFBooleanGetValue, CFNumberGetType,
-};
 use crate::WindowList;
+
 use anyhow::{anyhow, Result};
 use core_foundation::base::{CFGetTypeID, CFTypeID, ToVoid};
 use core_foundation::string::{kCFStringEncodingUTF8, CFString, CFStringGetCStringPtr};
-use core_foundation_sys::number::{
-    CFBooleanGetTypeID, CFNumberGetTypeID, CFNumberGetValue, CFNumberRef,
-};
+use core_foundation_sys::number::*;
 use core_foundation_sys::string::CFStringGetTypeID;
 use core_graphics::display::*;
+use log::error;
+use std::any::TypeId;
 use std::ffi::CStr;
 use std::ops::Deref;
 use std::os::raw::c_void;
@@ -17,12 +15,10 @@ use std::os::raw::c_void;
 #[derive(Debug)]
 enum DictEntryValue {
     Number(i64),
-    Bool(bool),
     String(String),
-    Unknown,
+    Unsupported,
 }
 
-///
 /// hard nut to crack, some starting point was:
 /// https://stackoverflow.com/questions/60117318/getting-window-owner-names-via-cgwindowlistcopywindowinfo-in-rust
 /// then some more PRs where needed:
@@ -69,6 +65,23 @@ pub fn window_list() -> Result<WindowList> {
     Ok(win_list)
 }
 
+fn convert_number<T: Default + 'static>(value: CFNumberRef) -> Option<T> {
+    let v = unsafe { CFNumberGetType(value) };
+    let mut value_i64 = T::default();
+    let out_value: *mut T = &mut value_i64;
+    let converted = unsafe { CFNumberGetValue(value, v, out_value.cast()) };
+    if converted {
+        Some(value_i64)
+    } else {
+        error!(
+            "Error when converting a native number to type {:?} number {:?}",
+            TypeId::of::<T>(),
+            value
+        );
+        None
+    }
+}
+
 fn get_from_dict(dict: CFDictionaryRef, key: &str) -> DictEntryValue {
     let key: CFString = key.into();
     let mut value: *const c_void = std::ptr::null();
@@ -77,31 +90,24 @@ fn get_from_dict(dict: CFDictionaryRef, key: &str) -> DictEntryValue {
         if type_id == unsafe { CFNumberGetTypeID() } {
             let value = value as CFNumberRef;
             match unsafe { CFNumberGetType(value) } {
-                I64 => {
-                    let mut value_i64 = 0_i64;
-                    let out_value: *mut i64 = &mut value_i64;
-                    let converted = unsafe { CFNumberGetValue(value, I64, out_value.cast()) };
-                    if converted {
-                        return DictEntryValue::Number(value_i64);
-                    }
-                }
-                I32 => {
-                    let mut value_i32 = 0_i32;
-                    let out_value: *mut i32 = &mut value_i32;
-                    let converted = unsafe { CFNumberGetValue(value, I32, out_value.cast()) };
-                    if converted {
-                        return DictEntryValue::Number(value_i32 as i64);
-                    }
-                }
+                v if v == kCFNumberSInt64Type => convert_number::<i64>(value)
+                    .map(DictEntryValue::Number)
+                    .unwrap_or(DictEntryValue::Unsupported),
+                v if v == kCFNumberSInt32Type => convert_number::<i32>(value)
+                    .map(|v| v as i64)
+                    .map(DictEntryValue::Number)
+                    .unwrap_or(DictEntryValue::Unsupported),
                 n => {
-                    eprintln!("Unsupported Number of typeId: {}", n);
+                    error!("Unsupported Number of typeId: {}", n);
+                    DictEntryValue::Unsupported
                 }
             }
         } else if type_id == unsafe { CFBooleanGetTypeID() } {
-            return DictEntryValue::Bool(unsafe { CFBooleanGetValue(value.cast()) });
+            error!("Unexpected boolean, boolean should not come in our context");
+            DictEntryValue::Unsupported // DictEntryValue::Bool(unsafe { CFBooleanGetValue(value.cast()) })
         } else if type_id == unsafe { CFStringGetTypeID() } {
             let c_ptr = unsafe { CFStringGetCStringPtr(value.cast(), kCFStringEncodingUTF8) };
-            return if !c_ptr.is_null() {
+            if !c_ptr.is_null() {
                 let c_result = unsafe { CStr::from_ptr(c_ptr) };
                 let result = String::from(c_result.to_str().unwrap());
                 DictEntryValue::String(result)
@@ -115,13 +121,15 @@ fn get_from_dict(dict: CFDictionaryRef, key: &str) -> DictEntryValue {
 
                 match str {
                     Ok(s) => DictEntryValue::String(s.to_owned()),
-                    Err(_) => DictEntryValue::Unknown,
+                    Err(_) => DictEntryValue::Unsupported,
                 }
-            };
+            }
         } else {
-            eprintln!("Unexpected type: {}", type_id);
+            error!("Unexpected type: {}", type_id);
+            DictEntryValue::Unsupported
         }
+    } else {
+        error!("Unexpected type native type");
+        DictEntryValue::Unsupported
     }
-
-    DictEntryValue::Unknown
 }

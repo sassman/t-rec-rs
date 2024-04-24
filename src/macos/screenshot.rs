@@ -77,18 +77,23 @@ mod tests {
         use crate::utils::IMG_EXT;
 
         let mut api = setup()?;
-        let win = 5308;
+        let win = std::env::var("T_REC_TEST_WIN_ID").expect(
+            "the e2e test requires the env var `T_REC_TEST_WIN_ID` is set to a valid window id",
+        );
+        let win = crate::WindowId::from_str_radix(win.as_str(), 10)
+            .expect("The window id is not a valid number");
         let image = api.capture_window_screenshot(win)?;
         let (width, height) = (image.layout.width, image.layout.height);
         dbg!(width, height);
 
+        let color_hint = image.color_hint.unwrap();
         // Note: visual validation is sometimes helpful:
         save_buffer(
             format!("frame-org-{win}.{IMG_EXT}"),
             &image.samples,
             image.layout.width,
             image.layout.height,
-            image.color_hint.unwrap(),
+            color_hint,
         )
         .context("Cannot save a frame.")?;
 
@@ -102,7 +107,7 @@ mod tests {
             &image_cropped.samples,
             image_cropped.layout.width,
             image_cropped.layout.height,
-            image_cropped.color_hint.unwrap(),
+            color_hint,
         )
         .context("Cannot save a frame.")?;
 
