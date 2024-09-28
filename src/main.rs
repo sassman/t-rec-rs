@@ -122,8 +122,7 @@ fn main() -> Result<()> {
             println!("Recording window id: {}", win_id);
         }
     }
-    if args.get_flag("quiet") {
-    } else {
+    if !args.get_flag("quiet") {
         println!("[t-rec]: Press Ctrl+D to end recording");
     }
     thread::sleep(Duration::from_millis(1250));
