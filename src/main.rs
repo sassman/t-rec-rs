@@ -33,6 +33,7 @@ use anyhow::{bail, Context};
 use clap::ArgMatches;
 use image::FlatSamples;
 use std::borrow::Borrow;
+use std::io::{self, Write};
 use std::sync::{mpsc, Arc, Mutex};
 use std::time::{Duration, Instant};
 use std::{env, thread};
@@ -109,6 +110,7 @@ fn main() -> Result<()> {
     let interact = thread::spawn(move || -> Result<()> { sub_shell_thread(&program).map(|_| ()) });
 
     clear_screen();
+    io::stdout().flush().unwrap();
     if args.get_flag("verbose") {
         println!(
             "Frame cache dir: {:?}",
@@ -121,7 +123,6 @@ fn main() -> Result<()> {
         }
     }
     if args.get_flag("quiet") {
-        println!();
     } else {
         println!("[t-rec]: Press Ctrl+D to end recording");
     }
