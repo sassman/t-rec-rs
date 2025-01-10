@@ -6,12 +6,12 @@
 name: Build
 on:
   push:
-    branches: [ '*' ]
+    branches: ["*"]
     paths-ignore:
       - "**/docs/**"
       - "**.md"
   pull_request:
-    branches: [ main ]
+    branches: [main]
     paths-ignore:
       - "**/docs/**"
       - "**.md"
@@ -23,7 +23,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        version: [ 'macos-latest', 'ubuntu-latest']
+        version: ["macos-latest", "ubuntu-latest"]
     runs-on: ${{ matrix.version }}
     steps:
       - uses: actions/checkout@v2
@@ -43,7 +43,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        version: [ 'macos-latest', 'ubuntu-latest']
+        version: ["macos-latest", "ubuntu-latest"]
         cargo-cmd:
           - fmt --all -- --check
           - clippy --all-targets --all-features -- -D warnings
@@ -66,8 +66,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        version: [ 'macos-latest', 'ubuntu-latest']
-        rust: [ nightly, stable ]
+        version: ["macos-latest", "ubuntu-latest"]
+        rust: [nightly, stable]
     runs-on: ${{ matrix.version }}
     continue-on-error: ${{ matrix.rust == 'nightly' }}
     steps:
@@ -80,7 +80,7 @@ jobs:
           profile: minimal
       - uses: Swatinem/rust-cache@v1
       - name: cargo test
-        run: cargo test --all --locked -- -Z unstable-options
+        run: cargo test --all --locked
 
   pkg-deb:
     name: binary package .deb
