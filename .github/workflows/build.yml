@@ -28,7 +28,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: setup | rust
-        uses: actions-rs/toolchain@v1
+        uses: dtolnay/rust-toolchain@stable
         with:
           toolchain: stable
           default: true
@@ -51,7 +51,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: setup | rust
-        uses: actions-rs/toolchain@v1
+        uses: dtolnay/rust-toolchain@stable
         with:
           toolchain: stable
           default: true
@@ -73,14 +73,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: setup | rust
-        uses: actions-rs/toolchain@v1
+        uses: dtolnay/rust-toolchain@stable
         with:
           toolchain: ${{ matrix.rust }}
           default: true
           profile: minimal
       - if: ${{ matrix.version == 'ubuntu-latest' }}
         name: install libX11-devel for libX11
-        run: sudo apt-get install -y libX11-devel
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libX11-devel
       - uses: Swatinem/rust-cache@v1
       - name: cargo test
         run: cargo test --all --locked
@@ -106,7 +108,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: setup | rust
-        uses: actions-rs/toolchain@v1
+        uses: dtolnay/rust-toolchain@stable
         with:
           toolchain: stable
           default: true
