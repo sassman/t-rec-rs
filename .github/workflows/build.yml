@@ -39,7 +39,6 @@ jobs:
 
   lint:
     name: lint
-    needs: check
     strategy:
       fail-fast: false
       matrix:
@@ -62,7 +61,6 @@ jobs:
 
   tests:
     name: test
-    needs: check
     strategy:
       fail-fast: false
       matrix:
@@ -82,14 +80,14 @@ jobs:
         name: install libX11-devel for libX11
         run: |
           sudo apt-get update
-          sudo apt-get install -y libX11-devel
+          sudo apt-get install -y libx11-dev
       - uses: Swatinem/rust-cache@v1
       - name: cargo test
         run: cargo test --all --locked
 
   pkg-deb:
     name: binary package .deb
-    needs: check
+    needs: tests
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -103,7 +101,6 @@ jobs:
 
   audit:
     name: security audit
-    needs: check
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
