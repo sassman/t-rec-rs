@@ -3,10 +3,7 @@ use crate::{Image, ImageOnHeap, Result};
 use image::flat::View;
 use image::{imageops, GenericImageView, ImageBuffer, Rgba};
 
-///
 /// specialized version of crop for [`ImageOnHeap`] and [`Margin`]
-///
-#[cfg_attr(not(macos), allow(dead_code))]
 pub fn crop(image: Image, margin: &Margin) -> Result<ImageOnHeap> {
     let mut img2: View<_, Rgba<u8>> = image.as_view()?;
     let (width, height) = (
@@ -31,7 +28,6 @@ pub fn crop(image: Image, margin: &Margin) -> Result<ImageOnHeap> {
     Ok(Box::new(buf.into_flat_samples()))
 }
 
-///
 pub fn convert_bgra_to_rgba(buffer: &mut [u8]) {
     for chunk in buffer.chunks_exact_mut(4) {
         chunk.swap(0, 2);
