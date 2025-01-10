@@ -91,7 +91,7 @@ jobs:
       - name: build .deb file
         uses: sassman/rust-deb-builder@v1
       - name: Archive deb artifact
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: t-rec-amd64-static.deb
           path: target/x86_64-unknown-linux-musl/debian/t-rec*.deb
