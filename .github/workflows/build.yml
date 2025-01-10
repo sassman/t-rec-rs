@@ -34,7 +34,6 @@ jobs:
           default: true
           profile: minimal
           components: clippy, rustfmt
-      - uses: Swatinem/rust-cache@v1
       - run: cargo check
 
   lint:
@@ -56,7 +55,6 @@ jobs:
           default: true
           profile: minimal
           components: clippy, rustfmt
-      - uses: Swatinem/rust-cache@v1
       - run: cargo ${{ matrix['cargo-cmd'] }}
 
   tests:
@@ -81,7 +79,6 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y libx11-dev
-      - uses: Swatinem/rust-cache@v1
       - name: cargo test
         run: cargo test --all --locked
 
@@ -110,7 +107,6 @@ jobs:
           toolchain: stable
           default: true
           profile: minimal
-      - uses: Swatinem/rust-cache@v1
       - name: audit
         uses: actions-rs/audit-check@v1
         with:
