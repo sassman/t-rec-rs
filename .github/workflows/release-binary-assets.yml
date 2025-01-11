@@ -71,6 +71,7 @@ jobs:
           allowUpdates: true
           artifactErrorsFailBuild: true
           artifacts: ${{ env.FILENAME }}
+          tag: ${{ env.TAG }}
           artifactContentType: application/octet-stream
           omitBodyDuringUpdate: true
           omitNameDuringUpdate: true
@@ -104,6 +105,7 @@ jobs:
           allowUpdates: true
           artifactErrorsFailBuild: true
           artifacts: target/x86_64-unknown-linux-musl/debian/t-rec*.deb
+          tag: ${{ env.TAG }}
           artifactContentType: application/octet-stream
           omitBodyDuringUpdate: true
           omitNameDuringUpdate: true
