@@ -16,7 +16,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - update dependencies + minor changes (#212)
 - Update help output (#209)
-[Unreleased]: https://github.com/sassman/t-rec-rs/compare/v0.7.6...HEAD
 
 ## [0.7.6] - 2023-01-21
 [0.7.6]: https://github.com/sassman/t-rec-rs/compare/v0.7.5...v0.7.6
