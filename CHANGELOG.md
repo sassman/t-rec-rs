@@ -5,6 +5,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+## [0.7.7](https://github.com/sassman/t-rec-rs/compare/v0.7.6...v0.7.7) - 2025-01-11
+
+### Fixed
+
+- When used with `--quiet`, don't print a blank line on startup. (#210)
+
+### Other
+
+- update dependencies + minor changes (#212)
+- Update help output (#209)
 [Unreleased]: https://github.com/sassman/t-rec-rs/compare/v0.7.6...HEAD
 
 ## [0.7.6] - 2023-01-21
