@@ -6,12 +6,12 @@
 name: Build
 on:
   push:
-    branches: [ '*' ]
+    branches: ["*"]
     paths-ignore:
       - "**/docs/**"
       - "**.md"
   pull_request:
-    branches: [ main ]
+    branches: [main]
     paths-ignore:
       - "**/docs/**"
       - "**.md"
@@ -23,92 +23,90 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        version: [ 'macos-latest', 'ubuntu-latest']
+        version: ["macos-latest", "ubuntu-latest"]
     runs-on: ${{ matrix.version }}
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - name: setup | rust
-        uses: actions-rs/toolchain@v1
+        uses: dtolnay/rust-toolchain@stable
         with:
           toolchain: stable
           default: true
           profile: minimal
           components: clippy, rustfmt
-      - uses: Swatinem/rust-cache@v1
       - run: cargo check
 
   lint:
     name: lint
-    needs: check
     strategy:
       fail-fast: false
       matrix:
-        version: [ 'macos-latest', 'ubuntu-latest']
+        version: ["macos-latest", "ubuntu-latest"]
         cargo-cmd:
           - fmt --all -- --check
           - clippy --all-targets --all-features -- -D warnings
     runs-on: ${{ matrix.version }}
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - name: setup | rust
-        uses: actions-rs/toolchain@v1
+        uses: dtolnay/rust-toolchain@stable
         with:
           toolchain: stable
           default: true
           profile: minimal
           components: clippy, rustfmt
-      - uses: Swatinem/rust-cache@v1
       - run: cargo ${{ matrix['cargo-cmd'] }}
 
   tests:
     name: test
-    needs: check
     strategy:
       fail-fast: false
       matrix:
-        version: [ 'macos-latest', 'ubuntu-latest']
-        rust: [ nightly, stable ]
+        version: ["macos-latest", "ubuntu-latest"]
+        rust: [nightly, stable]
     runs-on: ${{ matrix.version }}
     continue-on-error: ${{ matrix.rust == 'nightly' }}
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - name: setup | rust
-        uses: actions-rs/toolchain@v1
+        uses: dtolnay/rust-toolchain@stable
         with:
           toolchain: ${{ matrix.rust }}
           default: true
           profile: minimal
-      - uses: Swatinem/rust-cache@v1
+      - if: ${{ matrix.version == 'ubuntu-latest' }}
+        name: install libX11-devel for libX11
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libx11-dev
       - name: cargo test
-        run: cargo test --all --locked -- -Z unstable-options
+        run: cargo test --all --locked
 
   pkg-deb:
     name: binary package .deb
-    needs: check
+    needs: tests
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - name: build .deb file
         uses: sassman/rust-deb-builder@v1
       - name: Archive deb artifact
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: t-rec-amd64-static.deb
           path: target/x86_64-unknown-linux-musl/debian/t-rec*.deb
 
   audit:
     name: security audit
-    needs: check
     runs-on: macos-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - name: setup | rust
-        uses: actions-rs/toolchain@v1
+        uses: dtolnay/rust-toolchain@stable
         with:
           toolchain: stable
           default: true
           profile: minimal
-      - uses: Swatinem/rust-cache@v1
       - name: audit
         uses: actions-rs/audit-check@v1
         with:

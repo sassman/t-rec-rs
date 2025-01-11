@@ -133,41 +133,41 @@ t-rec /bin/sh
 
 ### Full Options
 
-```sh
-t-rec 0.7.0
+```text
+t-rec 0.7.6
 Sven Assmann <sven.assmann.it@gmail.com>
 Blazingly fast terminal recorder that generates animated gif images for the web written in rust.
 
-USAGE:
-    t-rec [OPTIONS] [shell or program to launch]
+Usage: t-rec [OPTIONS] [shell or program to launch]
 
-ARGS:
-    <shell or program to launch>    If you want to start a different program than $SHELL you can
-                                    pass it here. For example '/bin/sh'
+Arguments:
+  [shell or program to launch]  If you want to start a different program than $SHELL you can
+                                pass it here. For example '/bin/sh'
 
-OPTIONS:
-    -b, --bg <bg>                     Background color when decors are used [default: transparent]
-                                      [possible values: white, black, transparent]
-    -d, --decor <decor>               Decorates the animation with certain, mostly border effects
-                                      [default: none] [possible values: shadow, none]
-    -e, --end-pause <s | ms | m>      to specify the pause time at the end of the animation, that
-                                      time the gif will show the last frame
-    -h, --help                        Print help information
-    -l, --ls-win                      If you want to see a list of windows available for recording
-                                      by their id, you can set env var 'WINDOWID' or `--win-id` to
-                                      record this specific window only
-    -m, --video                       Generates additionally to the gif a mp4 video of the recording
-    -M, --video-only                  Generates only a mp4 video and not gif
-    -n, --natural                     If you want a very natural typing experience and disable the
-                                      idle detection and sampling optimization
-    -q, --quiet                       Quiet mode, suppresses the banner: 'Press Ctrl+D to end
-                                      recording'
-    -s, --start-pause <s | ms | m>    to specify the pause time at the start of the animation, that
-                                      time the gif will show the first frame
-    -v, --verbose                     Enable verbose insights for the curious
-    -V, --version                     Print version information
-    -w, --win-id <win-id>             Window Id (see --ls-win) that should be captured, instead of
-                                      the current terminal
+Options:
+  -v, --verbose                   Enable verbose insights for the curious
+  -q, --quiet                     Quiet mode, suppresses the banner:
+                                  'Press Ctrl+D to end recording'
+  -m, --video                     Generates additionally to the gif a mp4 video of the recording
+  -M, --video-only                Generates only a mp4 video and not gif
+  -d, --decor <decor>             Decorates the animation with certain, mostly border effects 
+                                  [default: none] [possible values: shadow, none]
+  -b, --bg <bg>                   Background color when decors are used [default: transparent]
+                                  [possible values: white, black, transparent]
+  -n, --natural                   If you want a very natural typing experience and disable the idle
+                                  detection and sampling optimization
+  -l, --ls-win                    If you want to see a list of windows available for recording by
+                                  their id, you can set env var 'WINDOWID' or `--win-id` to record
+                                  this specific window only
+  -w, --win-id <win-id>           Window Id (see --ls-win) that should be captured, instead of
+                                  the current terminal
+  -e, --end-pause <s | ms | m>    to specify the pause time at the end of the animation, that time
+                                  the gif will show the last frame
+  -s, --start-pause <s | ms | m>  to specify the pause time at the start of the animation, that time
+                                  the gif will show the first frame
+  -o, --output <file>             to specify the output file (without extension) [default: t-rec]
+  -h, --help                      Print help
+  -V, --version                   Print version
 ```
 
 ### Disable idle detection & optimization

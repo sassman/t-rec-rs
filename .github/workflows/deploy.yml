@@ -1,8 +1,8 @@
 name: Deploy
 on:
   push:
-    tags: 
-      - 'v[0-9]+.[0-9]+.[0-9]+'
+    tags:
+      - "v[0-9]+.[0-9]+.[0-9]+"
     paths-ignore:
       - "**/docs/**"
       - "**.md"
@@ -17,14 +17,13 @@ jobs:
     needs: [doing-a-build]
     runs-on: macos-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - name: setup | rust
-        uses: actions-rs/toolchain@v1
+        uses: dtolnay/rust-toolchain@stable
         with:
           toolchain: stable
           default: true
           profile: minimal
-      - uses: Swatinem/rust-cache@v1
       - uses: katyo/publish-crates@v1
         with:
           registry-token: ${{ secrets.CARGO_REGISTRY_TOKEN }}
@@ -46,14 +45,13 @@ jobs:
     needs: [publish]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - name: setup | rust
-        uses: actions-rs/toolchain@v1
+        uses: dtolnay/rust-toolchain@stable
         with:
           toolchain: stable
           default: true
           profile: minimal
-      - uses: Swatinem/rust-cache@v1
       - name: Get version from tag
         id: tag_name
         run: echo ::set-output name=current_version::${GITHUB_REF#refs/tags/v}

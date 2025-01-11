@@ -17,6 +17,7 @@ use std::os::raw::c_void;
 #[derive(Debug)]
 enum DictEntryValue {
     Number(i64),
+    #[allow(dead_code)] // false warning of clippy
     Bool(bool),
     String(String),
     Unknown,
