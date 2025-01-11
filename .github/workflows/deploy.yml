@@ -6,6 +6,13 @@ on:
     paths-ignore:
       - "**/docs/**"
       - "**.md"
+  workflow_dispatch:
+    inputs:
+      version:
+        type: string
+        description: "Version"
+        required: true
+        default: "0.1.0"
 
 jobs:
   # call out to build.yml
@@ -13,6 +20,7 @@ jobs:
     uses: sassman/t-rec-rs/.github/workflows/build.yml@main
 
   publish:
+    if: github.event_name == 'push' && contains(github.event.ref, 'refs/tags/v')
     name: post / cargo publish
     needs: [doing-a-build]
     runs-on: macos-latest
@@ -34,7 +42,7 @@ jobs:
     needs: [publish]
     runs-on: macos-latest
     steps:
-      - uses: mislav/bump-homebrew-formula-action@v1
+      - uses: mislav/bump-homebrew-formula-action@v3
         with:
           formula-name: t-rec
         env:
@@ -68,7 +76,7 @@ jobs:
         id: create_release
         uses: actions/create-release@v1
         env:
-          GITHUB_TOKEN: ${{ secrets.GH_PAT }}
+          GITHUB_TOKEN: ${{ secrets.COMMITTER_TOKEN }}
         with:
           # This pulls from the "Get Changelog Entry" step above, referencing it's ID to get its outputs object.
           # See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps
