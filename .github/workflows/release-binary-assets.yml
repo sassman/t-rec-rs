@@ -28,6 +28,11 @@ jobs:
           toolchain: stable
           target: ${{ matrix.target }}
           override: true
+      - if: ${{ matrix.os == 'ubuntu-latest' }}
+        name: install libX11-devel for libX11
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libx11-dev
       - name: Build
         uses: actions-rs/cargo@v1
         with:
@@ -71,12 +76,12 @@ jobs:
           TAG: ${{ github.event.release.tag_name }}
         uses: sassman/rust-deb-builder@v1
       - name: Archive deb artifact
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: t-rec-${{ github.event.release.tag_name }}-x86_64-unknown-linux-musl.deb
           path: target/x86_64-unknown-linux-musl/debian/t-rec*.deb
       - name: upload deb file
-        uses: ncipollo/release-action@v1.8.7
+        uses: ncipollo/release-action@v1.14.0
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           allowUpdates: true
