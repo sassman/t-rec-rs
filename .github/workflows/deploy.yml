@@ -13,6 +13,16 @@ on:
         description: "Version"
         required: true
         default: "0.1.0"
+      do-homebrew:
+        type: boolean
+        description: "Publish to Homebrew"
+        required: false
+        default: true
+      do-github-release:
+        type: boolean
+        description: "Create a GitHub release"
+        required: false
+        default: true
 
 jobs:
   # call out to build.yml
@@ -40,6 +50,7 @@ jobs:
   publish-to-brew:
     name: post / homebrew
     runs-on: macos-latest
+    if: (github.event_name == 'push' && contains(github.event.ref, 'refs/tags/v')) ||  (github.event_name == 'workflow_dispatch' && ${{ github.event.inputs.do-homebrew }})
     steps:
       - name: Get version from tag
         if: github.event_name == 'push' && contains(github.event.ref, 'refs/tags/v')
@@ -61,6 +72,7 @@ jobs:
   release:
     name: post / github release
     runs-on: ubuntu-latest
+    if: (github.event_name == 'push' && contains(github.event.ref, 'refs/tags/v')) || (github.event_name == 'workflow_dispatch') && ${{ github.event.inputs.do-github-release }})
     steps:
       - uses: actions/checkout@v4
       - name: setup | rust
@@ -88,7 +100,7 @@ jobs:
         id: create_release
         uses: actions/create-release@v1
         env:
-          GITHUB_TOKEN: ${{ secrets.GH_PAT }}
+          GITHUB_TOKEN: ${{ secrets.COMMITTER_TOKEN }}
         with:
           # This pulls from the "Get Changelog Entry" step above, referencing it's ID to get its outputs object.
           # See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps
