@@ -53,6 +53,8 @@ jobs:
         with:
           formula-name: t-rec
           tag-name: v${{ env.RELEASE_VERSION }}
+          version: ${{ env.RELEASE_VERSION }}
+
         env:
           COMMITTER_TOKEN: ${{ secrets.COMMITTER_TOKEN }}
 
@@ -85,7 +87,7 @@ jobs:
       - name: Create Release
         # https://github.com/marketplace/actions/changelog-reader
         id: create_release
-        uses: actions/create-release@v1
+        uses: comnoco/create-release@v2
         env:
           GITHUB_TOKEN: ${{ secrets.COMMITTER_TOKEN }}
         with:
