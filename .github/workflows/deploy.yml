@@ -39,7 +39,6 @@ jobs:
   # https://github.com/mislav/bump-homebrew-formula-action
   publish-to-brew:
     name: post / homebrew
-    needs: [publish]
     runs-on: macos-latest
     steps:
       - uses: mislav/bump-homebrew-formula-action@v3
@@ -50,7 +49,6 @@ jobs:
 
   release:
     name: post / github release
-    needs: [publish]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
