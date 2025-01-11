@@ -41,9 +41,18 @@ jobs:
     name: post / homebrew
     runs-on: macos-latest
     steps:
+      - name: Get version from tag
+        if: github.event_name == 'push' && contains(github.event.ref, 'refs/tags/v')
+        run: echo RELEASE_VERSION=${GITHUB_REF#refs/tags/v} >> $GITHUB_ENV
+        shell: bash
+      - name: Get version from input
+        if: github.event_name == 'workflow_dispatch'
+        run: echo RELEASE_VERSION=${{ github.event.inputs.version }} >> $GITHUB_ENV
+        shell: bash
       - uses: mislav/bump-homebrew-formula-action@v3
         with:
           formula-name: t-rec
+          tag-name: v${{ env.RELEASE_VERSION }}
         env:
           COMMITTER_TOKEN: ${{ secrets.COMMITTER_TOKEN }}
 
@@ -59,15 +68,19 @@ jobs:
           default: true
           profile: minimal
       - name: Get version from tag
-        id: tag_name
-        run: echo ::set-output name=current_version::${GITHUB_REF#refs/tags/v}
+        if: github.event_name == 'push' && contains(github.event.ref, 'refs/tags/v')
+        run: echo RELEASE_VERSION=${GITHUB_REF#refs/tags/v} >> $GITHUB_ENV
+        shell: bash
+      - name: Get version from input
+        if: github.event_name == 'workflow_dispatch'
+        run: echo RELEASE_VERSION=${{ github.event.inputs.version }} >> $GITHUB_ENV
         shell: bash
       - name: Get Changelog Entry
         id: changelog_reader
         uses: mindsers/changelog-reader-action@v2
         with:
           validation_depth: 10
-          version: ${{ steps.tag_name.outputs.current_version }}
+          version: ${{ env.RELEASE_VERSION }}
           path: ./CHANGELOG.md
       - name: Create Release
         # https://github.com/marketplace/actions/changelog-reader
@@ -78,8 +91,8 @@ jobs:
         with:
           # This pulls from the "Get Changelog Entry" step above, referencing it's ID to get its outputs object.
           # See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps
-          tag_name: ${{ github.ref }}
-          release_name: Release ${{ steps.changelog_reader.outputs.version }}
+          tag_name: v${{ env.RELEASE_VERSION }}
+          release_name: Release ${{ env.RELEASE_VERSION }}
           body: ${{ steps.changelog_reader.outputs.changes }}
           prerelease: ${{ steps.changelog_reader.outputs.status == 'prereleased' }}
           draft: ${{ steps.changelog_reader.outputs.status == 'unreleased' }}
