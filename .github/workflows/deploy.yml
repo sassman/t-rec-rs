@@ -85,11 +85,10 @@ jobs:
           version: ${{ env.RELEASE_VERSION }}
           path: ./CHANGELOG.md
       - name: Create Release
-        # https://github.com/marketplace/actions/changelog-reader
         id: create_release
-        uses: comnoco/create-release@v2
+        uses: actions/create-release@v1
         env:
-          GITHUB_TOKEN: ${{ secrets.COMMITTER_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GH_PAT }}
         with:
           # This pulls from the "Get Changelog Entry" step above, referencing it's ID to get its outputs object.
           # See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps
