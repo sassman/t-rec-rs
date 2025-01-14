@@ -11,14 +11,14 @@ mod linux;
 mod macos;
 mod utils;
 #[cfg(target_os = "windows")]
-mod win;
+mod windows;
 
 #[cfg(any(target_os = "linux", target_os = "netbsd"))]
 use crate::linux::*;
 #[cfg(target_os = "macos")]
 use crate::macos::*;
 #[cfg(target_os = "windows")]
-use crate::win::*;
+use crate::windows::*;
 
 use crate::cli::launch;
 use crate::common::utils::{clear_screen, parse_delay, HumanReadable};
@@ -239,8 +239,11 @@ pub fn get_window_id_for(terminal: String) -> Result<(WindowId, String)> {
 /// lists all windows with name and id
 pub fn ls_win() -> Result<()> {
     let api = setup()?;
+    let mut list = api.window_list()?;
+    list.sort();
+
     println!("Window | Id");
-    for (window_owner, window_id) in api.window_list()? {
+    for (window_owner, window_id) in list.iter() {
         if let (Some(window_owner), window_id) = (window_owner, window_id) {
             println!("{} | {}", window_owner, window_id)
         }
