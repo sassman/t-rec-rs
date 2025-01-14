@@ -6,6 +6,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.8](https://github.com/sassman/t-rec-rs/compare/v0.7.7...v0.7.8) - 2025-01-14
+
+### Added
+
+- implement alphabetically sorted window list (see #221) (#223)
+- cmd line argument alias `--ls` for `--ls-win` (see #220) (#222)
+
+### Other
+
+- *(deps)* bump anyhow from 1.0.68 to 1.0.95 (#217)
+- *(deps)* bump tempfile from 3.3.0 to 3.15.0 (#218)
+- *(deps)* bump simplerand from 1.3.0 to 1.5.1 (#216)
+
 ## [0.7.7](https://github.com/sassman/t-rec-rs/compare/v0.7.6...v0.7.7) - 2025-01-11
 
 ### Fixed
