@@ -74,6 +74,7 @@ pub fn launch() -> ArgMatches {
                 .required(false)
                 .short('l')
                 .long("ls-win")
+                .long("ls")
                 .help("If you want to see a list of windows available for recording by their id, you can set env var 'WINDOWID' or `--win-id` to record this specific window only"),
         )
         .arg(
