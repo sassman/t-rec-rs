@@ -6,6 +6,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.9](https://github.com/sassman/t-rec-rs/compare/v0.7.8...v0.7.9) - 2025-03-14
+
+### Other
+
+- *(deps)* bump tempfile from 3.17.1 to 3.18.0 ([#239](https://github.com/sassman/t-rec-rs/pull/239))
+- *(deps)* bump anyhow from 1.0.96 to 1.0.97 ([#240](https://github.com/sassman/t-rec-rs/pull/240))
+- *(deps)* bump log from 0.4.25 to 0.4.26 ([#234](https://github.com/sassman/t-rec-rs/pull/234))
+- *(deps)* bump anyhow from 1.0.95 to 1.0.96 ([#235](https://github.com/sassman/t-rec-rs/pull/235))
+- *(deps)* bump tempfile from 3.15.0 to 3.17.1 ([#237](https://github.com/sassman/t-rec-rs/pull/237))
+
 ## [0.7.8](https://github.com/sassman/t-rec-rs/compare/v0.7.7...v0.7.8) - 2025-01-14
 
 ### Added
