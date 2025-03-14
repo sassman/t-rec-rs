@@ -1,14 +1,29 @@
-name: release-plz
+name: Release PR
+
+permissions:
+  pull-requests: write
+  contents: write
+
 on:
   push:
     branches:
       - main
+  workflow_dispatch:
 
 jobs:
   release-plz:
     name: Release-plz
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/create-github-app-token@v1
+        id: app-token
+        with:
+          app-id: 1178949
+          private-key: ${{ secrets.PRIVATE_KEY_5422M4N_BOT }}
+      - uses: ./actions/staging-tests
+        with:
+          token: ${{ steps.app-token.outputs.token }}
+
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
@@ -18,5 +33,5 @@ jobs:
         with:
           command: release-pr
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
           CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
