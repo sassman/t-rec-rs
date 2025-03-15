@@ -35,17 +35,19 @@ jobs:
 
       - name: Get version from tag
         if: github.event_name == 'push' && contains(github.event.ref, 'refs/tags/v')
-        run: echo RELEASE_VERSION=${GITHUB_REF#refs/tags/v} >> $GITHUB_ENV
+        run: |
+          echo RELEASE_VERSION=${GITHUB_REF#refs/tags/v} >> $GITHUB_ENV
+          echo COMMITTER_TOKEN=${{ steps.app-token.outputs.token }} >> $GITHUB_ENV
         shell: bash
       - name: Get version from input
         if: github.event_name == 'workflow_dispatch'
-        run: echo RELEASE_VERSION=${{ github.event.inputs.version }} >> $GITHUB_ENV
+        run: |
+          echo RELEASE_VERSION=${{ github.event.inputs.version }} >> $GITHUB_ENV
+          echo COMMITTER_TOKEN=${{ secrets.GITHUB_TOKEN }} >> $GITHUB_ENV
         shell: bash
       - uses: mislav/bump-homebrew-formula-action@v3
+        # this action needs the COMMITTER_TOKEN to be set in the environment from above
         with:
           formula-name: t-rec
           tag-name: v${{ env.RELEASE_VERSION }}
           version: ${{ env.RELEASE_VERSION }}
-
-        env:
-          COMMITTER_TOKEN: ${{ steps.app-token.outputs.token }}
