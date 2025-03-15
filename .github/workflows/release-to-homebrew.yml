@@ -50,4 +50,3 @@ jobs:
         with:
           formula-name: t-rec
           tag-name: v${{ env.RELEASE_VERSION }}
-          version: ${{ env.RELEASE_VERSION }}
