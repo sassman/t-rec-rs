@@ -1,4 +1,4 @@
-name: Release Binary Assets
+name: Release to Homebrew
 on:
   release:
     types:
