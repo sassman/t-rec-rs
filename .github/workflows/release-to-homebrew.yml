@@ -9,7 +9,7 @@ on:
         type: string
         description: "Version"
         required: true
-        default: "0.1.0"
+        default: "0.7.9"
 
 jobs:
   # https://github.com/mislav/bump-homebrew-formula-action
@@ -20,19 +20,16 @@ jobs:
     steps:
       - uses: actions/create-github-app-token@v1
         id: app-token
-        if: github.event_name != 'workflow_dispatch'
         with:
           app-id: 1178949
           private-key: ${{ secrets.PRIVATE_KEY_5422M4N_BOT }}
 
       - name: Get GitHub App User ID
         id: get-user-id
-        if: github.event_name != 'workflow_dispatch'
         run: echo "user-id=$(gh api "/users/${{ steps.app-token.outputs.app-slug }}[bot]" --jq .id)" >> "$GITHUB_OUTPUT"
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
       - name: Set git user
-        if: github.event_name != 'workflow_dispatch'
         run: |
           git config --global user.name '${{ steps.app-token.outputs.app-slug }}[bot]'
           git config --global user.email '${{ steps.get-user-id.outputs.user-id }}+${{ steps.app-token.outputs.app-slug }}[bot]@users.noreply.github.com'
@@ -54,3 +51,6 @@ jobs:
         with:
           formula-name: t-rec
           tag-name: v${{ env.RELEASE_VERSION }}
+
+        env:
+          GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
