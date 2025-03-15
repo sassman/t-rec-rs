@@ -1,0 +1,26 @@
+name: Release to Homebrew
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        type: string
+        description: "Version"
+        required: true
+        default: "0.7.9"
+
+jobs:
+  # https://github.com/mislav/bump-homebrew-formula-action
+  publish-to-brew:
+    name: post / homebrew
+    runs-on: macos-latest
+    steps:
+      - name: Get version from input
+        run: |
+          echo RELEASE_VERSION=${{ github.event.inputs.version }} >> $GITHUB_ENV
+          echo COMMITTER_TOKEN=${{ secrets.GITHUB_TOKEN }} >> $GITHUB_ENV
+        shell: bash
+      - uses: mislav/bump-homebrew-formula-action@v3
+        # this action needs the COMMITTER_TOKEN to be set in the environment from above
+        with:
+          formula-name: t-rec
+          tag-name: v${{ env.RELEASE_VERSION }}
