@@ -53,6 +53,21 @@ jobs:
     runs-on: macos-latest
     if: (github.event_name == 'push' && contains(github.event.ref, 'refs/tags/v')) ||  (github.event_name == 'workflow_dispatch' && ${{ github.event.inputs.do-homebrew }})
     steps:
+      - uses: actions/create-github-app-token@v1
+        id: app-token
+        with:
+          app-id: 1178949
+          private-key: ${{ secrets.PRIVATE_KEY_5422M4N_BOT }}
+
+      - name: Get GitHub App User ID
+        id: get-user-id
+        run: echo "user-id=$(gh api "/users/${{ steps.app-token.outputs.app-slug }}[bot]" --jq .id)" >> "$GITHUB_OUTPUT"
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+      - run: |
+          git config --global user.name '${{ steps.app-token.outputs.app-slug }}[bot]'
+          git config --global user.email '${{ steps.get-user-id.outputs.user-id }}+${{ steps.app-token.outputs.app-slug }}[bot]@users.noreply.github.com'
+
       - name: Get version from tag
         if: github.event_name == 'push' && contains(github.event.ref, 'refs/tags/v')
         run: echo RELEASE_VERSION=${GITHUB_REF#refs/tags/v} >> $GITHUB_ENV
@@ -68,7 +83,7 @@ jobs:
           version: ${{ env.RELEASE_VERSION }}
 
         env:
-          COMMITTER_TOKEN: ${{ secrets.COMMITTER_TOKEN }}
+          COMMITTER_TOKEN: ${{ steps.app-token.outputs.token }}
 
   release:
     name: post / github release
@@ -76,6 +91,20 @@ jobs:
     runs-on: ubuntu-latest
     if: (github.event_name == 'push' && contains(github.event.ref, 'refs/tags/v')) || (github.event_name == 'workflow_dispatch') && ${{ github.event.inputs.do-github-release }})
     steps:
+      - uses: actions/create-github-app-token@v1
+        id: app-token
+        with:
+          app-id: 1178949
+          private-key: ${{ secrets.PRIVATE_KEY_5422M4N_BOT }}
+
+      - name: Get GitHub App User ID
+        id: get-user-id
+        run: echo "user-id=$(gh api "/users/${{ steps.app-token.outputs.app-slug }}[bot]" --jq .id)" >> "$GITHUB_OUTPUT"
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+      - run: |
+          git config --global user.name '${{ steps.app-token.outputs.app-slug }}[bot]'
+          git config --global user.email '${{ steps.get-user-id.outputs.user-id }}+${{ steps.app-token.outputs.app-slug }}[bot]@users.noreply.github.com'
       - uses: actions/checkout@v4
       - name: setup | rust
         uses: dtolnay/rust-toolchain@stable
@@ -102,7 +131,7 @@ jobs:
         id: create_release
         uses: actions/create-release@v1
         env:
-          GITHUB_TOKEN: ${{ secrets.COMMITTER_TOKEN }}
+          GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
         with:
           # This pulls from the "Get Changelog Entry" step above, referencing it's ID to get its outputs object.
           # See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps
