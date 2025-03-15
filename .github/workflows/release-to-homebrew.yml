@@ -16,7 +16,7 @@ jobs:
   publish-to-brew:
     name: post / homebrew
     runs-on: macos-latest
-    if: (github.event_name == 'push' && contains(github.event.ref, 'refs/tags/v')) ||  (github.event_name == 'workflow_dispatch' && ${{ github.event.inputs.do-homebrew }})
+    if: (github.event_name == 'push' && contains(github.event.ref, 'refs/tags/v')) ||  github.event_name == 'workflow_dispatch'
     steps:
       - uses: actions/create-github-app-token@v1
         id: app-token
