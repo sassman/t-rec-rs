@@ -15,7 +15,6 @@ jobs:
   # https://github.com/mislav/bump-homebrew-formula-action
   publish-to-brew:
     name: post / homebrew
-    needs: [doing-a-build]
     runs-on: macos-latest
     if: (github.event_name == 'push' && contains(github.event.ref, 'refs/tags/v')) ||  (github.event_name == 'workflow_dispatch' && ${{ github.event.inputs.do-homebrew }})
     steps:
