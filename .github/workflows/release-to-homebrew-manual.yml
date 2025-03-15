@@ -24,3 +24,5 @@ jobs:
         with:
           formula-name: t-rec
           tag-name: v${{ env.RELEASE_VERSION }}
+        env:
+          COMMITTER_TOKEN: ${{ secrets.COMMITTER_TOKEN }}
