@@ -27,6 +27,7 @@ jobs:
 
       - name: Get GitHub App User ID
         id: get-user-id
+        if: github.event_name != 'workflow_dispatch'
         run: echo "user-id=$(gh api "/users/${{ steps.app-token.outputs.app-slug }}[bot]" --jq .id)" >> "$GITHUB_OUTPUT"
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
@@ -53,4 +54,3 @@ jobs:
         with:
           formula-name: t-rec
           tag-name: v${{ env.RELEASE_VERSION }}
-          push-to: sassman/homebrew-core
