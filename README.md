@@ -20,7 +20,7 @@ Blazingly fast terminal recorder that generates animated gif images for the web 
 ## Features
 - Screenshotting your terminal with 4 frames per second (every 250ms)
 - Generates high quality small sized animated gif images or mp4 videos
-- **Build-In idle frames detection and optimization** (for super fluid presentations)
+- **Built-In idle frames detection and optimization** (for super fluid presentations)
 - Applies (can be disabled) border decor effects like drop shadow
 - Runs on MacOS, Linux and NetBSD
 - Uses native efficient APIs
@@ -30,7 +30,7 @@ Blazingly fast terminal recorder that generates animated gif images for the web 
 - No issues with curses based programs
 - No issues with escape sequences
 - No record and replay - just one simple command to rule them all
-- Can record every arbitrary window you want (e.g. browser, ide)
+- Can record every arbitrary window you want (e.g. browser, IDE)
 - Written in Rust 🦀
 
 ## Installation on MacOS
@@ -78,13 +78,13 @@ t-rec 0.4.3
 
 ### from AUR
 
-`t-rec` can be installed from available [AUR packages](https://aur.archlinux.org/packages/?O=0&SeB=nd&K=Blazingly+fast+terminal+recorder&outdated=&SB=n&SO=a&PP=50&do_Search=Go) using an [AUR helper](https://wiki.archlinux.org/index.php/AUR_helpers). For example,
+`t-rec` can be installed from the [AUR package](https://aur.archlinux.org/packages/?O=0&SeB=nd&K=Blazingly+fast+terminal+recorder&outdated=&SB=n&SO=a&PP=50&do_Search=Go) using an [AUR helper](https://wiki.archlinux.org/index.php/AUR_helpers). For example,
 
 ```
 paru -S t-rec
 ```
 
-If you prefer, you can clone the [AUR packages](https://aur.archlinux.org/packages/?O=0&SeB=nd&K=Blazingly+fast+terminal+recorder&outdated=&SB=n&SO=a&PP=50&do_Search=Go) and then compile them with [makepkg](https://wiki.archlinux.org/index.php/Makepkg). For example,
+If you prefer, you can clone the [AUR package](https://aur.archlinux.org/packages/?O=0&SeB=nd&K=Blazingly+fast+terminal+recorder&outdated=&SB=n&SO=a&PP=50&do_Search=Go) and then compile them with [makepkg](https://wiki.archlinux.org/index.php/Makepkg). For example,
 
 ```
 git clone https://aur.archlinux.org/t-rec.git
