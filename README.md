@@ -20,7 +20,7 @@ Blazingly fast terminal recorder that generates animated gif images for the web 
 ## Features
 - Screenshotting your terminal with 4 frames per second (every 250ms)
 - Generates high quality small sized animated gif images or mp4 videos
-- **Build-In idle frames detection and optimization** (for super fluid presentations)
+- **built-in idle frames detection and optimization** (for super fluid presentations)
 - Applies (can be disabled) border decor effects like drop shadow
 - Runs on MacOS, Linux and NetBSD
 - Uses native efficient APIs
