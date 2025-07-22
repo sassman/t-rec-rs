@@ -165,6 +165,8 @@ Options:
                                   the gif will show the last frame
   -s, --start-pause <s | ms | m>  to specify the pause time at the start of the animation, that time
                                   the gif will show the first frame
+  -i, --idle-pause <s | ms | m>   to specify the minimum pause for idle frames, that time the
+                                  animation will show unchanged content
   -o, --output <file>             to specify the output file (without extension) [default: t-rec]
   -h, --help                      Print help
   -V, --version                   Print version
@@ -175,6 +177,13 @@ Options:
 If you are not happy with the idle detection and optimization, you can disable it with the `-n` or `--natural` parameter.
 By doing so, you would get the very natural timeline of typing and recording as you do it. 
 In this case there will be no optimizations performed.
+
+Alternatively, you can show some idle time before optimization kicks in with the `--idle-pause` parameter.
+This gives viewers time to read the text on screen before the animation jumps to the next change:
+```sh
+t-rec --idle-pause 1s        # Show 1 second of unchanged content before optimization
+t-rec --idle-pause 500ms     # Show 500ms of idle time
+```
 
 ### Enable shadow border decor
 

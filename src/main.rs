@@ -81,9 +81,10 @@ fn main() -> Result<()> {
     let force_natural = args.get_flag("natural-mode");
     let should_generate_gif = !args.get_flag("video-only");
     let should_generate_video = args.get_flag("video") || args.get_flag("video-only");
-    let (start_delay, end_delay) = (
+    let (start_delay, end_delay, idle_pause) = (
         parse_delay(args.get_one::<String>("start-pause"), "start-pause")?,
         parse_delay(args.get_one::<String>("end-pause"), "end-pause")?,
+        parse_delay(args.get_one::<String>("idle-pause"), "idle-pause")?,
     );
 
     if should_generate_gif {
@@ -103,7 +104,7 @@ fn main() -> Result<()> {
         let tempdir = tempdir.clone();
         let time_codes = time_codes.clone();
         thread::spawn(move || -> Result<()> {
-            capture_thread(&rx, api, win_id, time_codes, tempdir, force_natural)
+            capture_thread(&rx, api, win_id, time_codes, tempdir, force_natural, idle_pause)
         })
     };
     let interact = thread::spawn(move || -> Result<()> { sub_shell_thread(&program).map(|_| ()) });
