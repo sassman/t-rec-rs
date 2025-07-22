@@ -110,7 +110,7 @@ pub fn launch() -> ArgMatches {
                 .required(false)
                 .short('i')
                 .long("idle-pause")
-                .help("to specify the minimum pause for idle frames, that time the animation will show unchanged content"),
+                .help("to preserve natural pauses up to a maximum duration by overriding idle detection. Can enhance readability."),
         )
         .arg(
             Arg::new("file")

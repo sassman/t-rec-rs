@@ -49,7 +49,7 @@ sudo port install t-rec
 **NOTE** `t-rec` depends on `imagemagick`.
 ```sh
 brew install imagemagick
-cargo install -f t-rec 
+cargo install -f t-rec
 ```
 **NOTE** `-f` just makes sure the latest version is installed
 
@@ -113,11 +113,11 @@ cargo install -f t-rec
 |-------------------------|
 | ubuntu 20.10 on GNOME |
 | ![demo-ubuntu](./docs/demo-ubuntu.gif) |
-| ubuntu 20.10 on i3wm | 
+| ubuntu 20.10 on i3wm |
 | ![demo-ubuntu-i3wm](./docs/demo-ubuntu-i3wm.gif) |
-| linux mint 20 on cinnamon | 
+| linux mint 20 on cinnamon |
 | ![demo-mint](./docs/demo-mint.gif) |
-| ArcoLinux 5.4 on Xfwm4 | 
+| ArcoLinux 5.4 on Xfwm4 |
 | ![demo-arco](./docs/demo-arco-xfwm4.gif) |
 
 ## Usage
@@ -150,7 +150,7 @@ Options:
                                   'Press Ctrl+D to end recording'
   -m, --video                     Generates additionally to the gif a mp4 video of the recording
   -M, --video-only                Generates only a mp4 video and not gif
-  -d, --decor <decor>             Decorates the animation with certain, mostly border effects 
+  -d, --decor <decor>             Decorates the animation with certain, mostly border effects
                                   [default: none] [possible values: shadow, none]
   -b, --bg <bg>                   Background color when decors are used [default: transparent]
                                   [possible values: white, black, transparent]
@@ -165,8 +165,8 @@ Options:
                                   the gif will show the last frame
   -s, --start-pause <s | ms | m>  to specify the pause time at the start of the animation, that time
                                   the gif will show the first frame
-  -i, --idle-pause <s | ms | m>   to specify the minimum pause for idle frames, that time the
-                                  animation will show unchanged content
+  -i, --idle-pause <s | ms | m>   to preserve natural pauses up to a maximum duration by overriding
+                                  idle detection. Can enhance readability.
   -o, --output <file>             to specify the output file (without extension) [default: t-rec]
   -h, --help                      Print help
   -V, --version                   Print version
@@ -175,10 +175,10 @@ Options:
 ### Disable idle detection & optimization
 
 If you are not happy with the idle detection and optimization, you can disable it with the `-n` or `--natural` parameter.
-By doing so, you would get the very natural timeline of typing and recording as you do it. 
+By doing so, you would get the very natural timeline of typing and recording as you do it.
 In this case there will be no optimizations performed.
 
-Alternatively, you can show some idle time before optimization kicks in with the `--idle-pause` parameter.
+Alternatively, you can keep recording idle time before optimization kicks in with the `--idle-pause` parameter.
 This gives viewers time to read the text on screen before the animation jumps to the next change:
 ```sh
 t-rec --idle-pause 1s        # Show 1 second of unchanged content before optimization
@@ -187,7 +187,7 @@ t-rec --idle-pause 500ms     # Show 500ms of idle time
 
 ### Enable shadow border decor
 
-In order to enable the drop shadow border decor you have to pass `-d shadow` as an argument. If you only want to change 
+In order to enable the drop shadow border decor you have to pass `-d shadow` as an argument. If you only want to change
 the color of the background you can use `-b black` for example to have a black background.
 
 ### Record Arbitrary windows
@@ -199,7 +199,7 @@ You can record not only the terminal but also every other window. There 3 ways t
 t-rec --ls-win | grep -i calc
 Calculator | 45007
 
-t-rec -w 45007 
+t-rec -w 45007
 ```
 
 2) use the env var `TERM_PROGRAM` like this:
@@ -219,7 +219,7 @@ this is how it looks then:
 
 3) use the env var `WINDOWID` like this:
 - for example let's record a `VSCode` window
-- figure out the window id program, and make it 
+- figure out the window id program, and make it
 - make sure the window is visible on screen
 - set the variable and run `t-rec`
 
