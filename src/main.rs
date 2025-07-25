@@ -104,7 +104,15 @@ fn main() -> Result<()> {
         let tempdir = tempdir.clone();
         let time_codes = time_codes.clone();
         thread::spawn(move || -> Result<()> {
-            capture_thread(&rx, api, win_id, time_codes, tempdir, force_natural, idle_pause)
+            capture_thread(
+                &rx,
+                api,
+                win_id,
+                time_codes,
+                tempdir,
+                force_natural,
+                idle_pause,
+            )
         })
     };
     let interact = thread::spawn(move || -> Result<()> { sub_shell_thread(&program).map(|_| ()) });
