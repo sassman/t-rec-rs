@@ -11,24 +11,26 @@ use tempfile::TempDir;
 use crate::utils::{file_name_for, IMG_EXT};
 use crate::{ImageOnHeap, PlatformApi, WindowId};
 
-/// Captures screenshots as files for terminal recording with intelligent compression.
+/// Captures screenshots periodically and decides which frames to keep.
 ///
-/// Creates smooth, natural recordings by eliminating long idle periods while preserving
-/// brief pauses that aid comprehension. Timeline compression removes skipped frame time
-/// from subsequent timestamps, preventing jarring gaps in playback.
+/// Eliminates long idle periods while preserving brief pauses that aid
+/// viewer comprehension. Adjusts timestamps to prevent playback gaps.
 ///
 /// # Parameters
+/// * `rx` - Channel to receive stop signal
+/// * `api` - Platform API for taking screenshots
+/// * `win_id` - Window ID to capture
+/// * `time_codes` - Shared list to store frame timestamps
+/// * `tempdir` - Directory for saving frames
+/// * `force_natural` - If true, save all frames (no skipping)
+/// * `idle_pause` - Maximum pause duration to preserve for viewer comprehension:
+///   - `None`: Skip all identical frames (maximum compression)
+///   - `Some(duration)`: Preserve pauses up to this duration, skip beyond
 ///
-/// * `idle_pause` - Controls idle period handling:
-///   - `None`: Maximum compression - skip all identical frames
-///   - `Some(duration)`: Preserve natural pauses up to duration, skip beyond threshold
-///
-/// # Timeline Compression
-///
-/// When idle periods exceed the threshold:
-/// 1. Save frames during natural pauses (up to idle_pause duration)
-/// 2. Skip remaining frames and subtract their time from subsequent timestamps
-/// 3. Result: Playback shows exactly the intended pause duration
+/// # Behavior
+/// When identical frames are detected:
+/// - Within threshold: frames are saved (preserves brief pauses)
+/// - Beyond threshold: frames are skipped and time is subtracted from timestamps
 ///
 /// Example: 10-second idle with 3-second threshold → saves 3 seconds of pause,
 /// skips 7 seconds, playback shows exactly 3 seconds.
@@ -47,10 +49,10 @@ pub fn capture_thread(
     let duration = Duration::from_millis(250); // Production speed
     let start = Instant::now();
 
-    // Timeline compression state: total time removed from recording to maintain smooth playback
+    // Total idle time skipped (subtracted from timestamps to prevent gaps)
     let mut idle_duration = Duration::from_millis(0);
 
-    // Current idle sequence tracking: duration of ongoing identical frame sequence
+    // How long current identical frames have lasted
     let mut current_idle_period = Duration::from_millis(0);
 
     let mut last_frame: Option<ImageOnHeap> = None;
@@ -62,47 +64,47 @@ pub fn capture_thread(
         }
         let now = Instant::now();
 
-        // Calculate compressed timestamp for smooth playback: real time minus skipped idle time
+        // Calculate timestamp with skipped idle time removed
         let effective_now = now.sub(idle_duration);
         let tc = effective_now.saturating_duration_since(start).as_millis();
 
         let image = api.capture_window_screenshot(win_id)?;
         let frame_duration = now.duration_since(last_now);
 
-        // Detect identical frames to identify idle periods (unless in natural mode)
+        // Check if frame is identical to previous (skip check in natural mode)
         let frame_unchanged = !force_natural
             && last_frame
                 .as_ref()
                 .map(|last| image.samples.as_slice() == last.samples.as_slice())
                 .unwrap_or(false);
 
-        // Update idle period tracking for compression decisions
+        // Track duration of identical frames
         if frame_unchanged {
             current_idle_period = current_idle_period.add(frame_duration);
         } else {
             current_idle_period = Duration::from_millis(0);
         }
 
-        // Recording quality decision: balance compression with natural pacing
+        // Decide whether to save this frame
         let should_save_frame = if frame_unchanged {
             let should_skip_for_compression = if let Some(threshold) = idle_pause {
-                // Preserve natural pauses up to threshold, compress longer idle periods
+                // Skip if idle exceeds threshold
                 current_idle_period >= threshold
             } else {
-                // Maximum compression: skip all idle frames for smallest file size
+                // No threshold: skip all identical frames
                 true
             };
 
             if should_skip_for_compression {
-                // Remove this idle time from recording timeline for smooth playback
+                // Add skipped time to idle_duration for timestamp adjustment
                 idle_duration = idle_duration.add(frame_duration);
                 false
             } else {
-                // Keep short pauses for natural recording feel
+                // Save frame (idle within threshold)
                 true
             }
         } else {
-            // Always capture content changes
+            // Frame changed: reset idle tracking and save
             current_idle_period = Duration::from_millis(0);
             true
         };
@@ -116,7 +118,7 @@ pub fn capture_thread(
             }
             time_codes.lock().unwrap().push(tc);
 
-            // Update last_frame to current frame for next iteration's comparison
+            // Store frame for next comparison
             last_frame = Some(image);
         }
         last_now = now;
@@ -125,7 +127,7 @@ pub fn capture_thread(
     Ok(())
 }
 
-/// saves a frame as a tga file
+/// Saves a frame as a BMP file.
 pub fn save_frame(
     image: &ImageOnHeap,
     time_code: u128,
@@ -148,10 +150,8 @@ mod tests {
     use std::sync::mpsc;
     use tempfile::TempDir;
 
-    /// Mock implementation of PlatformApi for testing capture functionality.
-    ///
-    /// Cycles through a predefined sequence of frame data to simulate
-    /// terminal screenshots with controlled content changes and idle periods.
+    /// Mock PlatformApi that returns predefined 1x1 pixel frames.
+    /// After all frames are used, keeps returning the last frame.
     struct TestApi {
         frames: Vec<Vec<u8>>,
         index: std::cell::Cell<usize>,
@@ -194,12 +194,9 @@ mod tests {
         }
     }
 
-    /// Converts a sequence of numbers into frame data for testing.
-    ///
-    /// Each number becomes a 1x1 RGBA pixel where all channels have the same value.
-    /// This simulates terminal screenshots where:
-    /// - Same numbers = identical frames (idle terminal)
-    /// - Different numbers = content changed (terminal activity)
+    /// Converts byte array to frame data for testing.
+    /// Each byte becomes all 4 channels of an RGBA pixel.
+    /// Same values = identical frames, different values = changed content.
     ///
     /// Example: frames(&[1,2,2,3]) creates 4 frames where frames 1 and 2 are identical
     fn frames<T: AsRef<[u8]>>(sequence: T) -> Vec<Vec<u8>> {
@@ -210,15 +207,7 @@ mod tests {
             .collect()
     }
 
-    /// Runs a capture test with the specified frame sequence and compression settings.
-    ///
-    /// Sets up a mock capture environment, runs the capture thread for a duration
-    /// based on frame count, and returns the timestamps of saved frames.
-    ///
-    /// # Arguments
-    /// * `test_frames` - Sequence of frame data to capture
-    /// * `natural_mode` - If true, saves all frames (no compression)
-    /// * `idle_threshold` - Duration of idle to preserve before compression kicks in
+    /// Runs capture_thread with test frames and returns timestamps of saved frames.
     fn run_capture_test(
         test_frames: Vec<Vec<u8>>,
         natural_mode: bool,
@@ -232,8 +221,7 @@ mod tests {
         let temp_directory = Arc::new(Mutex::new(TempDir::new()?));
         let (stop_signal_tx, stop_signal_rx) = mpsc::channel();
 
-        // Calculate capture duration based on frame count
-        // Add buffer to ensure we capture all frames accounting for timing variations
+        // Run capture for (frame_count * 10ms) + 15ms buffer
         let frame_interval = 10; // ms per frame in test mode
         let capture_duration_ms = (test_frames.len() as u64 * frame_interval) + 15;
 
@@ -256,15 +244,15 @@ mod tests {
         Ok(result)
     }
 
-    /// Analyzes captured frame timestamps for compression effectiveness.
+    /// Analyzes captured frame timestamps to verify compression worked correctly.
     ///
     /// Returns a tuple of:
     /// - Frame count: Total number of frames captured
     /// - Total duration: Time span from first to last frame (ms)
-    /// - Has gaps: Whether large gaps exist that indicate compression failure
+    /// - Has gaps: Whether gaps over 25ms exist that indicate compression failure
     ///
-    /// Large gaps (>25ms) between consecutive frames indicate the timeline
-    /// compression algorithm failed to maintain smooth playback.
+    /// Gaps over 25ms between consecutive frames indicate the timeline
+    /// compression algorithm failed to maintain continuous playback.
     fn analyze_timeline(timestamps: &[u128]) -> (usize, u128, bool) {
         let max_normal_gap = 25; // Maximum expected gap between consecutive frames (ms)
 
@@ -275,7 +263,7 @@ mod tests {
             0
         };
 
-        // Detect large gaps indicating timeline compression failure
+        // Detect gaps over 25ms indicating timeline compression failure
         let has_compression_gaps = timestamps
             .windows(2)
             .any(|window| window[1] - window[0] > max_normal_gap);
@@ -283,40 +271,23 @@ mod tests {
         (frame_count, total_duration_ms, has_compression_gaps)
     }
 
-    /// Tests idle frame compression behavior across various scenarios.
+    /// Tests idle frame compression behavior.
     ///
-    /// This parameterized test validates the idle pause functionality by running
-    /// multiple test cases through a single test function. Each test case specifies:
-    /// - Natural mode on/off (force saving all frames vs compression)
-    /// - A frame pattern (sequence of frames with idle periods)
-    /// - An optional idle threshold (how long to preserve idle frames)
-    ///
-    /// The test verifies:
-    /// - Frames are compressed correctly based on the threshold
-    /// - Timeline compression eliminates gaps for smooth playback
-    /// - Natural mode bypasses compression entirely
-    /// - Edge cases like exact threshold boundaries work correctly
-    ///
-    /// Test patterns are created by `create_frames()` which returns expected
-    /// frame counts along with the actual frame data, making assertions clear.
+    /// Verifies:
+    /// - Correct frame count based on threshold settings
+    /// - No timestamp gaps over 25ms after compression (ensures smooth playback)
+    /// - Natural mode saves all frames regardless of content
+    /// - Threshold boundaries work correctly (e.g., exactly at 30ms)
     #[test]
     fn test_idle_pause() -> crate::Result<()> {
-        // Frame number explanation:
-        // - Each number in arrays like [1,2,2,2,3] represents a pixel value (0-255)
-        // - The frames() function converts each number to a 1x1 RGBA pixel where all channels have that value
-        // - Identical numbers = identical frames (simulates idle terminal)
-        // - Different numbers = content changed (simulates terminal activity)
-        // - Example: [1,2,2,2,3] = active frame, 3 idle frames, then active frame
-        // - The [..] syntax converts arrays to slices (&[u8]) since we have different array sizes
+        // Test format: (frames, natural_mode, threshold_ms, expected_count, description)
+        // - frames: byte array where same value = identical frame
+        // - natural_mode: true = save all, false = skip identical  
+        // - threshold_ms: None = skip all identical, Some(n) = keep up to n ms
+        // - expected_count: range due to timing variations
+        // - [..] converts array to slice (required for different array sizes)
         //
-        // Test data format - each test is a tuple with 5 elements:
-        // 1. frames: &[u8] - Array of pixel values representing frame sequence
-        // 2. natural mode: bool - If true, saves all frames (no compression)
-        // 3. threshold ms: Option<u64> - Idle duration to preserve before compressing
-        //    - None = maximum compression (skip all identical frames)
-        //    - Some(ms) = preserve idle frames up to ms, then compress
-        // 4. expected frames: RangeInclusive - Expected frame count range (handles timing variations)
-        // 5. description: &str - Human-readable explanation of what this test verifies
+        // Example: [1,2,2,2,3] = active frame, 3 idle frames, then active frame
         [
             // Natural mode - saves all frames regardless of content
             (
@@ -425,7 +396,7 @@ mod tests {
                 count
             );
 
-            // Check timeline compression (no large gaps between frames)
+            // Check timeline compression (no gaps over 25ms between frames)
             if threshold.is_some() && !natural {
                 assert!(!has_gaps, "Test {}: timeline has gaps", i + 1);
             }
