@@ -181,83 +181,16 @@ mod tests {
         fn get_active_window(&self) -> crate::Result<crate::WindowId> { Ok(0) }
     }
 
-    /// Converts a sequence of numbers into frame data.
+    /// Converts a sequence of numbers into frame data for testing.
     /// 
     /// Each number becomes a 1x1 RGBA pixel where all channels have the same value.
-    /// This makes it easy to create test patterns where identical numbers represent
-    /// idle frames and different numbers represent content changes.
-    fn frames(sequence: &[u8]) -> Vec<Vec<u8>> {
-        sequence.iter().map(|&value| vec![value; 4]).collect()
-    }
-    
-    /// Creates test frame sequences for idle compression scenarios.
+    /// This simulates terminal screenshots where:
+    /// - Same numbers = identical frames (idle terminal)
+    /// - Different numbers = content changed (terminal activity)
     /// 
-    /// Returns a tuple of (frames, min_expected, max_expected, description) where:
-    /// - frames: The sequence of frame data to test
-    /// - min_expected: Minimum frames expected with maximum compression
-    /// - max_expected: Maximum frames expected with no compression
-    /// - description: Human-readable explanation of what this pattern tests
-    /// 
-    /// Frame timing: At 10ms/frame in test mode:
-    /// - 2 identical frames = 20ms idle period
-    /// - 3 identical frames = 30ms idle period
-    /// - 4 identical frames = 40ms idle period
-    fn create_frames(pattern: &str) -> (Vec<Vec<u8>>, usize, usize, &'static str) {
-        match pattern {
-            // Tests that single frame recordings work correctly - the most basic test case
-            "single_frame_recording" => (
-                frames(&[1]), 1, 2,
-                "Single frame recording saves 1-2 frames (allows for timing variation)"
-            ),
-            
-            // Tests that all frames are saved when each frame has different content
-            "all_different_frames" => (
-                frames(&[1, 2, 3]), 3, 3,
-                "3 different frames save all 3 (no idle to compress)"
-            ),
-            
-            // Tests basic idle compression with 3 identical frames (30ms idle period)
-            "three_identical_frames" => (
-                frames(&[1, 1, 1]), 1, 4,
-                "3 identical frames: compresses to 1 or preserves up to 4 with timing variation"
-            ),
-            
-            // Tests that multiple idle periods are compressed independently, not cumulatively
-            "two_idle_periods" => (
-                frames(&[1, 2,2,2, 3, 4,4,4]), 3, 8,
-                "Two 3-frame idle periods (30ms each): tests independent compression"
-            ),
-            
-            // Tests compression behavior with different idle lengths in same recording
-            "mixed_length_idle_periods" => (
-                frames(&[1, 2,2, 3,4, 5,5,5,5]), 6, 9,
-                "20ms + 40ms idle periods: tests threshold boundary behavior"
-            ),
-            
-            // Tests that content changes properly reset idle period tracking
-            "idle_reset_on_change" => (
-                frames(&[1, 2,2, 3, 4,4,4, 5]), 6, 8,
-                "Content change at frame 3 resets idle tracking, preventing over-compression"
-            ),
-            
-            // Tests exact threshold boundary case where idle duration equals threshold
-            "idle_at_exact_threshold" => (
-                frames(&[1, 2,2,2, 3]), 5, 6,
-                "3 idle frames at exactly 30ms threshold: 5-6 frames saved (timing variation)"
-            ),
-            
-            // Tests timeline compression maintains smooth playback without timestamp gaps
-            "single_long_idle_period" => (
-                frames(&[1, 2,2,2,2, 3]), 2, 4,
-                "40ms idle period: verifies timeline compression prevents playback gaps"
-            ),
-            
-            // Default fallback pattern for unrecognized test names
-            _ => (
-                frames(&[1, 1, 1]), 1, 3,
-                "Default: 3 identical frames"
-            ),
-        }
+    /// Example: frames(&[1,2,2,3]) creates 4 frames where frames 1 and 2 are identical
+    fn frames<T: AsRef<[u8]>>(sequence: T) -> Vec<Vec<u8>> {
+        sequence.as_ref().iter().map(|&value| vec![value; 4]).collect()
     }
 
     /// Runs a capture test with the specified frame sequence and compression settings.
@@ -333,86 +266,83 @@ mod tests {
     /// frame counts along with the actual frame data, making assertions clear.
     #[test]
     fn test_idle_pause() -> crate::Result<()> {
-        // Test timing: frames arrive every 10ms in test mode
-        let frame_interval_ms = 10;
-        let short_threshold = Duration::from_millis(frame_interval_ms * 2);  // 20ms = 2 frames
-        let medium_threshold = Duration::from_millis(25); // 25ms = 2.5 frames  
-        let long_threshold = Duration::from_millis(frame_interval_ms * 3);   // 30ms = 3 frames
-        let very_long_threshold = Duration::from_millis(500); // 500ms = 50 frames
-        
-        // Each test case is a tuple of (natural_mode, pattern_name, idle_threshold)
-        // The test loop runs each case and verifies frame counts match expectations
-        let test_cases = [
-            // Natural mode - no compression regardless of content
-            (true, "three_identical_frames", None),
+        // Frame number explanation:
+        // - Each number in arrays like [1,2,2,2,3] represents a pixel value (0-255)
+        // - The frames() function converts each number to a 1x1 RGBA pixel where all channels have that value
+        // - Identical numbers = identical frames (simulates idle terminal)
+        // - Different numbers = content changed (simulates terminal activity)
+        // - Example: [1,2,2,2,3] = active frame, 3 idle frames, then active frame
+        // - The [..] syntax converts arrays to slices (&[u8]) since we have different array sizes
+        //
+        // Test data format - each test is a tuple with 5 elements:
+        // 1. frames: &[u8] - Array of pixel values representing frame sequence
+        // 2. natural mode: bool - If true, saves all frames (no compression)
+        // 3. threshold ms: Option<u64> - Idle duration to preserve before compressing
+        //    - None = maximum compression (skip all identical frames)
+        //    - Some(ms) = preserve idle frames up to ms, then compress
+        // 4. expected frames: RangeInclusive - Expected frame count range (handles timing variations)
+        // 5. description: &str - Human-readable explanation of what this test verifies
+        [
+            // Natural mode - saves all frames regardless of content
+            (&[1,1,1][..],          true,  None,     3..=4, "natural mode preserves all frames"),
             
-            // Basic compression scenarios
-            (false, "single_frame_recording", None),
-            (false, "all_different_frames", None),
-            (false, "three_identical_frames", None),
-            (false, "three_identical_frames", Some(very_long_threshold)),
+            // Basic single frame test
+            (&[1][..],              false, None,     1..=2, "single frame recording"),
             
-            // Multiple idle periods - tests independent compression
-            (false, "two_idle_periods", None),
-            (false, "two_idle_periods", Some(short_threshold)),
+            // All different frames - no idle to compress
+            (&[1,2,3][..],          false, None,     3..=3, "all different frames saved"),
             
-            // Edge cases - threshold boundaries and tracking resets
-            (false, "mixed_length_idle_periods", Some(long_threshold)),
-            (false, "idle_reset_on_change", Some(medium_threshold)),
-            (false, "idle_at_exact_threshold", Some(long_threshold)),
+            // Basic idle compression
+            (&[1,1,1][..],          false, None,     1..=1, "3 identical frames → 1 frame"),
             
-            // Timeline compression - verifies no playback gaps
-            (false, "single_long_idle_period", Some(short_threshold)),
-            (false, "single_long_idle_period", None),
-        ];
-
-        // Run each test case through the capture simulation
-        for (case_num, &(natural_mode, pattern, threshold)) in test_cases.iter().enumerate() {
-            // Get test frames and expected results from pattern name
-            let (test_frames, min_frames, max_frames, description) = create_frames(pattern);
+            // Long threshold preserves short sequences
+            (&[1,1,1][..],          false, Some(500), 3..=4, "500ms threshold preserves 30ms idle"),
             
-            // Override expected frames for natural mode (saves all frames)
-            // Allow for +1 frame due to timing variations in test environment
-            let (min_expected, max_expected) = if natural_mode {
-                (test_frames.len(), test_frames.len() + 1)
-            } else {
-                (min_frames, max_frames)
-            };
+            // Multiple idle periods compress independently
+            (&[1,2,2,2,3,4,4,4][..], false, None,     3..=4, "two idle periods compress independently"),
             
-            let saved_timestamps = run_capture_test(test_frames, natural_mode, threshold)?;
-            let (actual_frame_count, total_duration_ms, has_large_gaps) = analyze_timeline(&saved_timestamps);
+            // 20ms threshold behavior
+            (&[1,2,2,2,3,4,4,4][..], false, Some(20), 6..=8, "20ms threshold: 2 frames per idle period"),
             
-            // Build test context for clearer error messages
-            let threshold_desc = match threshold {
-                None => "no threshold".to_string(),
-                Some(d) => format!("{}ms threshold", d.as_millis()),
-            };
-            let mode_desc = if natural_mode { "natural mode" } else { "compression mode" };
+            // Mixed idle lengths with 30ms threshold
+            (&[1,2,2,3,4,5,5,5,5][..], false, Some(30), 8..=9, "mixed idle: 20ms saved, 40ms partial"),
             
-            // Verify captured frame count matches expected range
-            assert!(actual_frame_count >= min_expected && actual_frame_count <= max_expected, 
-                "Test {} [{}] {}: {} - expected {}-{} frames, got {} frames", 
-                case_num + 1, mode_desc, pattern, threshold_desc, min_expected, max_expected, actual_frame_count);
+            // Content change resets idle tracking
+            (&[1,2,2,3,4,4,4,5][..], false, Some(25), 6..=8, "content change resets idle tracking"),
             
-            // Verify timeline compression eliminates gaps from skipped frames
-            if threshold.is_some() && !natural_mode {
-                assert!(!has_large_gaps, 
-                    "Test {} [{}] {}: {} - timeline compression failed, found large timestamp gaps", 
-                    case_num + 1, mode_desc, pattern, threshold_desc);
+            // Exact threshold boundary
+            (&[1,2,2,2,3][..],      false, Some(30), 5..=6, "exact 30ms boundary test"),
+            
+            // Timeline compression verification
+            (&[1,2,2,2,2,3][..],    false, Some(20), 4..=4, "40ms idle: 20ms saved, rest compressed"),
+            
+            // Maximum compression
+            (&[1,2,2,2,2,3][..],    false, None,     2..=3, "max compression: only active frames"),
+        ]
+        .iter()
+        .enumerate()
+        .try_for_each(|(i, (frame_seq, natural, threshold_ms, expected, desc))| {
+            let threshold = threshold_ms.map(Duration::from_millis);
+            let timestamps = run_capture_test(frames(frame_seq), *natural, threshold)?;
+            let (count, duration, has_gaps) = analyze_timeline(&timestamps);
+            
+            // Check frame count matches expectation
+            assert!(expected.contains(&count), 
+                "Test {}: expected {:?} frames, got {}", i+1, expected, count);
+            
+            // Check timeline compression (no large gaps between frames)
+            if threshold.is_some() && !natural {
+                assert!(!has_gaps, "Test {}: timeline has gaps", i+1);
             }
             
-            // Verify compression effectiveness for sequences with long idle periods
-            let max_compressed_duration_ms = 120; // ~12 frames at 10ms intervals
-            if (pattern.contains("long") || pattern.contains("periods")) && !natural_mode && threshold.is_none() {
-                assert!(total_duration_ms < max_compressed_duration_ms, 
-                    "Test {} [{}] {}: {} - timeline should be compressed to <{}ms, got {}ms", 
-                    case_num + 1, mode_desc, pattern, threshold_desc, max_compressed_duration_ms, total_duration_ms);
+            // Check aggressive compression for long idle sequences
+            if !natural && threshold.is_none() && frame_seq.windows(2).filter(|w| w[0] == w[1]).count() >= 3 {
+                assert!(duration < 120, "Test {}: duration {} too long", i+1, duration);
             }
             
-            println!("✓ Test {} [{}] {}: {} - {}", 
-                case_num + 1, mode_desc, pattern, threshold_desc, description);
-        }
-        Ok(())
+            println!("✓ Test {}: {} - {} frames captured", i+1, desc, count);
+            Ok(())
+        })
     }
 
 
