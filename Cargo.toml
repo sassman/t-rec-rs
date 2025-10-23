@@ -55,7 +55,7 @@ depends = "imagemagick"
 extended-description = """## Features
 - Screenshotting your terminal with 4 frames per second (every 250ms)
 - Generates high quality small sized animated gif images
-- **Build-In idle frames detection and optimization** (for super fluid
+- **built-in idle frames detection and optimization** (for super fluid
 presentations)
 - Applies (can be disabled) border decor effects like drop shadow
 - Runs on MacOS and Linux
