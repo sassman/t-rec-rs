@@ -128,7 +128,7 @@ impl X11Api {
 impl PlatformApi for X11Api {
     /// 1. error if no screenshot is capture-able
     /// 2. it checks for transparent margins and configures the api
-    ///     to cut them away in further screenshots
+    ///    to cut them away in further screenshots
     fn calibrate(&mut self, window_id: WindowId) -> Result<()> {
         let image = self.capture_window_screenshot(window_id)?;
         self.margin = identify_transparency(*image)?;
