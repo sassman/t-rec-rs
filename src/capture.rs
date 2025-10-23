@@ -33,7 +33,7 @@ use crate::{ImageOnHeap, PlatformApi, WindowId};
 /// - Beyond threshold: frames are skipped and time is subtracted from timestamps
 ///
 /// Example: 10-second idle with 3-second threshold → saves 3 seconds of pause,
-/// skips 7 seconds, playback shows exactly 3 seconds.
+///          skips 7 seconds, playback shows exactly 3 seconds.
 pub fn capture_thread(
     rx: &Receiver<()>,
     api: impl PlatformApi,
