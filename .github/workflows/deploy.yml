@@ -13,15 +13,15 @@ on:
         description: "Version"
         required: true
         default: "0.1.0"
-      do-homebrew:
+      do-cargo-release:
         type: boolean
-        description: "Publish to Homebrew"
-        required: false
+        description: "Publish to crates.io"
+        required: true
         default: true
       do-github-release:
         type: boolean
         description: "Create a GitHub release"
-        required: false
+        required: true
         default: true
 
 jobs:
@@ -30,7 +30,7 @@ jobs:
     uses: sassman/t-rec-rs/.github/workflows/build.yml@main
 
   publish:
-    if: github.event_name == 'push' && contains(github.event.ref, 'refs/tags/v')
+    if: github.event_name == 'push' && contains(github.event.ref, 'refs/tags/v') || (github.event_name == 'workflow_dispatch' && ${{ github.event.inputs.do-cargo-release }})
     name: post / cargo publish
     needs: [doing-a-build]
     runs-on: macos-latest
@@ -46,36 +46,26 @@ jobs:
         with:
           registry-token: ${{ secrets.CARGO_REGISTRY_TOKEN }}
 
-  # https://github.com/mislav/bump-homebrew-formula-action
-  publish-to-brew:
-    name: post / homebrew
-    needs: [doing-a-build]
-    runs-on: macos-latest
-    if: (github.event_name == 'push' && contains(github.event.ref, 'refs/tags/v')) ||  (github.event_name == 'workflow_dispatch' && ${{ github.event.inputs.do-homebrew }})
-    steps:
-      - name: Get version from tag
-        if: github.event_name == 'push' && contains(github.event.ref, 'refs/tags/v')
-        run: echo RELEASE_VERSION=${GITHUB_REF#refs/tags/v} >> $GITHUB_ENV
-        shell: bash
-      - name: Get version from input
-        if: github.event_name == 'workflow_dispatch'
-        run: echo RELEASE_VERSION=${{ github.event.inputs.version }} >> $GITHUB_ENV
-        shell: bash
-      - uses: mislav/bump-homebrew-formula-action@v3
-        with:
-          formula-name: t-rec
-          tag-name: v${{ env.RELEASE_VERSION }}
-          version: ${{ env.RELEASE_VERSION }}
-
-        env:
-          COMMITTER_TOKEN: ${{ secrets.COMMITTER_TOKEN }}
-
   release:
     name: post / github release
     needs: [doing-a-build]
     runs-on: ubuntu-latest
     if: (github.event_name == 'push' && contains(github.event.ref, 'refs/tags/v')) || (github.event_name == 'workflow_dispatch') && ${{ github.event.inputs.do-github-release }})
     steps:
+      - uses: actions/create-github-app-token@v1
+        id: app-token
+        with:
+          app-id: 1178949
+          private-key: ${{ secrets.PRIVATE_KEY_5422M4N_BOT }}
+
+      - name: Get GitHub App User ID
+        id: get-user-id
+        run: echo "user-id=$(gh api "/users/${{ steps.app-token.outputs.app-slug }}[bot]" --jq .id)" >> "$GITHUB_OUTPUT"
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+      - run: |
+          git config --global user.name '${{ steps.app-token.outputs.app-slug }}[bot]'
+          git config --global user.email '${{ steps.get-user-id.outputs.user-id }}+${{ steps.app-token.outputs.app-slug }}[bot]@users.noreply.github.com'
       - uses: actions/checkout@v4
       - name: setup | rust
         uses: dtolnay/rust-toolchain@stable
@@ -102,7 +92,7 @@ jobs:
         id: create_release
         uses: actions/create-release@v1
         env:
-          GITHUB_TOKEN: ${{ secrets.COMMITTER_TOKEN }}
+          GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
         with:
           # This pulls from the "Get Changelog Entry" step above, referencing it's ID to get its outputs object.
           # See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps

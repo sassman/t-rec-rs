@@ -1,0 +1,56 @@
+name: Release to Homebrew
+on:
+  release:
+    types:
+      - published
+  workflow_dispatch:
+    inputs:
+      version:
+        type: string
+        description: "Version"
+        required: true
+        default: "0.7.9"
+
+jobs:
+  # https://github.com/mislav/bump-homebrew-formula-action
+  publish-to-brew:
+    name: post / homebrew
+    runs-on: macos-latest
+    if: (github.event_name == 'push' && contains(github.event.ref, 'refs/tags/v')) ||  github.event_name == 'workflow_dispatch'
+    steps:
+      - uses: actions/create-github-app-token@v1
+        id: app-token
+        with:
+          app-id: 1178949
+          private-key: ${{ secrets.PRIVATE_KEY_5422M4N_BOT }}
+
+      - name: Get GitHub App User ID
+        id: get-user-id
+        run: echo "user-id=$(gh api "/users/${{ steps.app-token.outputs.app-slug }}[bot]" --jq .id)" >> "$GITHUB_OUTPUT"
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+      - name: Set git user
+        run: |
+          git config --global user.name '${{ steps.app-token.outputs.app-slug }}[bot]'
+          git config --global user.email '${{ steps.get-user-id.outputs.user-id }}+${{ steps.app-token.outputs.app-slug }}[bot]@users.noreply.github.com'
+
+      - name: Get version from tag
+        if: github.event_name == 'push' && contains(github.event.ref, 'refs/tags/v')
+        run: |
+          echo RELEASE_VERSION=${GITHUB_REF#refs/tags/v} >> $GITHUB_ENV
+          echo COMMITTER_TOKEN=${{ steps.app-token.outputs.token }} >> $GITHUB_ENV
+        shell: bash
+      - name: Get version from input
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          echo RELEASE_VERSION=${{ github.event.inputs.version }} >> $GITHUB_ENV
+          echo COMMITTER_TOKEN=${{ secrets.GITHUB_TOKEN }} >> $GITHUB_ENV
+        shell: bash
+      - uses: mislav/bump-homebrew-formula-action@v3
+        # this action needs the COMMITTER_TOKEN to be set in the environment from above
+        with:
+          formula-name: t-rec
+          tag-name: v${{ env.RELEASE_VERSION }}
+
+        env:
+          GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
