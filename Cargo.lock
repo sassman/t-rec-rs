@@ -532,9 +532,9 @@ checksum = "d29ab0c6d3fc0ee92fe66e2d99f700eab17a8d57d1c1d3b748380fb20baa78cd"
 
 [[package]]
 name = "simplerand"
-version = "1.5.1"
+version = "1.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "21e69528fe5b77e9b19f5c4de1fcb8692471bb3325c8876ae62773d318351538"
+checksum = "e111daec97c913e764c730b11de670f36adfc9ef87c791ee8999ecc3ded8f644"
 dependencies = [
  "lazy_static",
 ]
