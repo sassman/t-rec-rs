@@ -225,8 +225,7 @@ fn current_win_id(args: &ArgMatches) -> Result<(WindowId, Option<String>)> {
     }
 }
 
-///
-/// finds the window id for a given terminal / programm by name
+/// finds the window id for a given terminal / program by name
 pub fn get_window_id_for(terminal: String) -> Result<(WindowId, String)> {
     let api = setup()?;
     for term in terminal.to_lowercase().split('.') {
