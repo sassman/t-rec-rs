@@ -282,7 +282,7 @@ mod tests {
     fn test_idle_pause() -> crate::Result<()> {
         // Test format: (frames, natural_mode, threshold_ms, expected_count, description)
         // - frames: byte array where same value = identical frame
-        // - natural_mode: true = save all, false = skip identical  
+        // - natural_mode: true = save all, false = skip identical
         // - threshold_ms: None = skip all identical, Some(n) = keep up to n ms
         // - expected_count: range due to timing variations
         // - [..] converts array to slice (required for different array sizes)
