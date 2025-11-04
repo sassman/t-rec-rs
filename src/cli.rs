@@ -104,6 +104,15 @@ pub fn launch() -> ArgMatches {
                 .help("to specify the pause time at the start of the animation, that time the gif will show the first frame"),
         )
         .arg(
+            Arg::new("idle-pause")
+                .value_parser(NonEmptyStringValueParser::new())
+                .value_name("s | ms | m")
+                .required(false)
+                .short('i')
+                .long("idle-pause")
+                .help("to preserve natural pauses up to a maximum duration by overriding idle detection. Can enhance readability."),
+        )
+        .arg(
             Arg::new("file")
                 .value_parser(NonEmptyStringValueParser::new())
                 .required(false)
