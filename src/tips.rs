@@ -8,6 +8,7 @@ const TIPS: &[&str] = &[
     "To remove the shadow around the gif, use the `-d none` option",
     "For a mp4 video, use the `-m` option",
     "To suppress the 'Ctrl+D' banner, use the `-q` option",
+    "Add `--idle-pause <time>` to increase the time before idle frame optimization starts, this can improve readability in Demos"
 ];
 
 ///
