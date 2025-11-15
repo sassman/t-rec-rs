@@ -291,17 +291,17 @@ mod tests {
         [
             // Natural mode - saves all frames regardless of content
             (
-                &[1, 1, 1][..],
+                vec![1, 1, 1],
                 true,
                 None,
                 3..=4,
                 "natural mode preserves all frames",
             ),
             // Basic single frame test
-            (&[1][..], false, None, 1..=2, "single frame recording"),
+            (vec![1], false, None, 1..=2, "single frame recording"),
             // All different frames - no idle to compress
             (
-                &[1, 2, 3][..],
+                vec![1, 2, 3],
                 false,
                 None,
                 3..=3,
@@ -309,7 +309,7 @@ mod tests {
             ),
             // Basic idle compression
             (
-                &[1, 1, 1][..],
+                vec![1, 1, 1],
                 false,
                 None,
                 1..=1,
@@ -317,7 +317,7 @@ mod tests {
             ),
             // Long threshold preserves short sequences
             (
-                &[1, 1, 1][..],
+                vec![1, 1, 1],
                 false,
                 Some(500),
                 3..=4,
@@ -325,7 +325,7 @@ mod tests {
             ),
             // Multiple idle periods compress independently
             (
-                &[1, 2, 2, 2, 3, 4, 4, 4][..],
+                vec![1, 2, 2, 2, 3, 4, 4, 4],
                 false,
                 None,
                 3..=4,
@@ -333,7 +333,7 @@ mod tests {
             ),
             // 20ms threshold behavior
             (
-                &[1, 2, 2, 2, 3, 4, 4, 4][..],
+                vec![1, 2, 2, 2, 3, 4, 4, 4],
                 false,
                 Some(20),
                 6..=8,
@@ -341,7 +341,7 @@ mod tests {
             ),
             // Mixed idle lengths with 30ms threshold
             (
-                &[1, 2, 2, 3, 4, 5, 5, 5, 5][..],
+                vec![1, 2, 2, 3, 4, 5, 5, 5, 5],
                 false,
                 Some(30),
                 8..=9,
@@ -349,7 +349,7 @@ mod tests {
             ),
             // Content change resets idle tracking
             (
-                &[1, 2, 2, 3, 4, 4, 4, 5][..],
+                vec![1, 2, 2, 3, 4, 4, 4, 5],
                 false,
                 Some(25),
                 6..=8,
@@ -357,7 +357,7 @@ mod tests {
             ),
             // Exact threshold boundary
             (
-                &[1, 2, 2, 2, 3][..],
+                vec![1, 2, 2, 2, 3],
                 false,
                 Some(30),
                 5..=6,
@@ -365,7 +365,7 @@ mod tests {
             ),
             // Timeline compression verification
             (
-                &[1, 2, 2, 2, 2, 3][..],
+                vec![1, 2, 2, 2, 2, 3],
                 false,
                 Some(20),
                 4..=4,
@@ -373,7 +373,7 @@ mod tests {
             ),
             // Maximum compression
             (
-                &[1, 2, 2, 2, 2, 3][..],
+                vec![1, 2, 2, 2, 2, 3],
                 false,
                 None,
                 2..=3,
