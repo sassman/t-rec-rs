@@ -279,6 +279,7 @@ mod tests {
     /// - Natural mode saves all frames regardless of content
     /// - Threshold boundaries work correctly (e.g., exactly at 30ms)
     #[test]
+    #[cfg(feature = "e2e_tests")]
     fn test_idle_pause() -> crate::Result<()> {
         // Test format: (frames, natural_mode, threshold_ms, expected_count, description)
         // - frames: byte array where same value = identical frame
