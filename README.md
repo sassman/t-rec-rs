@@ -166,7 +166,7 @@ Options:
   -s, --start-pause <s | ms | m>  to specify the pause time at the start of the animation, that time
                                   the gif will show the first frame
   -i, --idle-pause <s | ms | m>   to preserve natural pauses up to a maximum duration by overriding
-                                  idle detection. Can enhance readability.
+                                  idle detection. Can enhance readability. [default: 3s]
   -o, --output <file>             to specify the output file (without extension) [default: t-rec]
   -h, --help                      Print help
   -V, --version                   Print version
@@ -184,6 +184,8 @@ This gives viewers time to read the text on screen before the animation jumps to
 t-rec --idle-pause 1s        # Show 1 second of unchanged content before optimization
 t-rec --idle-pause 500ms     # Show 500ms of idle time
 ```
+
+NOTE: The default value is `3s`.
 
 ### Enable shadow border decor
 
