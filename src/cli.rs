@@ -110,6 +110,7 @@ pub fn launch() -> ArgMatches {
                 .required(false)
                 .short('i')
                 .long("idle-pause")
+                .default_value("3s")
                 .help("to preserve natural pauses up to a maximum duration by overriding idle detection. Can enhance readability."),
         )
         .arg(
