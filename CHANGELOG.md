@@ -6,6 +6,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.10](https://github.com/sassman/t-rec-rs/compare/v0.7.9...v0.7.10) - 2025-11-15
+
+### Added
+
+- make 3s the default idle-pause for more readable demo recordings ([#288](https://github.com/sassman/t-rec-rs/pull/288))
+- *(tip)* add a tip for the idle pause flag feature from pr #267 ([#287](https://github.com/sassman/t-rec-rs/pull/287))
+- add --idle-pause <time> to set the max time before idle frame optimization. Can improve readability. ([#267](https://github.com/sassman/t-rec-rs/pull/267))
+
+### Other
+
+- *(deps)* bump clap from 4.5.50 to 4.5.51 ([#286](https://github.com/sassman/t-rec-rs/pull/286))
+- *(deps)* bump core-foundation from 0.10.0 to 0.10.1 ([#261](https://github.com/sassman/t-rec-rs/pull/261))
+- *(deps)* bump humantime from 2.1.0 to 2.3.0 ([#279](https://github.com/sassman/t-rec-rs/pull/279))
+- *(deps)* bump rayon from 1.10.0 to 1.11.0 ([#270](https://github.com/sassman/t-rec-rs/pull/270))
+- *(deps)* bump anyhow from 1.0.97 to 1.0.100 ([#281](https://github.com/sassman/t-rec-rs/pull/281))
+- *(deps)* bump log from 0.4.26 to 0.4.28 ([#278](https://github.com/sassman/t-rec-rs/pull/278))
+- *(deps)* bump simplerand from 1.5.1 to 1.6.0 ([#266](https://github.com/sassman/t-rec-rs/pull/266))
+- *(deps)* bump clap from 4.5.32 to 4.5.49 ([#285](https://github.com/sassman/t-rec-rs/pull/285))
+- fix typos ([#264](https://github.com/sassman/t-rec-rs/pull/264))
+- *(deps)* bump tempfile from 3.19.1 to 3.23.0 ([#283](https://github.com/sassman/t-rec-rs/pull/283))
+- *(deps)* bump image from 0.25.5 to 0.25.8 ([#277](https://github.com/sassman/t-rec-rs/pull/277))
+- *(deps)* bump clap from 4.5.31 to 4.5.32 ([#245](https://github.com/sassman/t-rec-rs/pull/245))
+- *(deps)* bump tempfile from 3.18.0 to 3.19.1 ([#246](https://github.com/sassman/t-rec-rs/pull/246))
+
 ## [0.7.9](https://github.com/sassman/t-rec-rs/compare/v0.7.8...v0.7.9) - 2025-03-15
 
 ### Other
