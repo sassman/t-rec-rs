@@ -6,6 +6,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.11](https://github.com/sassman/t-rec-rs/compare/v0.7.10...v0.7.11) - 2025-11-19
+
+### Other
+
+- update Cargo.lock dependencies
+
 ## [0.7.10](https://github.com/sassman/t-rec-rs/compare/v0.7.9...v0.7.10) - 2025-11-15
 
 ### Added
