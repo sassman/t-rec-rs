@@ -1,6 +1,8 @@
+mod validation;
 mod ventura;
 
-pub use ventura::apply_ventura_wallpaper_effect;
+pub use validation::{is_builtin_wallpaper, load_and_validate_wallpaper};
+pub use ventura::get_ventura_wallpaper;
 
 use image::{DynamicImage, GenericImageView, Rgba, RgbaImage};
 use rayon::prelude::*;

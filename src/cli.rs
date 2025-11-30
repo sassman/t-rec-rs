@@ -51,11 +51,11 @@ pub fn launch() -> ArgMatches {
         )
         .arg(
             Arg::new("wallpaper")
-                .value_parser(["ventura"])
+                .value_parser(NonEmptyStringValueParser::new())
                 .required(false)
                 .short('p')
                 .long("wallpaper")
-                .help("Adds a wallpaper background around the recording. Available: 'ventura' (macOS Ventura wallpaper)")
+                .help("Wallpaper background. Use 'ventura' for built-in, or provide a path to a custom image (PNG, JPEG, TGA)")
         )
         .arg(
             Arg::new("wallpaper-padding")
