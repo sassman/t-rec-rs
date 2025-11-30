@@ -28,15 +28,20 @@ use crate::common::{Margin, PlatformApi};
 use crate::decors::{apply_big_sur_corner_effect, apply_shadow_effect};
 use crate::generators::{check_for_gif, check_for_mp4, generate_gif, generate_mp4};
 use crate::tips::show_tip;
-use crate::wallpapers::apply_ventura_wallpaper_effect;
+use crate::wallpapers::{
+    apply_wallpaper_effect, get_ventura_wallpaper, is_builtin_wallpaper,
+    load_and_validate_wallpaper,
+};
 
 use crate::capture::capture_thread;
 use crate::utils::{sub_shell_thread, target_file, DEFAULT_EXT, MOVIE_EXT};
 use anyhow::{bail, Context};
 use clap::ArgMatches;
 use image::FlatSamples;
+use image::{DynamicImage, GenericImageView};
 use std::borrow::Borrow;
 use std::io::{self, Write};
+use std::path::Path;
 use std::sync::{mpsc, Arc, Mutex};
 use std::time::{Duration, Instant};
 use std::{env, thread};
@@ -80,6 +85,9 @@ fn main() -> Result<()> {
     let (win_id, window_name) = current_win_id(&args)?;
     let mut api = setup()?;
     api.calibrate(win_id)?;
+
+    // Validate wallpaper BEFORE recording starts
+    let wallpaper_config = validate_wallpaper_config(&args, &api, win_id)?;
 
     let force_natural = args.get_flag("natural-mode");
     let should_generate_gif = !args.get_flag("video-only");
@@ -169,11 +177,11 @@ fn main() -> Result<()> {
         );
     }
 
-    if let Some("ventura") = args.get_one::<String>("wallpaper").map(|s| s.as_ref()) {
-        let padding = *args.get_one::<u32>("wallpaper-padding").unwrap();
-        apply_ventura_wallpaper_effect(
+    if let Some((wallpaper, padding)) = wallpaper_config {
+        apply_wallpaper_effect(
             &time_codes.lock().unwrap(),
             tempdir.lock().unwrap().borrow(),
+            &wallpaper,
             padding,
         );
     }
@@ -206,6 +214,60 @@ fn main() -> Result<()> {
     println!("Time: {}", time.as_human_readable());
 
     Ok(())
+}
+
+/// Validates and loads the wallpaper configuration before recording starts.
+///
+/// Returns `Some((wallpaper, padding))` if wallpaper is configured, `None` otherwise.
+/// Fails early with a clear error message if the wallpaper is invalid or too small.
+fn validate_wallpaper_config(
+    args: &ArgMatches,
+    api: &impl PlatformApi,
+    win_id: WindowId,
+) -> Result<Option<(DynamicImage, u32)>> {
+    let wp_value = match args.get_one::<String>("wallpaper") {
+        Some(v) => v,
+        None => return Ok(None),
+    };
+
+    let padding = *args.get_one::<u32>("wallpaper-padding").unwrap();
+
+    // Capture a screenshot to get terminal dimensions
+    let screenshot = api.capture_window_screenshot(win_id)?;
+    let terminal_width = screenshot.layout.width;
+    let terminal_height = screenshot.layout.height;
+
+    let wallpaper = if is_builtin_wallpaper(wp_value) {
+        match wp_value.to_lowercase().as_str() {
+            "ventura" => {
+                // Validate built-in wallpaper dimensions too
+                let wp = get_ventura_wallpaper();
+                let (wp_width, wp_height) = wp.dimensions();
+                let min_width = terminal_width + (padding * 2);
+                let min_height = terminal_height + (padding * 2);
+
+                if wp_width < min_width || wp_height < min_height {
+                    bail!(
+                        "Terminal size {}x{} with {}px padding exceeds built-in wallpaper size {}x{}.\n\
+                         Try reducing the terminal size or padding.",
+                        terminal_width,
+                        terminal_height,
+                        padding,
+                        wp_width,
+                        wp_height
+                    );
+                }
+                wp.clone()
+            }
+            _ => bail!("Unknown built-in wallpaper: {}", wp_value),
+        }
+    } else {
+        // Custom wallpaper path - validate before recording
+        let path = Path::new(wp_value);
+        load_and_validate_wallpaper(path, terminal_width, terminal_height, padding)?
+    };
+
+    Ok(Some((wallpaper, padding)))
 }
 
 ///
