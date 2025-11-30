@@ -4,6 +4,7 @@ mod common;
 mod config;
 mod decors;
 mod generators;
+mod summary;
 mod tips;
 mod wallpapers;
 
@@ -31,6 +32,7 @@ use crate::config::{
 };
 use crate::decors::{apply_big_sur_corner_effect, apply_shadow_effect};
 use crate::generators::{check_for_gif, check_for_mp4, generate_gif, generate_mp4};
+use crate::summary::print_recording_summary;
 use crate::tips::show_tip;
 use crate::wallpapers::{
     apply_wallpaper_effect, get_ventura_wallpaper, is_builtin_wallpaper,
@@ -171,11 +173,11 @@ fn main() -> Result<()> {
         .unwrap()
         .context("Cannot launch the recording thread")?;
 
+    let frame_count = time_codes.lock().unwrap().borrow().len();
+    print_recording_summary(&settings, frame_count);
+
     println!();
-    println!(
-        "🎆 Applying effects to {} frames (might take a bit)",
-        time_codes.lock().unwrap().borrow().len()
-    );
+    println!("🎆 Applying effects (might take a bit)");
     show_tip();
 
     apply_big_sur_corner_effect(
