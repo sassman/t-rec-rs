@@ -6,7 +6,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [0.7.12](https://github.com/sassman/t-rec-rs/compare/v0.7.11...v0.7.12) - 2025-11-30
+## [0.8.0](https://github.com/sassman/t-rec-rs/compare/v0.7.11...v0.8.0) - 2025-11-30
 
 ### Added
 
