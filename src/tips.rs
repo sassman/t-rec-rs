@@ -12,6 +12,9 @@ const TIPS: &[&str] = &[
     "For a beautiful macOS-style background, try `--wallpaper ventura`",
     "Use your own wallpaper with `-p /path/to/image.png` (supports PNG, JPEG, TGA)",
     "Adjust wallpaper padding with `--wallpaper-padding 100` (default: 60px)",
+    "Save your favorite settings with `t-rec --init-config` and edit ~/.config/t-rec/config.toml",
+    "Create named profiles in your config file and use them with `--profile demo`",
+    "List available profiles from your config with `t-rec --list-profiles`",
 ];
 
 ///
