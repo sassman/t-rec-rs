@@ -11,6 +11,36 @@ use tempfile::TempDir;
 use crate::utils::{file_name_for, IMG_EXT};
 use crate::{ImageOnHeap, PlatformApi, WindowId};
 
+/// Configuration and shared state for the capture thread.
+///
+/// Groups all parameters needed for frame capture, making the API cleaner
+/// and easier to extend with new options.
+pub struct CaptureContext {
+    /// Window ID to capture
+    pub win_id: WindowId,
+    /// Shared list to store frame timestamps
+    pub time_codes: Arc<Mutex<Vec<u128>>>,
+    /// Directory for saving frames
+    pub tempdir: Arc<Mutex<TempDir>>,
+    /// If true, save all frames without idle detection
+    pub natural: bool,
+    /// Maximum pause duration to preserve (None = skip all identical frames)
+    pub idle_pause: Option<Duration>,
+    /// Capture framerate (4-15 fps)
+    pub fps: u8,
+}
+
+impl CaptureContext {
+    /// Calculate frame interval from fps, this is not used in tests
+    pub fn frame_interval(&self) -> Duration {
+        if cfg!(test) {
+            Duration::from_millis(10) // Fast for testing
+        } else {
+            Duration::from_millis(1000 / self.fps as u64)
+        }
+    }
+}
+
 /// Captures screenshots periodically and decides which frames to keep.
 ///
 /// Eliminates long idle periods while preserving brief pauses that aid
@@ -19,13 +49,7 @@ use crate::{ImageOnHeap, PlatformApi, WindowId};
 /// # Parameters
 /// * `rx` - Channel to receive stop signal
 /// * `api` - Platform API for taking screenshots
-/// * `win_id` - Window ID to capture
-/// * `time_codes` - Shared list to store frame timestamps
-/// * `tempdir` - Directory for saving frames
-/// * `force_natural` - If true, save all frames (no skipping)
-/// * `idle_pause` - Maximum pause duration to preserve for viewer comprehension:
-///   - `None`: Skip all identical frames (maximum compression)
-///   - `Some(duration)`: Preserve pauses up to this duration, skip beyond
+/// * `ctx` - Capture configuration and shared state
 ///
 /// # Behavior
 /// When identical frames are detected:
@@ -34,19 +58,8 @@ use crate::{ImageOnHeap, PlatformApi, WindowId};
 ///
 /// Example: 10-second idle with 3-second threshold → saves 3 seconds of pause,
 ///          skips 7 seconds, playback shows exactly 3 seconds.
-pub fn capture_thread(
-    rx: &Receiver<()>,
-    api: impl PlatformApi,
-    win_id: WindowId,
-    time_codes: Arc<Mutex<Vec<u128>>>,
-    tempdir: Arc<Mutex<TempDir>>,
-    force_natural: bool,
-    idle_pause: Option<Duration>,
-) -> Result<()> {
-    #[cfg(test)]
-    let duration = Duration::from_millis(10); // Fast for testing
-    #[cfg(not(test))]
-    let duration = Duration::from_millis(250); // Production speed
+pub fn capture_thread(rx: &Receiver<()>, api: impl PlatformApi, ctx: CaptureContext) -> Result<()> {
+    let duration = ctx.frame_interval();
     let start = Instant::now();
 
     // Total idle time skipped (subtracted from timestamps to prevent gaps)
@@ -68,11 +81,11 @@ pub fn capture_thread(
         let effective_now = now.sub(idle_duration);
         let tc = effective_now.saturating_duration_since(start).as_millis();
 
-        let image = api.capture_window_screenshot(win_id)?;
+        let image = api.capture_window_screenshot(ctx.win_id)?;
         let frame_duration = now.duration_since(last_now);
 
         // Check if frame is identical to previous (skip check in natural mode)
-        let frame_unchanged = !force_natural
+        let frame_unchanged = !ctx.natural
             && last_frame
                 .as_ref()
                 .map(|last| image.samples.as_slice() == last.samples.as_slice())
@@ -87,7 +100,7 @@ pub fn capture_thread(
 
         // Decide whether to save this frame
         let should_save_frame = if frame_unchanged {
-            let should_skip_for_compression = if let Some(threshold) = idle_pause {
+            let should_skip_for_compression = if let Some(threshold) = ctx.idle_pause {
                 // Skip if idle exceeds threshold
                 current_idle_period >= threshold
             } else {
@@ -111,12 +124,16 @@ pub fn capture_thread(
 
         if should_save_frame {
             // Save frame and update state
-            if let Err(e) = save_frame(&image, tc, tempdir.lock().unwrap().borrow(), file_name_for)
-            {
+            if let Err(e) = save_frame(
+                &image,
+                tc,
+                ctx.tempdir.lock().unwrap().borrow(),
+                file_name_for,
+            ) {
                 eprintln!("{}", &e);
                 return Err(e);
             }
-            time_codes.lock().unwrap().push(tc);
+            ctx.time_codes.lock().unwrap().push(tc);
 
             // Store frame for next comparison
             last_frame = Some(image);
@@ -230,16 +247,15 @@ mod tests {
             let _ = stop_signal_tx.send(());
         });
 
-        let timestamps_clone = captured_timestamps.clone();
-        capture_thread(
-            &stop_signal_rx,
-            test_api,
-            0,
-            timestamps_clone,
-            temp_directory,
-            natural_mode,
-            idle_threshold,
-        )?;
+        let ctx = CaptureContext {
+            win_id: 0,
+            time_codes: captured_timestamps.clone(),
+            tempdir: temp_directory,
+            natural: natural_mode,
+            idle_pause: idle_threshold,
+            fps: 4, // Default fps for tests
+        };
+        capture_thread(&stop_signal_rx, test_api, ctx)?;
         let result = captured_timestamps.lock().unwrap().clone();
         Ok(result)
     }

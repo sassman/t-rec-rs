@@ -4,6 +4,7 @@ mod common;
 mod config;
 mod decors;
 mod generators;
+mod summary;
 mod tips;
 mod wallpapers;
 
@@ -31,13 +32,14 @@ use crate::config::{
 };
 use crate::decors::{apply_big_sur_corner_effect, apply_shadow_effect};
 use crate::generators::{check_for_gif, check_for_mp4, generate_gif, generate_mp4};
+use crate::summary::print_recording_summary;
 use crate::tips::show_tip;
 use crate::wallpapers::{
     apply_wallpaper_effect, get_ventura_wallpaper, is_builtin_wallpaper,
     load_and_validate_wallpaper,
 };
 
-use crate::capture::capture_thread;
+use crate::capture::{capture_thread, CaptureContext};
 use crate::utils::{sub_shell_thread, target_file, DEFAULT_EXT, MOVIE_EXT};
 use anyhow::{bail, Context};
 use clap::ArgMatches;
@@ -107,7 +109,6 @@ fn main() -> Result<()> {
     // Validate wallpaper BEFORE recording starts
     let wallpaper_config = validate_wallpaper_config(&settings, &api, win_id)?;
 
-    let force_natural = settings.natural();
     let should_generate_gif = !settings.video_only();
     let should_generate_video = settings.video() || settings.video_only();
     let (start_delay, end_delay, idle_pause) = (
@@ -115,6 +116,7 @@ fn main() -> Result<()> {
         parse_delay(settings.end_pause.as_deref(), "end-pause")?,
         parse_delay(Some(settings.idle_pause()), "idle-pause")?,
     );
+    let fps = settings.fps();
 
     if should_generate_gif {
         check_for_gif()?;
@@ -130,19 +132,15 @@ fn main() -> Result<()> {
     let time_codes = Arc::new(Mutex::new(Vec::new()));
     let (tx, rx) = mpsc::channel();
     let photograph = {
-        let tempdir = tempdir.clone();
-        let time_codes = time_codes.clone();
-        thread::spawn(move || -> Result<()> {
-            capture_thread(
-                &rx,
-                api,
-                win_id,
-                time_codes,
-                tempdir,
-                force_natural,
-                idle_pause,
-            )
-        })
+        let ctx = CaptureContext {
+            win_id,
+            time_codes: time_codes.clone(),
+            tempdir: tempdir.clone(),
+            natural: settings.natural(),
+            idle_pause,
+            fps,
+        };
+        thread::spawn(move || -> Result<()> { capture_thread(&rx, api, ctx) })
     };
     let interact = thread::spawn(move || -> Result<()> { sub_shell_thread(&program).map(|_| ()) });
 
@@ -175,11 +173,11 @@ fn main() -> Result<()> {
         .unwrap()
         .context("Cannot launch the recording thread")?;
 
+    let frame_count = time_codes.lock().unwrap().borrow().len();
+    print_recording_summary(&settings, frame_count);
+
     println!();
-    println!(
-        "🎆 Applying effects to {} frames (might take a bit)",
-        time_codes.lock().unwrap().borrow().len()
-    );
+    println!("🎆 Applying effects (might take a bit)");
     show_tip();
 
     apply_big_sur_corner_effect(
