@@ -279,6 +279,29 @@ t-rec --fps 15
 
 **Note:** Higher framerates produce larger files. The default 4 fps is recommended for most use cases.
 
+### Video Generation
+
+After recording, t-rec will ask if you also want to generate an MP4 video:
+
+```
+🎉 🚀 Generating t-rec.gif
+
+🎬 Also generate MP4 video? (y/n) ›
+(auto-skip in 15s)
+```
+
+- Press `y` to generate both GIF and MP4
+- Press `n` or wait 15 seconds to skip
+
+To always generate video without being asked, use the `--video` flag:
+
+```sh
+t-rec --video          # Generate both GIF and MP4
+t-rec --video-only     # Generate only MP4, no GIF
+```
+
+The prompt is skipped in quiet mode (`-q`) or non-interactive environments.
+
 ### Disable idle detection & optimization
 
 If you are not happy with the idle detection and optimization, you can disable it with the `-n` or `--natural` parameter.

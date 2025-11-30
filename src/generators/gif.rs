@@ -33,7 +33,7 @@ pub fn generate_gif_with_convert(
     start_pause: Option<Duration>,
     end_pause: Option<Duration>,
 ) -> Result<()> {
-    println!("🎉 🚀 Generating {target}");
+    println!("🎉 🚀 Generating {target}\n");
     let mut cmd = Command::new(PROGRAM);
     cmd.arg("-loop").arg("0");
     let mut delay = 0;

@@ -41,7 +41,7 @@ pub fn generate_mp4_with_ffmpeg(
     tempdir: &TempDir,
     target: &str,
 ) -> Result<()> {
-    println!("🎉 🎬 Generating {target}");
+    println!("🎬 🎉 🚀 Generating {target}");
     Command::new(PROGRAM)
         .arg("-y")
         .arg("-r")
