@@ -1,6 +1,6 @@
 [package]
 name = "t-rec"
-version = "0.7.10"
+version = "0.7.11"
 authors = ["Sven Kanoldt <sven@d34dl0ck.me>"]
 edition = "2018"
 license = "GPL-3.0-only"

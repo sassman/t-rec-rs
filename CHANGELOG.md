@@ -6,6 +6,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.11](https://github.com/sassman/t-rec-rs/compare/v0.7.10...v0.7.11) - 2025-11-30
+
+### Added
+
+- add config file with profiles support ([#295](https://github.com/sassman/t-rec-rs/pull/295))
+- support custom wallpaper images ([#294](https://github.com/sassman/t-rec-rs/pull/294))
+- add --wallpaper option with macOS Ventura background ([#292](https://github.com/sassman/t-rec-rs/pull/292))
+
 ## [0.7.10](https://github.com/sassman/t-rec-rs/compare/v0.7.9...v0.7.10) - 2025-11-15
 
 ### Added
