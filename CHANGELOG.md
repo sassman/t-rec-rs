@@ -6,6 +6,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.12](https://github.com/sassman/t-rec-rs/compare/v0.7.11...v0.7.12) - 2025-11-30
+
+### Added
+
+- add interactive prompt for video generation ([#298](https://github.com/sassman/t-rec-rs/pull/298))
+- configurable framerate for smoother animations ([#296](https://github.com/sassman/t-rec-rs/pull/296))
+
 ## [0.7.11](https://github.com/sassman/t-rec-rs/compare/v0.7.10...v0.7.11) - 2025-11-30
 
 ### Added
