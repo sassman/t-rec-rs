@@ -1,6 +1,7 @@
 mod assets;
 mod cli;
 mod common;
+mod config;
 mod decors;
 mod generators;
 mod tips;
@@ -25,6 +26,9 @@ use crate::windows::*;
 use crate::cli::launch;
 use crate::common::utils::{clear_screen, parse_delay, HumanReadable};
 use crate::common::{Margin, PlatformApi};
+use crate::config::{
+    expand_home, handle_init_config, handle_list_profiles, load_config, resolve_settings,
+};
 use crate::decors::{apply_big_sur_corner_effect, apply_shadow_effect};
 use crate::generators::{check_for_gif, check_for_mp4, generate_gif, generate_mp4};
 use crate::tips::show_tip;
@@ -70,9 +74,23 @@ fn main() -> Result<()> {
     env_logger::init();
 
     let args = launch();
+
+    // Handle config-related commands first
+    if args.get_flag("init-config") {
+        return handle_init_config();
+    }
+    if args.get_flag("list-profiles") {
+        return handle_list_profiles();
+    }
     if args.get_flag("list-windows") {
         return ls_win();
     }
+
+    // Load config and resolve settings
+    let config = load_config()?;
+    let profile_name = args.get_one::<String>("profile").map(|s| s.as_str());
+    let mut settings = resolve_settings(config.as_ref(), profile_name)?;
+    settings.apply_cli_args(&args);
 
     let program: String = {
         if args.contains_id("program") {
@@ -87,15 +105,15 @@ fn main() -> Result<()> {
     api.calibrate(win_id)?;
 
     // Validate wallpaper BEFORE recording starts
-    let wallpaper_config = validate_wallpaper_config(&args, &api, win_id)?;
+    let wallpaper_config = validate_wallpaper_config(&settings, &api, win_id)?;
 
-    let force_natural = args.get_flag("natural-mode");
-    let should_generate_gif = !args.get_flag("video-only");
-    let should_generate_video = args.get_flag("video") || args.get_flag("video-only");
+    let force_natural = settings.natural();
+    let should_generate_gif = !settings.video_only();
+    let should_generate_video = settings.video() || settings.video_only();
     let (start_delay, end_delay, idle_pause) = (
-        parse_delay(args.get_one::<String>("start-pause"), "start-pause")?,
-        parse_delay(args.get_one::<String>("end-pause"), "end-pause")?,
-        parse_delay(args.get_one::<String>("idle-pause"), "idle-pause")?,
+        parse_delay(settings.start_pause.as_deref(), "start-pause")?,
+        parse_delay(settings.end_pause.as_deref(), "end-pause")?,
+        parse_delay(Some(settings.idle_pause()), "idle-pause")?,
     );
 
     if should_generate_gif {
@@ -130,7 +148,7 @@ fn main() -> Result<()> {
 
     clear_screen();
     io::stdout().flush().unwrap();
-    if args.get_flag("verbose") {
+    if settings.verbose() {
         println!(
             "Frame cache dir: {:?}",
             tempdir.lock().expect("Cannot lock tempdir resource").path()
@@ -141,7 +159,7 @@ fn main() -> Result<()> {
             println!("Recording window id: {}", win_id);
         }
     }
-    if !args.get_flag("quiet") {
+    if !settings.quiet() {
         println!("[t-rec]: Press Ctrl+D to end recording");
     }
     thread::sleep(Duration::from_millis(1250));
@@ -169,11 +187,11 @@ fn main() -> Result<()> {
         tempdir.lock().unwrap().borrow(),
     );
 
-    if let Some("shadow") = args.get_one::<String>("decor").map(|s| s.as_ref()) {
+    if settings.decor() == "shadow" {
         apply_shadow_effect(
             &time_codes.lock().unwrap(),
             tempdir.lock().unwrap().borrow(),
-            args.get_one::<String>("bg").unwrap().to_string(),
+            settings.bg().to_string(),
         );
     }
 
@@ -186,7 +204,7 @@ fn main() -> Result<()> {
         );
     }
 
-    let target = target_file(args.get_one::<String>("file").unwrap());
+    let target = target_file(settings.output());
     let mut time = Duration::default();
 
     if should_generate_gif {
@@ -221,23 +239,25 @@ fn main() -> Result<()> {
 /// Returns `Some((wallpaper, padding))` if wallpaper is configured, `None` otherwise.
 /// Fails early with a clear error message if the wallpaper is invalid or too small.
 fn validate_wallpaper_config(
-    args: &ArgMatches,
+    settings: &config::ProfileSettings,
     api: &impl PlatformApi,
     win_id: WindowId,
 ) -> Result<Option<(DynamicImage, u32)>> {
-    let wp_value = match args.get_one::<String>("wallpaper") {
+    let wp_value = match &settings.wallpaper {
         Some(v) => v,
         None => return Ok(None),
     };
 
-    let padding = *args.get_one::<u32>("wallpaper-padding").unwrap();
+    // Expand $HOME in wallpaper path
+    let wp_value = expand_home(wp_value);
+    let padding = settings.wallpaper_padding();
 
     // Capture a screenshot to get terminal dimensions
     let screenshot = api.capture_window_screenshot(win_id)?;
     let terminal_width = screenshot.layout.width;
     let terminal_height = screenshot.layout.height;
 
-    let wallpaper = if is_builtin_wallpaper(wp_value) {
+    let wallpaper = if is_builtin_wallpaper(&wp_value) {
         match wp_value.to_lowercase().as_str() {
             "ventura" => {
                 // Validate built-in wallpaper dimensions too
@@ -263,7 +283,7 @@ fn validate_wallpaper_config(
         }
     } else {
         // Custom wallpaper path - validate before recording
-        let path = Path::new(wp_value);
+        let path = Path::new(&wp_value);
         load_and_validate_wallpaper(path, terminal_width, terminal_height, padding)?
     };
 

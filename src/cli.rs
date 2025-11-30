@@ -144,5 +144,25 @@ pub fn launch() -> ArgMatches {
                 .value_parser(NonEmptyStringValueParser::new())
                 .required(false)
                 .help("If you want to start a different program than $SHELL you can pass it here. For example '/bin/sh'"),
-        ).get_matches()
+        )
+        .arg(
+            Arg::new("profile")
+                .value_parser(NonEmptyStringValueParser::new())
+                .required(false)
+                .long("profile")
+                .help("Use a named profile from the config file"),
+        )
+        .arg(
+            Arg::new("init-config")
+                .action(ArgAction::SetTrue)
+                .long("init-config")
+                .help("Create a starter config file at ~/.config/t-rec/config.toml"),
+        )
+        .arg(
+            Arg::new("list-profiles")
+                .action(ArgAction::SetTrue)
+                .long("list-profiles")
+                .help("List available profiles from the config file"),
+        )
+        .get_matches()
 }
