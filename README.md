@@ -168,9 +168,99 @@ Options:
   -i, --idle-pause <s | ms | m>   to preserve natural pauses up to a maximum duration by overriding
                                   idle detection. Can enhance readability. [default: 3s]
   -o, --output <file>             to specify the output file (without extension) [default: t-rec]
+  -p, --wallpaper <wallpaper>     Wallpaper background. Use 'ventura' for built-in, or provide
+                                  a path to a custom image (PNG, JPEG, TGA)
+      --wallpaper-padding <1-500> Padding in pixels around the recording when using --wallpaper
+                                  [default: 60]
+      --profile <name>            Use a named profile from the config file
+      --init-config               Create a starter config file at ~/.config/t-rec/config.toml
+      --list-profiles             List available profiles from the config file
   -h, --help                      Print help
   -V, --version                   Print version
 ```
+
+### Configuration File
+
+You can save your preferred settings in a config file to avoid typing them every time.
+
+**Quick start:**
+
+```sh
+# Create a starter config file
+t-rec --init-config
+
+# List available profiles
+t-rec --list-profiles
+
+# Use a profile
+t-rec --profile demo
+```
+
+**Config file locations** (searched in order):
+1. `./t-rec.toml` (project-local)
+2. `~/.config/t-rec/config.toml` (Linux/macOS)
+3. `%APPDATA%\t-rec\config.toml` (Windows)
+
+**Example config file:**
+
+```toml
+# Default settings applied to all recordings
+[default]
+wallpaper = "ventura"
+wallpaper-padding = 80
+
+# Named profiles for different use cases
+[profiles.demo]
+wallpaper = "ventura"
+wallpaper-padding = 120
+start-pause = "10s"
+idle-pause = "5s"
+
+[profiles.quick]
+quiet = true
+idle-pause = "1s"
+
+# Custom wallpaper with $HOME expansion
+[profiles.custom]
+wallpaper = "$HOME/Pictures/my-wallpaper.png"
+wallpaper-padding = 80
+```
+
+**Using profiles:**
+
+```sh
+# Use default settings from config
+t-rec
+
+# Use a specific profile
+t-rec --profile demo
+
+# Override a profile setting
+t-rec --profile demo --wallpaper-padding 150
+
+# List available profiles
+t-rec --list-profiles
+```
+
+**Available config options:**
+
+| Option | Type | Description |
+|--------|------|-------------|
+| `verbose` | bool | Enable verbose output |
+| `quiet` | bool | Suppress the Ctrl+D banner |
+| `video` | bool | Also generate mp4 video |
+| `video-only` | bool | Only generate mp4, no gif |
+| `decor` | string | Border decoration (`shadow`, `none`) |
+| `wallpaper` | string | Wallpaper preset or file path (supports `$HOME`) |
+| `wallpaper-padding` | number | Padding around recording (1-500) |
+| `bg` | string | Background color (`white`, `black`, `transparent`) |
+| `natural` | bool | Disable idle detection |
+| `start-pause` | string | Pause at start (e.g., `2s`, `500ms`) |
+| `end-pause` | string | Pause at end |
+| `idle-pause` | string | Max idle time before optimization |
+| `output` | string | Output filename (without extension) |
+
+**Note:** CLI arguments always override config file settings.
 
 ### Disable idle detection & optimization
 
