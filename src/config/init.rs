@@ -3,6 +3,7 @@ pub const STARTER_CONFIG: &str = r#"# t-rec configuration file
 
 # Default settings applied to all recordings
 [default]
+# fps = 4
 # wallpaper = "ventura"
 # wallpaper-padding = 60
 # start-pause = "2s"
@@ -15,6 +16,10 @@ wallpaper = "ventura"
 wallpaper-padding = 100
 start-pause = "5s"
 idle-pause = "5s"
+
+[profiles.smooth]
+fps = 10
+idle-pause = "2s"
 
 [profiles.quick]
 quiet = true

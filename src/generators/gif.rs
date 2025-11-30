@@ -45,7 +45,7 @@ pub fn generate_gif_with_convert(
         if !frame.exists() {
             continue;
         }
-        let mut frame_delay = (delay as f64 * 0.1) as u64;
+        let mut frame_delay = ((delay as f64 * 0.1).round() as u64).max(1);
         match (i, start_pause, end_pause) {
             (0, Some(delay), _) => {
                 frame_delay += delay.as_millis().div(10) as u64;

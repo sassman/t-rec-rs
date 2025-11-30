@@ -139,6 +139,15 @@ pub fn launch() -> ArgMatches {
                 .help("to specify the output file (without extension)"),
         )
         .arg(
+            Arg::new("fps")
+                .value_parser(clap::value_parser!(u8).range(4..=15))
+                .default_value("4")
+                .required(false)
+                .short('f')
+                .long("fps")
+                .help("Capture framerate, 4-15 fps. Higher = smoother animations but larger files"),
+        )
+        .arg(
             Arg::new("program")
                 .value_name("shell or program to launch")
                 .value_parser(NonEmptyStringValueParser::new())

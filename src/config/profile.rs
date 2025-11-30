@@ -21,6 +21,7 @@ pub struct ProfileSettings {
     pub start_pause: Option<String>,
     pub idle_pause: Option<String>,
     pub output: Option<String>,
+    pub fps: Option<u8>,
 }
 
 impl ProfileSettings {
@@ -64,6 +65,9 @@ impl ProfileSettings {
         }
         if other.output.is_some() {
             self.output = other.output.clone();
+        }
+        if other.fps.is_some() {
+            self.fps = other.fps;
         }
     }
 
@@ -122,6 +126,11 @@ impl ProfileSettings {
                 self.output = Some(v.clone());
             }
         }
+        if args.value_source("fps") == Some(clap::parser::ValueSource::CommandLine) {
+            if let Some(v) = args.get_one::<u8>("fps") {
+                self.fps = Some(*v);
+            }
+        }
     }
 
     /// Get final values with defaults applied
@@ -154,6 +163,10 @@ impl ProfileSettings {
     }
     pub fn output(&self) -> &str {
         self.output.as_deref().unwrap_or("t-rec")
+    }
+    /// Get fps value (default: 4, must be kept in sync with CLI default)
+    pub fn fps(&self) -> u8 {
+        self.fps.unwrap_or(4)
     }
 }
 
@@ -252,5 +265,6 @@ mod tests {
         assert_eq!(settings.wallpaper_padding(), 60);
         assert_eq!(settings.idle_pause(), "3s");
         assert_eq!(settings.output(), "t-rec");
+        assert_eq!(settings.fps(), 4);
     }
 }

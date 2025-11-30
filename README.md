@@ -18,7 +18,7 @@ Blazingly fast terminal recorder that generates animated gif images for the web 
 ![demo](./docs/demo.gif)
 
 ## Features
-- Screenshotting your terminal with 4 frames per second (every 250ms)
+- Screenshotting your terminal with configurable framerate (4-15 fps)
 - Generates high quality small sized animated gif images or mp4 videos
 - **built-in idle frames detection and optimization** (for super fluid presentations)
 - Applies (can be disabled) border decor effects like drop shadow
@@ -168,6 +168,8 @@ Options:
   -i, --idle-pause <s | ms | m>   to preserve natural pauses up to a maximum duration by overriding
                                   idle detection. Can enhance readability. [default: 3s]
   -o, --output <file>             to specify the output file (without extension) [default: t-rec]
+  -f, --fps <4-15>                Capture framerate. Higher = smoother animations but larger
+                                  files [default: 4]
   -p, --wallpaper <wallpaper>     Wallpaper background. Use 'ventura' for built-in, or provide
                                   a path to a custom image (PNG, JPEG, TGA)
       --wallpaper-padding <1-500> Padding in pixels around the recording when using --wallpaper
@@ -259,8 +261,23 @@ t-rec --list-profiles
 | `end-pause` | string | Pause at end |
 | `idle-pause` | string | Max idle time before optimization |
 | `output` | string | Output filename (without extension) |
+| `fps` | number | Capture framerate, 4-15 (default: 4) |
 
 **Note:** CLI arguments always override config file settings.
+
+### Smoother Animations
+
+For smoother typing animations in demos, increase the capture framerate:
+
+```sh
+# Smooth typing (10 fps)
+t-rec --fps 10
+
+# Very smooth (15 fps)
+t-rec --fps 15
+```
+
+**Note:** Higher framerates produce larger files. The default 4 fps is recommended for most use cases.
 
 ### Disable idle detection & optimization
 

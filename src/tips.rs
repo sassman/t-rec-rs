@@ -15,6 +15,7 @@ const TIPS: &[&str] = &[
     "Save your favorite settings with `t-rec --init-config` and edit ~/.config/t-rec/config.toml",
     "Create named profiles in your config file and use them with `--profile demo`",
     "List available profiles from your config with `t-rec --list-profiles`",
+    "For smoother typing animations, try `--fps 10` or `--fps 15`",
 ];
 
 ///
