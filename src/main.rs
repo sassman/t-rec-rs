@@ -4,6 +4,7 @@ mod common;
 mod config;
 mod decors;
 mod generators;
+mod prompt;
 mod summary;
 mod tips;
 mod wallpapers;
@@ -40,6 +41,7 @@ use crate::wallpapers::{
 };
 
 use crate::capture::{capture_thread, CaptureContext};
+use crate::prompt::{start_background_prompt, PromptResult};
 use crate::utils::{sub_shell_thread, target_file, DEFAULT_EXT, MOVIE_EXT};
 use anyhow::{bail, Context};
 use clap::ArgMatches;
@@ -205,6 +207,14 @@ fn main() -> Result<()> {
     let target = target_file(settings.output());
     let mut time = Duration::default();
 
+    // Start video prompt in background if we might need to ask
+    // This runs while GIF is being generated, so user can answer early
+    let video_prompt = if !should_generate_video && !settings.quiet() {
+        start_background_prompt("🎬 Also generate MP4 video?", 15)
+    } else {
+        None
+    };
+
     if should_generate_gif {
         time += prof! {
             generate_gif(
@@ -216,6 +226,23 @@ fn main() -> Result<()> {
             )?;
         };
     }
+
+    // Determine if we should generate video:
+    // - If already requested via CLI/config, generate it
+    // - Otherwise, check the background prompt result
+    let should_generate_video = if should_generate_video {
+        true
+    } else if let Some(prompt) = video_prompt {
+        match prompt.wait() {
+            PromptResult::Yes => {
+                check_for_mp4()?;
+                true
+            }
+            PromptResult::No | PromptResult::Timeout => false,
+        }
+    } else {
+        false
+    };
 
     if should_generate_video {
         time += prof! {
