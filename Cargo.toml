@@ -12,7 +12,7 @@ categories = ["multimedia::images", "command-line-utilities"]
 repository = "https://github.com/sassman/t-rec-rs"
 links = "X11"
 build = "build.rs"
-include = ["src/**/*", "LICENSE", "*.md", "build.rs"]
+include = ["src/**/*", "resources/**/*", "LICENSE", "*.md", "build.rs"]
 
 [badges]
 github-actions = { repository = "sassman/t-rec-rs", branch = "main", workflow = "Build" }
@@ -34,7 +34,7 @@ features = ["cargo"]
 [dependencies.image]
 version = "0.25"
 default-features = false
-features = ["bmp", "tga"]
+features = ["bmp", "tga", "jpeg"]
 
 [target.'cfg(target_os = "macos")'.dependencies]
 objc_id = "0.1.1"

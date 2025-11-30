@@ -50,6 +50,22 @@ pub fn launch() -> ArgMatches {
                 .help("Decorates the animation with certain, mostly border effects")
         )
         .arg(
+            Arg::new("wallpaper")
+                .value_parser(["ventura"])
+                .required(false)
+                .short('p')
+                .long("wallpaper")
+                .help("Adds a wallpaper background around the recording. Available: 'ventura' (macOS Ventura wallpaper)")
+        )
+        .arg(
+            Arg::new("wallpaper-padding")
+                .value_parser(clap::value_parser!(u32).range(1..=500))
+                .default_value("60")
+                .required(false)
+                .long("wallpaper-padding")
+                .help("Padding in pixels around the recording when using --wallpaper (1-500, default: 60)")
+        )
+        .arg(
             Arg::new("bg")
                 .value_parser(["white", "black", "transparent"])
                 .default_value("transparent")

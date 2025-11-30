@@ -1,8 +1,10 @@
+mod assets;
 mod cli;
 mod common;
-mod decor_effect;
+mod decors;
 mod generators;
 mod tips;
+mod wallpapers;
 
 mod capture;
 #[cfg(any(target_os = "linux", target_os = "netbsd"))]
@@ -23,9 +25,10 @@ use crate::windows::*;
 use crate::cli::launch;
 use crate::common::utils::{clear_screen, parse_delay, HumanReadable};
 use crate::common::{Margin, PlatformApi};
-use crate::decor_effect::{apply_big_sur_corner_effect, apply_shadow_effect};
+use crate::decors::{apply_big_sur_corner_effect, apply_shadow_effect};
 use crate::generators::{check_for_gif, check_for_mp4, generate_gif, generate_mp4};
 use crate::tips::show_tip;
+use crate::wallpapers::apply_ventura_wallpaper_effect;
 
 use crate::capture::capture_thread;
 use crate::utils::{sub_shell_thread, target_file, DEFAULT_EXT, MOVIE_EXT};
@@ -163,7 +166,16 @@ fn main() -> Result<()> {
             &time_codes.lock().unwrap(),
             tempdir.lock().unwrap().borrow(),
             args.get_one::<String>("bg").unwrap().to_string(),
-        )
+        );
+    }
+
+    if let Some("ventura") = args.get_one::<String>("wallpaper").map(|s| s.as_ref()) {
+        let padding = *args.get_one::<u32>("wallpaper-padding").unwrap();
+        apply_ventura_wallpaper_effect(
+            &time_codes.lock().unwrap(),
+            tempdir.lock().unwrap().borrow(),
+            padding,
+        );
     }
 
     let target = target_file(args.get_one::<String>("file").unwrap());
