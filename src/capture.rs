@@ -31,9 +31,13 @@ pub struct CaptureContext {
 }
 
 impl CaptureContext {
-    /// Calculate frame interval from fps
+    /// Calculate frame interval from fps, this is not used in tests
     pub fn frame_interval(&self) -> Duration {
-        Duration::from_millis(1000 / self.fps as u64)
+        if cfg!(test) {
+            Duration::from_millis(10) // Fast for testing
+        } else {
+            Duration::from_millis(1000 / self.fps as u64)
+        }
     }
 }
 
@@ -55,9 +59,6 @@ impl CaptureContext {
 /// Example: 10-second idle with 3-second threshold → saves 3 seconds of pause,
 ///          skips 7 seconds, playback shows exactly 3 seconds.
 pub fn capture_thread(rx: &Receiver<()>, api: impl PlatformApi, ctx: CaptureContext) -> Result<()> {
-    #[cfg(test)]
-    let duration = Duration::from_millis(10); // Fast for testing
-    #[cfg(not(test))]
     let duration = ctx.frame_interval();
     let start = Instant::now();
 
