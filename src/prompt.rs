@@ -1,3 +1,4 @@
+use dialoguer::console::Term;
 use dialoguer::Confirm;
 use std::io::{self, Write};
 use std::sync::mpsc::{self, Receiver, Sender};
@@ -70,6 +71,8 @@ fn run_prompt(question: &str, timeout_secs: u64) -> PromptResult {
         io::stdout().flush().unwrap();
 
         if remaining == 0 {
+            // Restore terminal state before returning
+            restore_terminal();
             // Move down and print timeout message
             println!("\n\nSkipping video generation (timeout)");
             return PromptResult::Timeout;
@@ -99,6 +102,18 @@ fn run_prompt(question: &str, timeout_secs: u64) -> PromptResult {
     }
 
     PromptResult::Timeout
+}
+
+/// Restore terminal to normal state.
+///
+/// This ensures the cursor is visible and terminal modes are reset
+/// after dialoguer's prompt, especially important when timeout occurs
+/// and the prompt thread is abandoned.
+fn restore_terminal() {
+    let term = Term::stdout();
+    let _ = term.show_cursor();
+    // Clear any remaining input state by flushing
+    let _ = io::stdout().flush();
 }
 
 /// Check if stdin is connected to an interactive terminal.
