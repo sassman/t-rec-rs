@@ -1,4 +1,5 @@
 mod commands;
+pub mod defaults;
 mod file;
 mod init;
 mod profile;

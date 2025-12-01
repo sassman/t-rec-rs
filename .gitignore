@@ -9,5 +9,7 @@
 .idea
 .test-env
 t-rec*.gif
+t-rec*.mp4
+requirements/
 
 # End of https://www.toptal.com/developers/gitignore/api/rust

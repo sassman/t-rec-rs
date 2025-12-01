@@ -25,12 +25,10 @@ use crate::macos::*;
 #[cfg(target_os = "windows")]
 use crate::windows::*;
 
-use crate::cli::launch;
+use crate::cli::{launch, resolve_profiled_settings, CliArgs};
 use crate::common::utils::{clear_screen, parse_delay, HumanReadable};
 use crate::common::{Margin, PlatformApi};
-use crate::config::{
-    expand_home, handle_init_config, handle_list_profiles, load_config, resolve_settings,
-};
+use crate::config::{expand_home, handle_init_config, handle_list_profiles};
 use crate::decors::{apply_big_sur_corner_effect, apply_shadow_effect};
 use crate::generators::{check_for_gif, check_for_mp4, generate_gif, generate_mp4};
 use crate::summary::print_recording_summary;
@@ -44,7 +42,6 @@ use crate::capture::{capture_thread, CaptureContext};
 use crate::prompt::{start_background_prompt, PromptResult};
 use crate::utils::{sub_shell_thread, target_file, DEFAULT_EXT, MOVIE_EXT};
 use anyhow::{bail, Context};
-use clap::ArgMatches;
 use image::FlatSamples;
 use image::{DynamicImage, GenericImageView};
 use std::borrow::Borrow;
@@ -80,25 +77,21 @@ fn main() -> Result<()> {
     let args = launch();
 
     // Handle config-related commands first
-    if args.get_flag("init-config") {
+    if args.init_config {
         return handle_init_config();
     }
-    if args.get_flag("list-profiles") {
+    if args.list_profiles {
         return handle_list_profiles();
     }
-    if args.get_flag("list-windows") {
+    if args.list_windows {
         return ls_win();
     }
 
-    // Load config and resolve settings
-    let config = load_config()?;
-    let profile_name = args.get_one::<String>("profile").map(|s| s.as_str());
-    let mut settings = resolve_settings(config.as_ref(), profile_name)?;
-    settings.apply_cli_args(&args);
+    let settings = resolve_profiled_settings(&args)?;
 
     let program: String = {
-        if args.contains_id("program") {
-            args.get_one::<String>("program").unwrap().to_string()
+        if let Some(prog) = &args.program {
+            prog.to_string()
         } else {
             let default = DEFAULT_SHELL.to_owned();
             env::var("SHELL").unwrap_or(default)
@@ -320,12 +313,9 @@ fn validate_wallpaper_config(
 /// or by the env var 'TERM_PROGRAM' and then asking the window manager for all visible windows
 /// and finding the Terminal in that list
 /// panics if WindowId was not was not there
-fn current_win_id(args: &ArgMatches) -> Result<(WindowId, Option<String>)> {
-    match args
-        .get_one::<u64>("win-id")
-        .ok_or_else(|| env::var("WINDOWID"))
-    {
-        Ok(win_id) => Ok((*win_id, None)),
+fn current_win_id(args: &CliArgs) -> Result<(WindowId, Option<String>)> {
+    match args.win_id.ok_or_else(|| env::var("WINDOWID")) {
+        Ok(win_id) => Ok((win_id, None)),
         Err(_) => {
             let terminal = env::var("TERM_PROGRAM").context(
                 "Env variable 'TERM_PROGRAM' was empty but is needed for figure out the WindowId. Please set it to e.g. TERM_PROGRAM=alacitty",
