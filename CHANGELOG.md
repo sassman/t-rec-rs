@@ -6,6 +6,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.8.1](https://github.com/sassman/t-rec-rs/compare/v0.8.0...v0.8.1) - 2025-12-01
+
+### Added
+
+- Improve CLI help readability and fix config path docs ([#305](https://github.com/sassman/t-rec-rs/pull/305))
+
+### Fixed
+
+- restore terminal state after video prompt timeout ([#303](https://github.com/sassman/t-rec-rs/pull/303))
+
+### Other
+
+- update ventura wallpaper and upgrade dependencies ([#302](https://github.com/sassman/t-rec-rs/pull/302))
+
 ## [0.8.0](https://github.com/sassman/t-rec-rs/compare/v0.7.11...v0.8.0) - 2025-11-30
 
 ### Added
