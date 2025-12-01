@@ -33,7 +33,8 @@ dialoguer = { version = "0.12", default-features = false }
 
 [dependencies.clap]
 version = "4.5"
-features = ["cargo"]
+features = ["cargo", "derive", "help", "color", "std"]
+default-features = false
 
 [dependencies.image]
 version = "0.25"

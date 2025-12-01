@@ -1,10 +1,11 @@
 use anyhow::Result;
-use clap::ArgMatches;
 use serde::Deserialize;
 
+use super::defaults;
 use super::ConfigFile;
+use crate::cli::CliArgs;
 
-/// Settings that can be specified in a profile
+/// Settings that can be specified in a profile (all optional for merging)
 #[derive(Debug, Deserialize, Default, Clone)]
 #[serde(rename_all = "kebab-case")]
 pub struct ProfileSettings {
@@ -27,110 +28,27 @@ pub struct ProfileSettings {
 impl ProfileSettings {
     /// Merge another profile into this one (other takes precedence)
     pub fn merge(&mut self, other: &ProfileSettings) {
-        if other.verbose.is_some() {
-            self.verbose = other.verbose;
+        macro_rules! merge_field {
+            ($field:ident) => {
+                if other.$field.is_some() {
+                    self.$field = other.$field.clone();
+                }
+            };
         }
-        if other.quiet.is_some() {
-            self.quiet = other.quiet;
-        }
-        if other.video.is_some() {
-            self.video = other.video;
-        }
-        if other.video_only.is_some() {
-            self.video_only = other.video_only;
-        }
-        if other.decor.is_some() {
-            self.decor = other.decor.clone();
-        }
-        if other.wallpaper.is_some() {
-            self.wallpaper = other.wallpaper.clone();
-        }
-        if other.wallpaper_padding.is_some() {
-            self.wallpaper_padding = other.wallpaper_padding;
-        }
-        if other.bg.is_some() {
-            self.bg = other.bg.clone();
-        }
-        if other.natural.is_some() {
-            self.natural = other.natural;
-        }
-        if other.end_pause.is_some() {
-            self.end_pause = other.end_pause.clone();
-        }
-        if other.start_pause.is_some() {
-            self.start_pause = other.start_pause.clone();
-        }
-        if other.idle_pause.is_some() {
-            self.idle_pause = other.idle_pause.clone();
-        }
-        if other.output.is_some() {
-            self.output = other.output.clone();
-        }
-        if other.fps.is_some() {
-            self.fps = other.fps;
-        }
-    }
-
-    /// Apply CLI arguments on top of config settings
-    /// CLI args always win over config values
-    pub fn apply_cli_args(&mut self, args: &ArgMatches) {
-        // Flags - only override if explicitly set on CLI
-        if args.get_flag("verbose") {
-            self.verbose = Some(true);
-        }
-        if args.get_flag("quiet") {
-            self.quiet = Some(true);
-        }
-        if args.get_flag("video") {
-            self.video = Some(true);
-        }
-        if args.get_flag("video-only") {
-            self.video_only = Some(true);
-        }
-        if args.get_flag("natural-mode") {
-            self.natural = Some(true);
-        }
-
-        // Values - only override if provided on CLI (not default values)
-        if args.value_source("decor") == Some(clap::parser::ValueSource::CommandLine) {
-            if let Some(v) = args.get_one::<String>("decor") {
-                self.decor = Some(v.clone());
-            }
-        }
-        if let Some(v) = args.get_one::<String>("wallpaper") {
-            self.wallpaper = Some(v.clone());
-        }
-        if args.value_source("wallpaper-padding") == Some(clap::parser::ValueSource::CommandLine) {
-            if let Some(v) = args.get_one::<u32>("wallpaper-padding") {
-                self.wallpaper_padding = Some(*v);
-            }
-        }
-        if args.value_source("bg") == Some(clap::parser::ValueSource::CommandLine) {
-            if let Some(v) = args.get_one::<String>("bg") {
-                self.bg = Some(v.clone());
-            }
-        }
-        if let Some(v) = args.get_one::<String>("end-pause") {
-            self.end_pause = Some(v.clone());
-        }
-        if let Some(v) = args.get_one::<String>("start-pause") {
-            self.start_pause = Some(v.clone());
-        }
-        if args.value_source("idle-pause") == Some(clap::parser::ValueSource::CommandLine) {
-            if let Some(v) = args.get_one::<String>("idle-pause") {
-                self.idle_pause = Some(v.clone());
-            }
-        }
-        if args.value_source("file") == Some(clap::parser::ValueSource::CommandLine) {
-            if let Some(v) = args.get_one::<String>("file") {
-                self.output = Some(v.clone());
-            }
-        }
-        if args.value_source("fps") == Some(clap::parser::ValueSource::CommandLine) {
-            if let Some(v) = args.get_one::<u8>("fps") {
-                self.fps = Some(*v);
-            }
-        }
+        merge_field!(verbose);
+        merge_field!(quiet);
+        merge_field!(video);
+        merge_field!(video_only);
+        merge_field!(decor);
+        merge_field!(wallpaper);
+        merge_field!(wallpaper_padding);
+        merge_field!(bg);
+        merge_field!(natural);
+        merge_field!(end_pause);
+        merge_field!(start_pause);
+        merge_field!(idle_pause);
+        merge_field!(output);
+        merge_field!(fps);
     }
 
     /// Get final values with defaults applied
@@ -150,23 +68,47 @@ impl ProfileSettings {
         self.natural.unwrap_or(false)
     }
     pub fn decor(&self) -> &str {
-        self.decor.as_deref().unwrap_or("none")
+        self.decor.as_deref().unwrap_or(defaults::DECOR)
     }
     pub fn bg(&self) -> &str {
-        self.bg.as_deref().unwrap_or("transparent")
+        self.bg.as_deref().unwrap_or(defaults::BG)
     }
     pub fn wallpaper_padding(&self) -> u32 {
-        self.wallpaper_padding.unwrap_or(60)
+        self.wallpaper_padding
+            .unwrap_or(defaults::WALLPAPER_PADDING)
     }
     pub fn idle_pause(&self) -> &str {
-        self.idle_pause.as_deref().unwrap_or("3s")
+        self.idle_pause.as_deref().unwrap_or(defaults::IDLE_PAUSE)
     }
     pub fn output(&self) -> &str {
-        self.output.as_deref().unwrap_or("t-rec")
+        self.output.as_deref().unwrap_or(defaults::OUTPUT)
     }
-    /// Get fps value (default: 4, must be kept in sync with CLI default)
     pub fn fps(&self) -> u8 {
-        self.fps.unwrap_or(4)
+        self.fps.unwrap_or(defaults::FPS)
+    }
+}
+
+impl From<&CliArgs> for ProfileSettings {
+    fn from(args: &CliArgs) -> Self {
+        ProfileSettings {
+            // Flags: only set if true (otherwise None lets config win)
+            verbose: if args.verbose { Some(true) } else { None },
+            quiet: if args.quiet { Some(true) } else { None },
+            video: if args.video { Some(true) } else { None },
+            video_only: if args.video_only { Some(true) } else { None },
+            natural: if args.natural { Some(true) } else { None },
+
+            // Values: None if user didn't provide, Some if they did
+            decor: args.decor.clone(),
+            wallpaper: args.wallpaper.clone(),
+            wallpaper_padding: args.wallpaper_padding,
+            bg: args.bg.clone(),
+            end_pause: args.end_pause.clone(),
+            start_pause: args.start_pause.clone(),
+            idle_pause: args.idle_pause.clone(),
+            output: args.output.clone(),
+            fps: args.fps,
+        }
     }
 }
 
@@ -184,6 +126,7 @@ pub fn expand_home(value: &str) -> String {
 pub fn resolve_settings(
     config: Option<&ConfigFile>,
     profile_name: Option<&str>,
+    args: &CliArgs,
 ) -> Result<ProfileSettings> {
     let mut settings = ProfileSettings::default();
 
@@ -212,6 +155,9 @@ pub fn resolve_settings(
             }
         }
     }
+
+    // CLI args override everything
+    settings.merge(&ProfileSettings::from(args));
 
     Ok(settings)
 }
@@ -260,11 +206,11 @@ mod tests {
 
         assert!(!settings.verbose());
         assert!(!settings.quiet());
-        assert_eq!(settings.decor(), "none");
-        assert_eq!(settings.bg(), "transparent");
-        assert_eq!(settings.wallpaper_padding(), 60);
-        assert_eq!(settings.idle_pause(), "3s");
-        assert_eq!(settings.output(), "t-rec");
-        assert_eq!(settings.fps(), 4);
+        assert_eq!(settings.decor(), defaults::DECOR);
+        assert_eq!(settings.bg(), defaults::BG);
+        assert_eq!(settings.wallpaper_padding(), defaults::WALLPAPER_PADDING);
+        assert_eq!(settings.idle_pause(), defaults::IDLE_PAUSE);
+        assert_eq!(settings.output(), defaults::OUTPUT);
+        assert_eq!(settings.fps(), defaults::FPS);
     }
 }

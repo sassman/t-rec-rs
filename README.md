@@ -134,51 +134,56 @@ t-rec /bin/sh
 ### Full Options
 
 ```text
-t-rec 0.7.6
-Sven Assmann <sven.assmann.it@gmail.com>
 Blazingly fast terminal recorder that generates animated gif images for the web written in rust.
 
-Usage: t-rec [OPTIONS] [shell or program to launch]
+Usage: 
 
 Arguments:
-  [shell or program to launch]  If you want to start a different program than $SHELL you can
-                                pass it here. For example '/bin/sh'
+  [PROGRAM]  Shell or program to launch. Defaults to $SHELL
 
 Options:
-  -v, --verbose                   Enable verbose insights for the curious
-  -q, --quiet                     Quiet mode, suppresses the banner:
-                                  'Press Ctrl+D to end recording'
-  -m, --video                     Generates additionally to the gif a mp4 video of the recording
-  -M, --video-only                Generates only a mp4 video and not gif
-  -d, --decor <decor>             Decorates the animation with certain, mostly border effects
-                                  [default: none] [possible values: shadow, none]
-  -b, --bg <bg>                   Background color when decors are used [default: transparent]
-                                  [possible values: white, black, transparent]
-  -n, --natural                   If you want a very natural typing experience and disable the idle
-                                  detection and sampling optimization
-  -l, --ls-win                    If you want to see a list of windows available for recording by
-                                  their id, you can set env var 'WINDOWID' or `--win-id` to record
-                                  this specific window only
-  -w, --win-id <win-id>           Window Id (see --ls-win) that should be captured, instead of
-                                  the current terminal
-  -e, --end-pause <s | ms | m>    to specify the pause time at the end of the animation, that time
-                                  the gif will show the last frame
-  -s, --start-pause <s | ms | m>  to specify the pause time at the start of the animation, that time
-                                  the gif will show the first frame
-  -i, --idle-pause <s | ms | m>   to preserve natural pauses up to a maximum duration by overriding
-                                  idle detection. Can enhance readability. [default: 3s]
-  -o, --output <file>             to specify the output file (without extension) [default: t-rec]
-  -f, --fps <4-15>                Capture framerate. Higher = smoother animations but larger
-                                  files [default: 4]
-  -p, --wallpaper <wallpaper>     Wallpaper background. Use 'ventura' for built-in, or provide
-                                  a path to a custom image (PNG, JPEG, TGA)
-      --wallpaper-padding <1-500> Padding in pixels around the recording when using --wallpaper
-                                  [default: 60]
-      --profile <name>            Use a named profile from the config file
-      --init-config               Create a starter config file at ~/.config/t-rec/config.toml
-      --list-profiles             List available profiles from the config file
-  -h, --help                      Print help
-  -V, --version                   Print version
+  -v, --verbose
+          Enable verbose insights for the curious
+  -q, --quiet
+          Quiet mode, suppresses the banner: 'Press Ctrl+D to end recording'
+  -m, --video
+          Generates additionally to the gif a mp4 video of the recording
+  -M, --video-only
+          Generates only a mp4 video and not gif
+  -d, --decor <DECOR>
+          Decorates the animation with certain, mostly border effects [default: none] [possible values: shadow, none]
+  -p, --wallpaper <WALLPAPER>
+          Wallpaper background. Use 'ventura' for built-in, or provide a path to a custom image (PNG, JPEG, TGA)
+      --wallpaper-padding <WALLPAPER_PADDING>
+          Padding in pixels around the recording when using --wallpaper [default: 60]
+  -b, --bg <BG>
+          Background color when decors are used [default: transparent] [possible values: white, black, transparent]
+  -n, --natural
+          If you want a very natural typing experience and disable the idle detection and sampling optimization
+  -l, --ls-win
+          If you want to see a list of windows available for recording by their id [aliases: --ls]
+  -w, --win-id <WIN_ID>
+          Window Id (see --ls-win) that should be captured, instead of the current terminal
+  -e, --end-pause <END_PAUSE>
+          Pause time at the end of the animation (e.g., "2s", "500ms")
+  -s, --start-pause <START_PAUSE>
+          Pause time at the start of the animation (e.g., "1s", "200ms")
+  -i, --idle-pause <IDLE_PAUSE>
+          Max idle time before optimization kicks in. Can enhance readability [default: 3s]
+  -o, --output <OUTPUT>
+          Output file without extension [default: t-rec]
+  -f, --fps <FPS>
+          Capture framerate, 4-15 fps. Higher = smoother but larger files [default: 4]
+      --profile <PROFILE>
+          Use a named profile from the config file
+      --init-config
+          Create a starter config file at `~/.config/t-rec/config.toml` (linux) or `~/Library/Application Support/t-rec/config.toml` (macOS)
+      --list-profiles
+          List available profiles from the config file
+  -h, --help
+          Print help
+  -V, --version
+          Print version
 ```
 
 ### Configuration File
@@ -200,7 +205,8 @@ t-rec --profile demo
 
 **Config file locations** (searched in order):
 1. `./t-rec.toml` (project-local)
-2. `~/.config/t-rec/config.toml` (Linux/macOS)
+2. `~/.config/t-rec/config.toml` (Linux)
+2. `~/Library/Application Support/t-rec/config.toml` (macOS)
 3. `%APPDATA%\t-rec\config.toml` (Windows)
 
 **Example config file:**
