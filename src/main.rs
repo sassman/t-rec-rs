@@ -1,8 +1,13 @@
+mod assets;
 mod cli;
 mod common;
-mod decor_effect;
+mod config;
+mod decors;
 mod generators;
+mod prompt;
+mod summary;
 mod tips;
+mod wallpapers;
 
 mod capture;
 #[cfg(any(target_os = "linux", target_os = "netbsd"))]
@@ -20,20 +25,28 @@ use crate::macos::*;
 #[cfg(target_os = "windows")]
 use crate::windows::*;
 
-use crate::cli::launch;
+use crate::cli::{launch, resolve_profiled_settings, CliArgs};
 use crate::common::utils::{clear_screen, parse_delay, HumanReadable};
 use crate::common::{Margin, PlatformApi};
-use crate::decor_effect::{apply_big_sur_corner_effect, apply_shadow_effect};
+use crate::config::{expand_home, handle_init_config, handle_list_profiles};
+use crate::decors::{apply_big_sur_corner_effect, apply_shadow_effect};
 use crate::generators::{check_for_gif, check_for_mp4, generate_gif, generate_mp4};
+use crate::summary::print_recording_summary;
 use crate::tips::show_tip;
+use crate::wallpapers::{
+    apply_wallpaper_effect, get_ventura_wallpaper, is_builtin_wallpaper,
+    load_and_validate_wallpaper,
+};
 
-use crate::capture::capture_thread;
+use crate::capture::{capture_thread, CaptureContext};
+use crate::prompt::{start_background_prompt, PromptResult};
 use crate::utils::{sub_shell_thread, target_file, DEFAULT_EXT, MOVIE_EXT};
 use anyhow::{bail, Context};
-use clap::ArgMatches;
 use image::FlatSamples;
+use image::{DynamicImage, GenericImageView};
 use std::borrow::Borrow;
 use std::io::{self, Write};
+use std::path::Path;
 use std::sync::{mpsc, Arc, Mutex};
 use std::time::{Duration, Instant};
 use std::{env, thread};
@@ -62,13 +75,23 @@ fn main() -> Result<()> {
     env_logger::init();
 
     let args = launch();
-    if args.get_flag("list-windows") {
+
+    // Handle config-related commands first
+    if args.init_config {
+        return handle_init_config();
+    }
+    if args.list_profiles {
+        return handle_list_profiles();
+    }
+    if args.list_windows {
         return ls_win();
     }
 
+    let settings = resolve_profiled_settings(&args)?;
+
     let program: String = {
-        if args.contains_id("program") {
-            args.get_one::<String>("program").unwrap().to_string()
+        if let Some(prog) = &args.program {
+            prog.to_string()
         } else {
             let default = DEFAULT_SHELL.to_owned();
             env::var("SHELL").unwrap_or(default)
@@ -78,13 +101,17 @@ fn main() -> Result<()> {
     let mut api = setup()?;
     api.calibrate(win_id)?;
 
-    let force_natural = args.get_flag("natural-mode");
-    let should_generate_gif = !args.get_flag("video-only");
-    let should_generate_video = args.get_flag("video") || args.get_flag("video-only");
-    let (start_delay, end_delay) = (
-        parse_delay(args.get_one::<String>("start-pause"), "start-pause")?,
-        parse_delay(args.get_one::<String>("end-pause"), "end-pause")?,
+    // Validate wallpaper BEFORE recording starts
+    let wallpaper_config = validate_wallpaper_config(&settings, &api, win_id)?;
+
+    let should_generate_gif = !settings.video_only();
+    let should_generate_video = settings.video() || settings.video_only();
+    let (start_delay, end_delay, idle_pause) = (
+        parse_delay(settings.start_pause.as_deref(), "start-pause")?,
+        parse_delay(settings.end_pause.as_deref(), "end-pause")?,
+        parse_delay(Some(settings.idle_pause()), "idle-pause")?,
     );
+    let fps = settings.fps();
 
     if should_generate_gif {
         check_for_gif()?;
@@ -100,17 +127,21 @@ fn main() -> Result<()> {
     let time_codes = Arc::new(Mutex::new(Vec::new()));
     let (tx, rx) = mpsc::channel();
     let photograph = {
-        let tempdir = tempdir.clone();
-        let time_codes = time_codes.clone();
-        thread::spawn(move || -> Result<()> {
-            capture_thread(&rx, api, win_id, time_codes, tempdir, force_natural)
-        })
+        let ctx = CaptureContext {
+            win_id,
+            time_codes: time_codes.clone(),
+            tempdir: tempdir.clone(),
+            natural: settings.natural(),
+            idle_pause,
+            fps,
+        };
+        thread::spawn(move || -> Result<()> { capture_thread(&rx, api, ctx) })
     };
     let interact = thread::spawn(move || -> Result<()> { sub_shell_thread(&program).map(|_| ()) });
 
     clear_screen();
     io::stdout().flush().unwrap();
-    if args.get_flag("verbose") {
+    if settings.verbose() {
         println!(
             "Frame cache dir: {:?}",
             tempdir.lock().expect("Cannot lock tempdir resource").path()
@@ -121,7 +152,7 @@ fn main() -> Result<()> {
             println!("Recording window id: {}", win_id);
         }
     }
-    if !args.get_flag("quiet") {
+    if !settings.quiet() {
         println!("[t-rec]: Press Ctrl+D to end recording");
     }
     thread::sleep(Duration::from_millis(1250));
@@ -137,11 +168,11 @@ fn main() -> Result<()> {
         .unwrap()
         .context("Cannot launch the recording thread")?;
 
+    let frame_count = time_codes.lock().unwrap().borrow().len();
+    print_recording_summary(&settings, frame_count);
+
     println!();
-    println!(
-        "🎆 Applying effects to {} frames (might take a bit)",
-        time_codes.lock().unwrap().borrow().len()
-    );
+    println!("🎆 Applying effects (might take a bit)");
     show_tip();
 
     apply_big_sur_corner_effect(
@@ -149,16 +180,33 @@ fn main() -> Result<()> {
         tempdir.lock().unwrap().borrow(),
     );
 
-    if let Some("shadow") = args.get_one::<String>("decor").map(|s| s.as_ref()) {
+    if settings.decor() == "shadow" {
         apply_shadow_effect(
             &time_codes.lock().unwrap(),
             tempdir.lock().unwrap().borrow(),
-            args.get_one::<String>("bg").unwrap().to_string(),
-        )
+            settings.bg().to_string(),
+        );
     }
 
-    let target = target_file(args.get_one::<String>("file").unwrap());
+    if let Some((wallpaper, padding)) = wallpaper_config {
+        apply_wallpaper_effect(
+            &time_codes.lock().unwrap(),
+            tempdir.lock().unwrap().borrow(),
+            &wallpaper,
+            padding,
+        );
+    }
+
+    let target = target_file(settings.output());
     let mut time = Duration::default();
+
+    // Start video prompt in background if we might need to ask
+    // This runs while GIF is being generated, so user can answer early
+    let video_prompt = if !should_generate_video && !settings.quiet() {
+        start_background_prompt("🎬 Also generate MP4 video?", 15)
+    } else {
+        None
+    };
 
     if should_generate_gif {
         time += prof! {
@@ -171,6 +219,23 @@ fn main() -> Result<()> {
             )?;
         };
     }
+
+    // Determine if we should generate video:
+    // - If already requested via CLI/config, generate it
+    // - Otherwise, check the background prompt result
+    let should_generate_video = if should_generate_video {
+        true
+    } else if let Some(prompt) = video_prompt {
+        match prompt.wait() {
+            PromptResult::Yes => {
+                check_for_mp4()?;
+                true
+            }
+            PromptResult::No | PromptResult::Timeout => false,
+        }
+    } else {
+        false
+    };
 
     if should_generate_video {
         time += prof! {
@@ -187,17 +252,70 @@ fn main() -> Result<()> {
     Ok(())
 }
 
+/// Validates and loads the wallpaper configuration before recording starts.
+///
+/// Returns `Some((wallpaper, padding))` if wallpaper is configured, `None` otherwise.
+/// Fails early with a clear error message if the wallpaper is invalid or too small.
+fn validate_wallpaper_config(
+    settings: &config::ProfileSettings,
+    api: &impl PlatformApi,
+    win_id: WindowId,
+) -> Result<Option<(DynamicImage, u32)>> {
+    let wp_value = match &settings.wallpaper {
+        Some(v) => v,
+        None => return Ok(None),
+    };
+
+    // Expand $HOME in wallpaper path
+    let wp_value = expand_home(wp_value);
+    let padding = settings.wallpaper_padding();
+
+    // Capture a screenshot to get terminal dimensions
+    let screenshot = api.capture_window_screenshot(win_id)?;
+    let terminal_width = screenshot.layout.width;
+    let terminal_height = screenshot.layout.height;
+
+    let wallpaper = if is_builtin_wallpaper(&wp_value) {
+        match wp_value.to_lowercase().as_str() {
+            "ventura" => {
+                // Validate built-in wallpaper dimensions too
+                let wp = get_ventura_wallpaper();
+                let (wp_width, wp_height) = wp.dimensions();
+                let min_width = terminal_width + (padding * 2);
+                let min_height = terminal_height + (padding * 2);
+
+                if wp_width < min_width || wp_height < min_height {
+                    bail!(
+                        "Terminal size {}x{} with {}px padding exceeds built-in wallpaper size {}x{}.\n\
+                         Try reducing the terminal size or padding.",
+                        terminal_width,
+                        terminal_height,
+                        padding,
+                        wp_width,
+                        wp_height
+                    );
+                }
+                wp.clone()
+            }
+            _ => bail!("Unknown built-in wallpaper: {}", wp_value),
+        }
+    } else {
+        // Custom wallpaper path - validate before recording
+        let path = Path::new(&wp_value);
+        load_and_validate_wallpaper(path, terminal_width, terminal_height, padding)?
+    };
+
+    Ok(Some((wallpaper, padding)))
+}
+
 ///
 /// determines the WindowId either by env var 'WINDOWID'
 /// or by the env var 'TERM_PROGRAM' and then asking the window manager for all visible windows
 /// and finding the Terminal in that list
 /// panics if WindowId was not was not there
-fn current_win_id(args: &ArgMatches) -> Result<(WindowId, Option<String>)> {
-    match args
-        .get_one::<u64>("win-id")
-        .ok_or_else(|| env::var("WINDOWID"))
-    {
-        Ok(win_id) => Ok((*win_id, None)),
+fn current_win_id(args: &CliArgs) -> Result<(WindowId, Option<String>)> {
+    match args.win_id.ok_or_else(|| env::var("WINDOWID")) {
+        Ok(win_id) => Ok((win_id, None)),
         Err(_) => {
             let terminal = env::var("TERM_PROGRAM").context(
                 "Env variable 'TERM_PROGRAM' was empty but is needed for figure out the WindowId. Please set it to e.g. TERM_PROGRAM=alacitty",
@@ -216,8 +334,7 @@ fn current_win_id(args: &ArgMatches) -> Result<(WindowId, Option<String>)> {
     }
 }
 
-///
-/// finds the window id for a given terminal / programm by name
+/// finds the window id for a given terminal / program by name
 pub fn get_window_id_for(terminal: String) -> Result<(WindowId, String)> {
     let api = setup()?;
     for term in terminal.to_lowercase().split('.') {

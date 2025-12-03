@@ -8,6 +8,14 @@ const TIPS: &[&str] = &[
     "To remove the shadow around the gif, use the `-d none` option",
     "For a mp4 video, use the `-m` option",
     "To suppress the 'Ctrl+D' banner, use the `-q` option",
+    "Add `--idle-pause <time>` to increase the time before idle frame optimization starts, this can improve readability in Demos",
+    "For a beautiful macOS-style background, try `--wallpaper ventura`",
+    "Use your own wallpaper with `-p /path/to/image.png` (supports PNG, JPEG, TGA)",
+    "Adjust wallpaper padding with `--wallpaper-padding 100` (default: 60px)",
+    "Save your favorite settings with `t-rec --init-config` and edit `~/.config/t-rec/config.toml` or `~/Library/Application Support/t-rec/config.toml`",
+    "Create named profiles in your config file and use them with `--profile demo`",
+    "List available profiles from your config with `t-rec --list-profiles`",
+    "For smoother typing animations, try `--fps 10` or `--fps 15`",
 ];
 
 ///

@@ -1,47 +1,9 @@
-use std::path::PathBuf;
 use std::process::Command;
 
 use anyhow::Context;
-use rayon::prelude::*;
 use tempfile::TempDir;
 
-use crate::utils::IMG_EXT;
-use crate::Result;
-
-///
-/// apply a border decor effect via a chain of convert commands
-///
-/// ```sh
-/// convert t-rec-frame-000000251.tga \
-///     \( +clone -background black -shadow 140x10+0+0 \) \
-///     +swap -background white \
-///     -layers merge \
-///     t-rec-frame-000000251.tga
-/// ```
-pub fn apply_shadow_effect(time_codes: &[u128], tempdir: &TempDir, bg_color: String) {
-    apply_effect(
-        time_codes,
-        tempdir,
-        Box::new(move |file| {
-            let e = Command::new("convert")
-                .arg(file.to_str().unwrap())
-                .arg("(")
-                .args(["+clone", "-background", "black", "-shadow", "100x20+0+0"])
-                .arg(")")
-                .args(["+swap", "-background", bg_color.as_str()])
-                .args(["-layers", "merge"])
-                .arg(file.to_str().unwrap())
-                .output()
-                .context("Cannot apply shadow decor effect")?;
-
-            if !e.status.success() {
-                anyhow::bail!("{}", String::from_utf8_lossy(&e.stderr))
-            } else {
-                Ok(())
-            }
-        }),
-    )
-}
+use super::apply_effect;
 
 ///
 /// apply a corner radius decor effect via a chain of convert commands
@@ -90,22 +52,4 @@ pub fn apply_big_sur_corner_effect(time_codes: &[u128], tempdir: &TempDir) {
             }
         }),
     )
-}
-
-///
-/// apply a given effect (closure) to all frames
-///
-fn apply_effect(
-    time_codes: &[u128],
-    tempdir: &TempDir,
-    effect: Box<dyn Fn(PathBuf) -> Result<()> + Send + Sync>,
-) {
-    time_codes.into_par_iter().for_each(|tc| {
-        let file = tempdir
-            .path()
-            .join(crate::utils::file_name_for(tc, IMG_EXT));
-        if let Err(e) = effect(file) {
-            eprintln!("{}", e);
-        }
-    });
 }

@@ -1,122 +1,126 @@
-use clap::builder::NonEmptyStringValueParser;
-use clap::{crate_authors, crate_description, crate_version, Arg, ArgAction, ArgMatches, Command};
+//! Parse command line arguments.
+//!
+//! # Why no `default_value` on CliArgs?
+//!
+//! You might be tempted to use clap's `default_value` or `default_value_t` attributes. **Don't!**
+//!
+//! The problem: clap applies defaults *before* we can check if the user actually provided a value.
+//! This breaks our config precedence model where config/profile values should override CLI defaults,
+//! but explicit CLI args should override config.
+//!
+//! Example of what goes wrong with `default_value`:
+//! - Config file has `fps = 10`
+//! - User runs `t-rec` (no `--fps` flag)
+//! - With `default_value_t = 4`: clap sets `fps = 4`, we can't tell user didn't specify it,
+//!   config's `fps = 10` is ignored
+//! - With `Option<u8>` (no default): clap sets `fps = None`, we know to use config's `fps = 10`
+//!
+//! By using `Option<T>` without defaults, `None` clearly means "user didn't specify, use config
+//! or fall back to default". The actual defaults are applied later in `ProfileSettings` accessor
+//! methods, after config merging.
+//!
+//! Note: The default values shown in help text (e.g., `[default: 4]`) must be kept in sync with
+//! the constants in `config::defaults` module. This duplication is unfortunate but necessary
+//! because Rust's `concat!` macro only works with literal strings, not const references.
 
-pub fn launch() -> ArgMatches {
-    Command::new("t-rec")
-        .allow_missing_positional(true)
-        .version(crate_version!())
-        .author(crate_authors!())
-        .about(crate_description!())
-        .arg(
-            Arg::new("verbose")
-                .action(ArgAction::SetTrue)
-                .short('v')
-                .long("verbose")
-                .required(false)
-                .help("Enable verbose insights for the curious")
-        )
-        .arg(
-            Arg::new("quiet")
-                .action(ArgAction::SetTrue)
-                .short('q')
-                .long("quiet")
-                .required(false)
-                .help("Quiet mode, suppresses the banner: 'Press Ctrl+D to end recording'")
-        )
-        .arg(
-            Arg::new("video")
-                .action(ArgAction::SetTrue)
-                .short('m')
-                .long("video")
-                .required(false)
-                .help("Generates additionally to the gif a mp4 video of the recording")
-        )
-        .arg(
-            Arg::new("video-only")
-                .action(ArgAction::SetTrue)
-                .short('M')
-                .long("video-only")
-                .required(false)
-                .conflicts_with("video")
-                .help("Generates only a mp4 video and not gif")
-        )
-        .arg(
-            Arg::new("decor")
-                .value_parser(["shadow", "none"])
-                .default_value("none")
-                .required(false)
-                .short('d')
-                .long("decor")
-                .help("Decorates the animation with certain, mostly border effects")
-        )
-        .arg(
-            Arg::new("bg")
-                .value_parser(["white", "black", "transparent"])
-                .default_value("transparent")
-                .required(false)
-                .short('b')
-                .long("bg")
-                .help("Background color when decors are used")
-        )
-        .arg(
-            Arg::new("natural-mode")
-                .action(ArgAction::SetTrue)
-                .value_name("natural")
-                .required(false)
-                .short('n')
-                .long("natural")
-                .help("If you want a very natural typing experience and disable the idle detection and sampling optimization")
-        )
-        .arg(
-            Arg::new("list-windows")
-                .action(ArgAction::SetTrue)
-                .value_name("list all visible windows with name and id")
-                .required(false)
-                .short('l')
-                .long("ls-win")
-                .long("ls")
-                .help("If you want to see a list of windows available for recording by their id, you can set env var 'WINDOWID' or `--win-id` to record this specific window only"),
-        )
-        .arg(
-            Arg::new("win-id")
-                .value_parser(clap::value_parser!(u64))
-                .short('w')
-                .long("win-id")
-                .required(false)
-                .help("Window Id (see --ls-win) that should be captured, instead of the current terminal")
-        )
-        .arg(
-            Arg::new("end-pause")
-                .value_parser(NonEmptyStringValueParser::new())
-                .value_name("s | ms | m")
-                .required(false)
-                .short('e')
-                .long("end-pause")
-                .help("to specify the pause time at the end of the animation, that time the gif will show the last frame"),
-        )
-        .arg(
-            Arg::new("start-pause")
-                .value_parser(NonEmptyStringValueParser::new())
-                .value_name("s | ms | m")
-                .required(false)
-                .short('s')
-                .long("start-pause")
-                .help("to specify the pause time at the start of the animation, that time the gif will show the first frame"),
-        )
-        .arg(
-            Arg::new("file")
-                .value_parser(NonEmptyStringValueParser::new())
-                .required(false)
-                .short('o')
-                .long("output")
-                .default_value("t-rec")
-                .help("to specify the output file (without extension)"),
-        )
-        .arg(
-            Arg::new("program")
-                .value_name("shell or program to launch")
-                .value_parser(NonEmptyStringValueParser::new())
-                .required(false)
-                .help("If you want to start a different program than $SHELL you can pass it here. For example '/bin/sh'"),
-        ).get_matches()
+use clap::Parser;
+
+use crate::config::{resolve_settings, ProfileSettings};
+
+/// Blazingly fast terminal recorder that generates animated gif images for the web
+#[derive(Parser, Debug)]
+#[command(author, version, about)]
+pub struct CliArgs {
+    /// Enable verbose insights for the curious
+    #[arg(short, long)]
+    pub verbose: bool,
+
+    /// Quiet mode, suppresses the banner: 'Press Ctrl+D to end recording'
+    #[arg(short, long)]
+    pub quiet: bool,
+
+    /// Generates additionally to the gif a mp4 video of the recording
+    #[arg(short = 'm', long)]
+    pub video: bool,
+
+    /// Generates only a mp4 video and not gif
+    #[arg(short = 'M', long = "video-only", conflicts_with = "video")]
+    pub video_only: bool,
+
+    /// Decorates the animation with certain, mostly border effects [default: none]
+    #[arg(short, long, value_parser = ["shadow", "none"])]
+    pub decor: Option<String>,
+
+    /// Wallpaper background. Use 'ventura' for built-in, or provide a path to a custom image (PNG, JPEG, TGA)
+    #[arg(short = 'p', long)]
+    pub wallpaper: Option<String>,
+
+    /// Padding in pixels around the recording when using --wallpaper [default: 60]
+    #[arg(long = "wallpaper-padding", value_parser = clap::value_parser!(u32).range(1..=500))]
+    pub wallpaper_padding: Option<u32>,
+
+    /// Background color when decors are used [default: transparent]
+    #[arg(short, long, value_parser = ["white", "black", "transparent"])]
+    pub bg: Option<String>,
+
+    /// If you want a very natural typing experience and disable the idle detection and sampling optimization
+    #[arg(short, long = "natural")]
+    pub natural: bool,
+
+    /// If you want to see a list of windows available for recording by their id
+    #[arg(short = 'l', long = "ls-win", visible_alias = "ls")]
+    pub list_windows: bool,
+
+    /// Window Id (see --ls-win) that should be captured, instead of the current terminal
+    #[arg(short = 'w', long = "win-id")]
+    pub win_id: Option<u64>,
+
+    /// Pause time at the end of the animation (e.g., "2s", "500ms")
+    #[arg(short = 'e', long = "end-pause")]
+    pub end_pause: Option<String>,
+
+    /// Pause time at the start of the animation (e.g., "1s", "200ms")
+    #[arg(short = 's', long = "start-pause")]
+    pub start_pause: Option<String>,
+
+    /// Max idle time before optimization kicks in. Can enhance readability [default: 3s]
+    #[arg(short = 'i', long = "idle-pause")]
+    pub idle_pause: Option<String>,
+
+    /// Output file without extension [default: t-rec]
+    #[arg(short = 'o', long = "output")]
+    pub output: Option<String>,
+
+    /// Capture framerate, 4-15 fps. Higher = smoother but larger files [default: 4]
+    #[arg(short = 'f', long, value_parser = clap::value_parser!(u8).range(4..=15))]
+    pub fps: Option<u8>,
+
+    /// Shell or program to launch. Defaults to $SHELL
+    #[arg()]
+    pub program: Option<String>,
+
+    // --- Config-related args (not part of recording settings) ---
+    /// Use a named profile from the config file
+    #[arg(long)]
+    pub profile: Option<String>,
+
+    /// Create a starter config file at `~/.config/t-rec/config.toml` (linux) or `~/Library/Application Support/t-rec/config.toml` (macOS)
+    #[arg(long = "init-config")]
+    pub init_config: bool,
+
+    /// List available profiles from the config file
+    #[arg(long = "list-profiles")]
+    pub list_profiles: bool,
+}
+
+pub fn launch() -> CliArgs {
+    CliArgs::parse()
+}
+
+/// Load config and resolve settings: config defaults -> profile -> CLI args
+pub fn resolve_profiled_settings(args: &CliArgs) -> anyhow::Result<ProfileSettings> {
+    let config = crate::config::load_config()?;
+    let profile_name = args.profile.as_deref();
+
+    resolve_settings(config.as_ref(), profile_name, args)
 }
