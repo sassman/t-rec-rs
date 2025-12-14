@@ -71,11 +71,7 @@ fn run_prompt(question: &str, timeout_secs: u64) -> PromptResult {
         io::stdout().flush().unwrap();
 
         if remaining == 0 {
-            // Restore terminal state before returning
-            restore_terminal();
-            // Move down and print timeout message
-            println!("\n\nSkipping video generation (timeout)");
-            return PromptResult::Timeout;
+            break;
         }
 
         // Check for input with 1-second timeout
@@ -87,6 +83,7 @@ fn run_prompt(question: &str, timeout_secs: u64) -> PromptResult {
                 return if confirmed {
                     PromptResult::Yes
                 } else {
+                    println!("\n\nSkipping video generation");
                     PromptResult::No
                 };
             }
@@ -101,6 +98,9 @@ fn run_prompt(question: &str, timeout_secs: u64) -> PromptResult {
         }
     }
 
+    // Restore terminal state before returning
+    restore_terminal();
+    println!("\n\nSkipping video generation (timeout)");
     PromptResult::Timeout
 }
 

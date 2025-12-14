@@ -244,10 +244,10 @@ fn main() -> Result<()> {
     print!("\x1b[2J\x1b[H");
     io::stdout().flush().ok();
 
-    // Send start event to capture thread
-    capture_tx
-        .send(CaptureEvent::Start)
-        .context("Cannot start capture thread")?;
+    // // Send start event to capture thread
+    // capture_tx
+    //     .send(CaptureEvent::Start)
+    //     .context("Cannot start capture thread")?;
 
     // Spawn shell with PTY for proper terminal interaction
     #[cfg(unix)]
@@ -285,6 +285,14 @@ fn main() -> Result<()> {
             }
         });
 
+        // the shell needs some bootstrap time..
+        thread::sleep(Duration::from_millis(350));
+
+        // Send start event to capture thread
+        capture_tx
+            .send(CaptureEvent::Start)
+            .context("Cannot start capture thread")?;
+
         // Run keyboard monitor - this blocks until exit
         if let Err(e) = keyboard_monitor.run(shell_stdin, should_exit_for_monitor) {
             log::error!("Keyboard monitor error: {}", e);
@@ -306,6 +314,12 @@ fn main() -> Result<()> {
         let mut shell = Command::new(&program)
             .spawn()
             .context(format!("failed to start {:?}", &program))?;
+
+        // Send start event to capture thread
+        capture_tx
+            .send(CaptureEvent::Start)
+            .context("Cannot start capture thread")?;
+
         let _ = shell.wait();
         Ok::<(), anyhow::Error>(())
     };
