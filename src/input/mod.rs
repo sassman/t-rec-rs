@@ -212,7 +212,7 @@ impl KeyboardMonitor {
         mut shell_stdin: W,
         should_exit: Arc<AtomicBool>,
     ) -> anyhow::Result<()> {
-        log::info!("Keyboard monitor starting - F2=screenshot, F3=toggle capture, Ctrl+D=exit");
+        log::debug!("Keyboard monitor starting - F2=screenshot, F3=toggle capture, Ctrl+D=exit");
         enable_raw_mode()?;
         log::debug!("Raw mode enabled");
 
@@ -276,7 +276,7 @@ impl KeyboardMonitor {
 
             // Screenshot hotkey
             if self.hotkey_config.screenshot.as_ref() == Some(&key_combo) {
-                log::info!("F2 screenshot hotkey detected");
+                log::debug!("F2 screenshot hotkey detected");
                 self.trigger_screenshot();
                 return KeyAction::Handled;
             }
@@ -284,7 +284,7 @@ impl KeyboardMonitor {
             // Toggle keystroke capture hotkey
             if self.hotkey_config.toggle_keystroke_capturing.as_ref() == Some(&key_combo) {
                 let enabled = self.input_state.toggle_capture();
-                log::info!("Keystroke capture: {}", if enabled { "ON" } else { "OFF" });
+                log::debug!("Keystroke capture: {}", if enabled { "ON" } else { "OFF" });
                 return KeyAction::Handled;
             }
         }
@@ -325,7 +325,7 @@ impl KeyboardMonitor {
         self.router
             .send(RouterEvent::Flash(FlashEvent::ScreenshotTaken));
 
-        log::info!("Screenshot triggered at timecode {}", timecode_ms);
+        log::debug!("Screenshot triggered at timecode {}", timecode_ms);
     }
 
     fn format_key_name(&self, key: &KeyEvent) -> String {

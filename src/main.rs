@@ -5,6 +5,7 @@ mod config;
 mod decors;
 mod generators;
 mod input;
+mod logging;
 mod post_processing;
 mod prompt;
 mod screenshot;
@@ -25,6 +26,7 @@ mod windows;
 
 #[cfg(any(target_os = "linux", target_os = "netbsd"))]
 use crate::linux::*;
+use crate::logging::init_logging;
 #[cfg(target_os = "macos")]
 use crate::macos::*;
 #[cfg(target_os = "windows")]
@@ -36,7 +38,7 @@ use crate::common::{Margin, PlatformApi};
 use crate::config::{expand_home, handle_init_config, handle_list_profiles};
 use crate::generators::{check_for_gif, check_for_mp4, generate_gif, generate_mp4};
 use crate::post_processing::{
-    post_process_effects, post_process_file, post_process_screenshots, PostProcessingOptions,
+    post_process_effects, post_process_screenshots, PostProcessingOptions,
 };
 use crate::summary::print_recording_summary;
 use crate::tips::show_tip;
@@ -53,12 +55,11 @@ use anyhow::{bail, Context};
 use image::FlatSamples;
 use image::{DynamicImage, GenericImageView};
 use std::borrow::Borrow;
-use std::fs::File;
 use std::io::{self, Write};
 use std::path::Path;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{mpsc, Arc, Mutex};
-use std::time::{Duration, Instant, SystemTime};
+use std::time::{Duration, Instant};
 use std::{env, thread};
 use tempfile::TempDir;
 
@@ -81,52 +82,15 @@ macro_rules! prof {
     };
 }
 
-/// Initialize logging to a file (./t-rec-recording.log).
-///
-/// Default level is INFO, can be overridden with RUST_LOG env var.
-/// Logging to a file avoids interfering with the terminal output.
-fn init_logging() {
-    use env_logger::{Builder, Target};
-    use std::io::Write as _;
-
-    let log_file = File::create("t-rec-recording.log").ok();
-
-    let mut builder = Builder::new();
-
-    // Set default filter to INFO, allow RUST_LOG to override
-    builder.filter_level(log::LevelFilter::Info);
-    if let Ok(rust_log) = env::var("RUST_LOG") {
-        builder.parse_filters(&rust_log);
-    }
-
-    // Format with timestamp and level
-    builder.format(|buf, record| {
-        let now = SystemTime::now()
-            .duration_since(SystemTime::UNIX_EPOCH)
-            .unwrap_or_default();
-        let secs = now.as_secs();
-        let millis = now.subsec_millis();
-        writeln!(
-            buf,
-            "[{}.{:03} {} {}] {}",
-            secs,
-            millis,
-            record.level(),
-            record.target(),
-            record.args()
-        )
-    });
-
-    // Write to file if available, otherwise stderr
-    if let Some(file) = log_file {
-        builder.target(Target::Pipe(Box::new(file)));
-    }
-
-    builder.init();
+macro_rules! cls {
+    () => {
+        // Clear screen before spawning shell
+        print!("\x1b[2J\x1b[H");
+        io::stdout().flush().ok();
+    };
 }
 
 fn main() -> Result<()> {
-    // Initialize logging to file (./t-rec-recording.log)
     init_logging();
 
     let args = launch();
@@ -240,14 +204,7 @@ fn main() -> Result<()> {
         io::stdout().flush().ok();
         thread::sleep(Duration::from_millis(250));
     }
-    // Clear screen before spawning shell
-    print!("\x1b[2J\x1b[H");
-    io::stdout().flush().ok();
-
-    // // Send start event to capture thread
-    // capture_tx
-    //     .send(CaptureEvent::Start)
-    //     .context("Cannot start capture thread")?;
+    cls!();
 
     // Spawn shell with PTY for proper terminal interaction
     #[cfg(unix)]
@@ -276,7 +233,7 @@ fn main() -> Result<()> {
             while let Ok(event) = flash_rx.recv() {
                 match event {
                     FlashEvent::ScreenshotTaken => {
-                        log::info!("Screenshot taken");
+                        log::debug!("Screenshot taken");
                     }
                     FlashEvent::KeyPressed { .. } => {
                         unimplemented!("Capturing keys and flashing them will be coming soon!")
@@ -334,6 +291,8 @@ fn main() -> Result<()> {
         .join()
         .unwrap()
         .context("Cannot finish recording thread")?;
+
+    cls!();
 
     let frame_count = time_codes.lock().unwrap().borrow().len();
     print_recording_summary(&settings, frame_count);
