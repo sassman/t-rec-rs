@@ -1,8 +1,8 @@
 mod big_sur_corner;
 mod shadow;
 
-pub use big_sur_corner::apply_big_sur_corner_effect;
-pub use shadow::apply_shadow_effect;
+pub use big_sur_corner::{apply_big_sur_corner_effect, apply_corner_to_file};
+pub use shadow::{apply_shadow_effect, apply_shadow_to_file};
 
 use std::path::PathBuf;
 

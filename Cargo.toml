@@ -30,6 +30,7 @@ serde = { version = "1.0", features = ["derive"] }
 toml = "0.9"
 dirs = "6.0"
 dialoguer = { version = "0.12", default-features = false }
+crossterm = "0.28"
 
 [dependencies.clap]
 version = "4.5"
@@ -47,6 +48,10 @@ objc-foundation = "0.1.1"
 core-graphics = "0.24.0"
 core-foundation = "0.10.1"
 core-foundation-sys = "0.8.3"
+
+[target.'cfg(unix)'.dependencies]
+nix = { version = "0.29", features = ["term", "fs", "signal"] }
+libc = "0.2"
 
 [target.'cfg(any(target_os = "linux", target_os = "netbsd"))'.dependencies]
 x11rb = "0.13.1"

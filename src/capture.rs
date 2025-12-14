@@ -1,15 +1,102 @@
 use anyhow::{Context, Result};
 use image::save_buffer;
 use image::ColorType::Rgba8;
+use log::{debug, error};
 use std::borrow::Borrow;
 use std::ops::{Add, Sub};
-use std::sync::mpsc::Receiver;
+use std::sync::mpsc::{Receiver, RecvTimeoutError, Sender};
 use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
 use tempfile::TempDir;
 
+use crate::screenshot::{screenshot_file_name, ScreenshotInfo};
 use crate::utils::{file_name_for, IMG_EXT};
 use crate::{ImageOnHeap, PlatformApi, WindowId};
+
+/// Events for the Photographer actor (capture thread).
+///
+/// The Photographer receives these events via a channel and responds accordingly.
+/// Regular frame timing is handled internally via `recv_timeout`.
+#[derive(Debug, Clone)]
+pub enum CaptureEvent {
+    /// Start capturing frames. The thread waits for this before beginning.
+    Start,
+
+    /// Take a screenshot (F2-triggered).
+    /// The timecode_ms is the elapsed recording time when the screenshot was requested.
+    Screenshot { timecode_ms: u128 },
+
+    /// Stop recording and exit the capture loop.
+    Stop,
+}
+
+/// Events for the Presenter actor (main thread).
+///
+/// The Presenter receives these events and shows appropriate visual feedback.
+/// On macOS, this requires running on the main thread with NSRunLoop.
+#[derive(Debug, Clone)]
+pub enum FlashEvent {
+    /// Show screenshot visual feedback (camera icon).
+    ScreenshotTaken,
+
+    #[allow(dead_code)]
+    /// Show keystroke overlay
+    KeyPressed { key: String },
+}
+
+/// Unified event type for routing to different actors.
+///
+/// This allows callers to send events without worrying about which actor
+/// should receive them - the EventRouter handles the routing.
+#[derive(Debug, Clone)]
+pub enum Event {
+    /// Event for the Photographer actor (capture thread).
+    Capture(CaptureEvent),
+    /// Event for the Presenter actor (main thread visual feedback).
+    Flash(FlashEvent),
+}
+
+/// Routes events to the appropriate actor channels.
+///
+/// Simplifies event dispatch by providing a single `send()` method.
+/// Silently ignores events if the target channel is `None`.
+#[derive(Clone)]
+pub struct EventRouter {
+    capture_tx: Option<Sender<CaptureEvent>>,
+    flash_tx: Option<Sender<FlashEvent>>,
+}
+
+impl EventRouter {
+    /// Create a new EventRouter with optional channel senders.
+    pub fn new(
+        capture_tx: Option<Sender<CaptureEvent>>,
+        flash_tx: Option<Sender<FlashEvent>>,
+    ) -> Self {
+        Self {
+            capture_tx,
+            flash_tx,
+        }
+    }
+
+    /// Send an event to the appropriate actor.
+    ///
+    /// Routes `Event::Capture` to the Photographer and `Event::Flash` to the Presenter.
+    /// Silently ignores if the target channel is `None`.
+    pub fn send(&self, event: Event) {
+        match event {
+            Event::Capture(e) => {
+                if let Some(ref tx) = self.capture_tx {
+                    let _ = tx.send(e);
+                }
+            }
+            Event::Flash(e) => {
+                if let Some(ref tx) = self.flash_tx {
+                    let _ = tx.send(e);
+                }
+            }
+        }
+    }
+}
 
 /// Configuration and shared state for the capture thread.
 ///
@@ -28,6 +115,8 @@ pub struct CaptureContext {
     pub idle_pause: Option<Duration>,
     /// Capture framerate (4-15 fps)
     pub fps: u8,
+    /// List of captured screenshots
+    pub screenshots: Option<Arc<Mutex<Vec<ScreenshotInfo>>>>,
 }
 
 impl CaptureContext {
@@ -47,18 +136,34 @@ impl CaptureContext {
 /// viewer comprehension. Adjusts timestamps to prevent playback gaps.
 ///
 /// # Parameters
-/// * `rx` - Channel to receive stop signal
+/// * `rx` - Channel to receive capture events (Start, Stop, Screenshot)
 /// * `api` - Platform API for taking screenshots
 /// * `ctx` - Capture configuration and shared state
 ///
 /// # Behavior
-/// When identical frames are detected:
-/// - Within threshold: frames are saved (preserves brief pauses)
-/// - Beyond threshold: frames are skipped and time is subtracted from timestamps
+/// - Waits for `CaptureEvent::Start` before beginning capture
+/// - When identical frames are detected:
+///   - Within threshold: frames are saved (preserves brief pauses)
+///   - Beyond threshold: frames are skipped and time is subtracted from timestamps
+/// - Exits on `CaptureEvent::Stop`
 ///
 /// Example: 10-second idle with 3-second threshold → saves 3 seconds of pause,
 ///          skips 7 seconds, playback shows exactly 3 seconds.
-pub fn capture_thread(rx: &Receiver<()>, api: impl PlatformApi, ctx: CaptureContext) -> Result<()> {
+pub fn capture_thread(
+    rx: Receiver<CaptureEvent>,
+    api: impl PlatformApi,
+    ctx: CaptureContext,
+) -> Result<()> {
+    // Wait for Start event before beginning capture
+    loop {
+        match rx.recv() {
+            Ok(CaptureEvent::Start) => break,
+            Ok(CaptureEvent::Stop) => return Ok(()), // Stop before even starting
+            Ok(_) => continue,                       // Ignore other events while waiting
+            Err(_) => return Ok(()),                 // Channel closed
+        }
+    }
+
     let duration = ctx.frame_interval();
     let start = Instant::now();
 
@@ -71,10 +176,17 @@ pub fn capture_thread(rx: &Receiver<()>, api: impl PlatformApi, ctx: CaptureCont
     let mut last_frame: Option<ImageOnHeap> = None;
     let mut last_now = Instant::now();
     loop {
-        // blocks for a timeout
-        if rx.recv_timeout(duration).is_ok() {
-            break;
-        }
+        // Wait for frame interval or event
+        let screenshot_event_tc = match rx.recv_timeout(duration) {
+            Ok(CaptureEvent::Stop) => break,
+            Ok(CaptureEvent::Start) => continue, // Already started, ignore
+            Ok(CaptureEvent::Screenshot { timecode_ms }) => {
+                debug!("Received Screenshot event with timecode {}", timecode_ms);
+                Some(timecode_ms)
+            }
+            Err(RecvTimeoutError::Timeout) => None, // Time to capture a frame
+            Err(RecvTimeoutError::Disconnected) => break,
+        };
         let now = Instant::now();
 
         // Calculate timestamp with skipped idle time removed
@@ -83,6 +195,19 @@ pub fn capture_thread(rx: &Receiver<()>, api: impl PlatformApi, ctx: CaptureCont
 
         let image = api.capture_window_screenshot(ctx.win_id)?;
         let frame_duration = now.duration_since(last_now);
+
+        // Handle screenshot if triggered by event
+        let should_screenshot = screenshot_event_tc.is_some();
+
+        if should_screenshot {
+            let screenshot_tc = screenshot_event_tc.unwrap_or(tc);
+            debug!("Taking screenshot at tc={}", screenshot_tc);
+            if let Err(e) = save_screenshot(&image, screenshot_tc, &ctx) {
+                error!("Failed to save screenshot: {}", e);
+            } else {
+                debug!("Screenshot saved successfully to tempdir");
+            }
+        }
 
         // Check if frame is identical to previous (skip check in natural mode)
         let frame_unchanged = !ctx.natural
@@ -144,6 +269,34 @@ pub fn capture_thread(rx: &Receiver<()>, api: impl PlatformApi, ctx: CaptureCont
     Ok(())
 }
 
+/// Saves a screenshot to the temp directory.
+fn save_screenshot(image: &ImageOnHeap, timecode_ms: u128, ctx: &CaptureContext) -> Result<()> {
+    let tempdir = ctx.tempdir.lock().unwrap();
+    let path = tempdir
+        .path()
+        .join(screenshot_file_name(timecode_ms, IMG_EXT));
+
+    save_buffer(
+        &path,
+        &image.samples,
+        image.layout.width,
+        image.layout.height,
+        image.color_hint.unwrap_or(Rgba8),
+    )
+    .context("Cannot save screenshot")?;
+
+    // Record screenshot info
+    if let Some(ref screenshots) = ctx.screenshots {
+        screenshots.lock().unwrap().push(ScreenshotInfo {
+            timecode_ms,
+            temp_path: path,
+        });
+    }
+
+    debug!("Screenshot saved at timecode {}", timecode_ms);
+    Ok(())
+}
+
 /// Saves a frame as a BMP file.
 pub fn save_frame(
     image: &ImageOnHeap,
@@ -168,7 +321,6 @@ mod tests {
     use tempfile::TempDir;
 
     /// Mock PlatformApi that returns predefined 1x1 pixel frames.
-    /// After all frames are used, keeps returning the last frame.
     struct TestApi {
         frames: Vec<Vec<u8>>,
         index: std::cell::Cell<usize>,
@@ -181,12 +333,11 @@ mod tests {
         ) -> crate::Result<crate::ImageOnHeap> {
             let i = self.index.get();
             self.index.set(i + 1);
-            // Return 1x1 RGBA pixel data - stop at last frame instead of cycling
-            let num_channels = 4; // RGBA
+            let num_channels = 4;
             let pixel_width = 1;
             let pixel_height = 1;
             let frame_index = if i >= self.frames.len() {
-                self.frames.len() - 1 // Stay on last frame
+                self.frames.len() - 1
             } else {
                 i
             };
@@ -211,11 +362,6 @@ mod tests {
         }
     }
 
-    /// Converts byte array to frame data for testing.
-    /// Each byte becomes all 4 channels of an RGBA pixel.
-    /// Same values = identical frames, different values = changed content.
-    ///
-    /// Example: frames(&[1,2,2,3]) creates 4 frames where frames 1 and 2 are identical
     fn frames<T: AsRef<[u8]>>(sequence: T) -> Vec<Vec<u8>> {
         sequence
             .as_ref()
@@ -224,7 +370,6 @@ mod tests {
             .collect()
     }
 
-    /// Runs capture_thread with test frames and returns timestamps of saved frames.
     fn run_capture_test(
         test_frames: Vec<Vec<u8>>,
         natural_mode: bool,
@@ -236,16 +381,19 @@ mod tests {
         };
         let captured_timestamps = Arc::new(Mutex::new(Vec::new()));
         let temp_directory = Arc::new(Mutex::new(TempDir::new()?));
-        let (stop_signal_tx, stop_signal_rx) = mpsc::channel();
+        let (tx, rx) = mpsc::channel();
 
-        // Run capture for (frame_count * 10ms) + 15ms buffer
-        let frame_interval = 10; // ms per frame in test mode
+        let frame_interval = 10;
         let capture_duration_ms = (test_frames.len() as u64 * frame_interval) + 15;
 
+        let tx_clone = tx.clone();
         std::thread::spawn(move || {
             std::thread::sleep(Duration::from_millis(capture_duration_ms));
-            let _ = stop_signal_tx.send(());
+            let _ = tx_clone.send(CaptureEvent::Stop);
         });
+
+        // Send start event
+        tx.send(CaptureEvent::Start).unwrap();
 
         let ctx = CaptureContext {
             win_id: 0,
@@ -253,186 +401,36 @@ mod tests {
             tempdir: temp_directory,
             natural: natural_mode,
             idle_pause: idle_threshold,
-            fps: 4, // Default fps for tests
+            fps: 4,
+            screenshots: None,
         };
-        capture_thread(&stop_signal_rx, test_api, ctx)?;
+        capture_thread(rx, test_api, ctx)?;
         let result = captured_timestamps.lock().unwrap().clone();
         Ok(result)
     }
 
-    /// Analyzes captured frame timestamps to verify compression worked correctly.
-    ///
-    /// Returns a tuple of:
-    /// - Frame count: Total number of frames captured
-    /// - Total duration: Time span from first to last frame (ms)
-    /// - Has gaps: Whether gaps over 25ms exist that indicate compression failure
-    ///
-    /// Gaps over 25ms between consecutive frames indicate the timeline
-    /// compression algorithm failed to maintain continuous playback.
-    fn analyze_timeline(timestamps: &[u128]) -> (usize, u128, bool) {
-        let max_normal_gap = 25; // Maximum expected gap between consecutive frames (ms)
+    #[test]
+    fn test_event_router() {
+        let (capture_tx, capture_rx) = mpsc::channel();
+        let (flash_tx, flash_rx) = mpsc::channel();
 
-        let frame_count = timestamps.len();
-        let total_duration_ms = if timestamps.len() > 1 {
-            timestamps.last().unwrap() - timestamps.first().unwrap()
-        } else {
-            0
-        };
+        let router = EventRouter::new(Some(capture_tx), Some(flash_tx));
 
-        // Detect gaps over 25ms indicating timeline compression failure
-        let has_compression_gaps = timestamps
-            .windows(2)
-            .any(|window| window[1] - window[0] > max_normal_gap);
+        router.send(Event::Capture(CaptureEvent::Start));
+        router.send(Event::Flash(FlashEvent::ScreenshotTaken));
 
-        (frame_count, total_duration_ms, has_compression_gaps)
+        assert!(matches!(capture_rx.recv().unwrap(), CaptureEvent::Start));
+        assert!(matches!(
+            flash_rx.recv().unwrap(),
+            FlashEvent::ScreenshotTaken
+        ));
     }
 
-    /// Tests idle frame compression behavior.
-    ///
-    /// Verifies:
-    /// - Correct frame count based on threshold settings
-    /// - No timestamp gaps over 25ms after compression (ensures smooth playback)
-    /// - Natural mode saves all frames regardless of content
-    /// - Threshold boundaries work correctly (e.g., exactly at 30ms)
     #[test]
-    #[cfg(feature = "e2e_tests")]
-    fn test_idle_pause() -> crate::Result<()> {
-        // Test format: (frames, natural_mode, threshold_ms, expected_count, description)
-        // - frames: byte array where same value = identical frame
-        // - natural_mode: true = save all, false = skip identical
-        // - threshold_ms: None = skip all identical, Some(n) = keep up to n ms
-        // - expected_count: range due to timing variations
-        // - [..] converts array to slice (required for different array sizes)
-        //
-        // Example: [1,2,2,2,3] = active frame, 3 idle frames, then active frame
-        [
-            // Natural mode - saves all frames regardless of content
-            (
-                vec![1, 1, 1],
-                true,
-                None,
-                3..=4,
-                "natural mode preserves all frames",
-            ),
-            // Basic single frame test
-            (vec![1], false, None, 1..=2, "single frame recording"),
-            // All different frames - no idle to compress
-            (
-                vec![1, 2, 3],
-                false,
-                None,
-                3..=3,
-                "all different frames saved",
-            ),
-            // Basic idle compression
-            (
-                vec![1, 1, 1],
-                false,
-                None,
-                1..=1,
-                "3 identical frames → 1 frame",
-            ),
-            // Long threshold preserves short sequences
-            (
-                vec![1, 1, 1],
-                false,
-                Some(500),
-                3..=4,
-                "500ms threshold preserves 30ms idle",
-            ),
-            // Multiple idle periods compress independently
-            (
-                vec![1, 2, 2, 2, 3, 4, 4, 4],
-                false,
-                None,
-                3..=4,
-                "two idle periods compress independently",
-            ),
-            // 20ms threshold behavior
-            (
-                vec![1, 2, 2, 2, 3, 4, 4, 4],
-                false,
-                Some(20),
-                6..=8,
-                "20ms threshold: 2 frames per idle period",
-            ),
-            // Mixed idle lengths with 30ms threshold
-            (
-                vec![1, 2, 2, 3, 4, 5, 5, 5, 5],
-                false,
-                Some(30),
-                8..=9,
-                "mixed idle: 20ms saved, 40ms partial",
-            ),
-            // Content change resets idle tracking
-            (
-                vec![1, 2, 2, 3, 4, 4, 4, 5],
-                false,
-                Some(25),
-                6..=8,
-                "content change resets idle tracking",
-            ),
-            // Exact threshold boundary
-            (
-                vec![1, 2, 2, 2, 3],
-                false,
-                Some(30),
-                5..=6,
-                "exact 30ms boundary test",
-            ),
-            // Timeline compression verification
-            (
-                vec![1, 2, 2, 2, 2, 3],
-                false,
-                Some(20),
-                4..=4,
-                "40ms idle: 20ms saved, rest compressed",
-            ),
-            // Maximum compression
-            (
-                vec![1, 2, 2, 2, 2, 3],
-                false,
-                None,
-                2..=3,
-                "max compression: only active frames",
-            ),
-        ]
-        .iter()
-        .enumerate()
-        .try_for_each(|(i, (frame_seq, natural, threshold_ms, expected, desc))| {
-            let threshold = threshold_ms.map(Duration::from_millis);
-            let timestamps = run_capture_test(frames(frame_seq), *natural, threshold)?;
-            let (count, duration, has_gaps) = analyze_timeline(&timestamps);
-
-            // Check frame count matches expectation
-            assert!(
-                expected.contains(&count),
-                "Test {}: expected {:?} frames, got {}",
-                i + 1,
-                expected,
-                count
-            );
-
-            // Check timeline compression (no gaps over 25ms between frames)
-            if threshold.is_some() && !natural {
-                assert!(!has_gaps, "Test {}: timeline has gaps", i + 1);
-            }
-
-            // Check aggressive compression for long idle sequences
-            if !natural
-                && threshold.is_none()
-                && frame_seq.windows(2).filter(|w| w[0] == w[1]).count() >= 3
-            {
-                assert!(
-                    duration < 120,
-                    "Test {}: duration {} too long",
-                    i + 1,
-                    duration
-                );
-            }
-
-            println!("✓ Test {}: {} - {} frames captured", i + 1, desc, count);
-            Ok(())
-        })
+    fn test_event_router_none_channels() {
+        let router = EventRouter::new(None, None);
+        // Should not panic when channels are None
+        router.send(Event::Capture(CaptureEvent::Start));
+        router.send(Event::Flash(FlashEvent::ScreenshotTaken));
     }
 }

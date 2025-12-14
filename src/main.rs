@@ -4,7 +4,10 @@ mod common;
 mod config;
 mod decors;
 mod generators;
+mod input;
+mod post_processing;
 mod prompt;
+mod screenshot;
 mod summary;
 mod tips;
 mod wallpapers;
@@ -14,6 +17,8 @@ mod capture;
 mod linux;
 #[cfg(target_os = "macos")]
 mod macos;
+#[cfg(unix)]
+mod pty;
 mod utils;
 #[cfg(target_os = "windows")]
 mod windows;
@@ -26,29 +31,34 @@ use crate::macos::*;
 use crate::windows::*;
 
 use crate::cli::{launch, resolve_profiled_settings, CliArgs};
-use crate::common::utils::{clear_screen, parse_delay, HumanReadable};
+use crate::common::utils::{clear_screen, parse_delay, print_tree_list, HumanReadable};
 use crate::common::{Margin, PlatformApi};
 use crate::config::{expand_home, handle_init_config, handle_list_profiles};
-use crate::decors::{apply_big_sur_corner_effect, apply_shadow_effect};
 use crate::generators::{check_for_gif, check_for_mp4, generate_gif, generate_mp4};
+use crate::post_processing::{
+    post_process_effects, post_process_file, post_process_screenshots, PostProcessingOptions,
+};
 use crate::summary::print_recording_summary;
 use crate::tips::show_tip;
-use crate::wallpapers::{
-    apply_wallpaper_effect, get_ventura_wallpaper, is_builtin_wallpaper,
-    load_and_validate_wallpaper,
-};
+use crate::wallpapers::{get_ventura_wallpaper, is_builtin_wallpaper, load_and_validate_wallpaper};
 
-use crate::capture::{capture_thread, CaptureContext};
+use crate::capture::{capture_thread, CaptureContext, CaptureEvent, EventRouter, FlashEvent};
+use crate::input::{HotkeyConfig, InputState, KeyboardMonitor};
 use crate::prompt::{start_background_prompt, PromptResult};
-use crate::utils::{sub_shell_thread, target_file, DEFAULT_EXT, MOVIE_EXT};
+#[cfg(unix)]
+use crate::pty::PtyShell;
+use crate::screenshot::ScreenshotInfo;
+use crate::utils::{target_file, DEFAULT_EXT, MOVIE_EXT};
 use anyhow::{bail, Context};
 use image::FlatSamples;
 use image::{DynamicImage, GenericImageView};
 use std::borrow::Borrow;
+use std::fs::File;
 use std::io::{self, Write};
 use std::path::Path;
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{mpsc, Arc, Mutex};
-use std::time::{Duration, Instant};
+use std::time::{Duration, Instant, SystemTime};
 use std::{env, thread};
 use tempfile::TempDir;
 
@@ -71,8 +81,53 @@ macro_rules! prof {
     };
 }
 
+/// Initialize logging to a file (./t-rec-recording.log).
+///
+/// Default level is INFO, can be overridden with RUST_LOG env var.
+/// Logging to a file avoids interfering with the terminal output.
+fn init_logging() {
+    use env_logger::{Builder, Target};
+    use std::io::Write as _;
+
+    let log_file = File::create("t-rec-recording.log").ok();
+
+    let mut builder = Builder::new();
+
+    // Set default filter to INFO, allow RUST_LOG to override
+    builder.filter_level(log::LevelFilter::Info);
+    if let Ok(rust_log) = env::var("RUST_LOG") {
+        builder.parse_filters(&rust_log);
+    }
+
+    // Format with timestamp and level
+    builder.format(|buf, record| {
+        let now = SystemTime::now()
+            .duration_since(SystemTime::UNIX_EPOCH)
+            .unwrap_or_default();
+        let secs = now.as_secs();
+        let millis = now.subsec_millis();
+        writeln!(
+            buf,
+            "[{}.{:03} {} {}] {}",
+            secs,
+            millis,
+            record.level(),
+            record.target(),
+            record.args()
+        )
+    });
+
+    // Write to file if available, otherwise stderr
+    if let Some(file) = log_file {
+        builder.target(Target::Pipe(Box::new(file)));
+    }
+
+    builder.init();
+}
+
 fn main() -> Result<()> {
-    env_logger::init();
+    // Initialize logging to file (./t-rec-recording.log)
+    init_logging();
 
     let args = launch();
 
@@ -125,7 +180,23 @@ fn main() -> Result<()> {
         TempDir::new().context("Cannot create tempdir.")?,
     ));
     let time_codes = Arc::new(Mutex::new(Vec::new()));
-    let (tx, rx) = mpsc::channel();
+    let screenshots = Arc::new(Mutex::new(Vec::<ScreenshotInfo>::new()));
+
+    // Create event channels
+    let (capture_tx, capture_rx) = mpsc::channel::<CaptureEvent>();
+    let (flash_tx, flash_rx) = mpsc::channel::<FlashEvent>();
+
+    // Create event router for keyboard monitor
+    let router = EventRouter::new(Some(capture_tx.clone()), Some(flash_tx));
+
+    // Create input state for screenshot flag
+    let input_state = Arc::new(InputState::new());
+
+    // Shared idle duration tracking (for accurate timecodes)
+    let idle_duration = Arc::new(Mutex::new(Duration::from_millis(0)));
+    let recording_start = Instant::now();
+
+    // Create capture context with screenshot support
     let photograph = {
         let ctx = CaptureContext {
             win_id,
@@ -134,10 +205,10 @@ fn main() -> Result<()> {
             natural: settings.natural(),
             idle_pause,
             fps,
+            screenshots: Some(screenshots.clone()),
         };
-        thread::spawn(move || -> Result<()> { capture_thread(&rx, api, ctx) })
+        thread::spawn(move || -> Result<()> { capture_thread(capture_rx, api, ctx) })
     };
-    let interact = thread::spawn(move || -> Result<()> { sub_shell_thread(&program).map(|_| ()) });
 
     clear_screen();
     io::stdout().flush().unwrap();
@@ -154,19 +225,101 @@ fn main() -> Result<()> {
     }
     if !settings.quiet() {
         println!("[t-rec]: Press Ctrl+D to end recording");
-    }
-    thread::sleep(Duration::from_millis(1250));
-    clear_screen();
+        println!("[t-rec]: F2 = Screenshot");
+        // println!("[t-rec]: F2 = Screenshot, F3 = Toggle keystroke capture"); // future feature
 
-    interact
-        .join()
-        .unwrap()
-        .context("Cannot launch the sub shell")?;
-    tx.send(()).context("Cannot stop the recording thread")?;
+        // little countdown before starting
+        for i in (1..=3).rev() {
+            // Move cursor up, clear line, print countdown
+            print!("\r[t-rec]: Recording starts in {}...", i);
+            io::stdout().flush().ok();
+            thread::sleep(Duration::from_secs(1));
+        }
+        // hack to overwrite the line
+        print!("\r[t-rec]: Recording!                         \n");
+        io::stdout().flush().ok();
+        thread::sleep(Duration::from_millis(250));
+    }
+    // Clear screen before spawning shell
+    print!("\x1b[2J\x1b[H");
+    io::stdout().flush().ok();
+
+    // Send start event to capture thread
+    capture_tx
+        .send(CaptureEvent::Start)
+        .context("Cannot start capture thread")?;
+
+    // Spawn shell with PTY for proper terminal interaction
+    #[cfg(unix)]
+    let shell_result = {
+        let mut pty_shell = PtyShell::spawn(&program)?;
+        let shell_stdin = pty_shell.get_writer()?;
+        let should_exit = Arc::new(AtomicBool::new(false));
+        let should_exit_for_output = should_exit.clone();
+        let should_exit_for_monitor = should_exit.clone();
+
+        // Forward PTY output to stdout in background
+        let output_thread = thread::spawn(move || pty_shell.forward_output(should_exit_for_output));
+
+        // Run keyboard monitor (blocks until Ctrl+D or shell exit)
+        let hotkey_config = HotkeyConfig::default();
+        let keyboard_monitor = KeyboardMonitor::new(
+            input_state,
+            idle_duration,
+            recording_start,
+            hotkey_config,
+            router,
+        );
+
+        // Handle flash events in background (for visual feedback)
+        let flash_handler = thread::spawn(move || {
+            while let Ok(event) = flash_rx.recv() {
+                match event {
+                    FlashEvent::ScreenshotTaken => {
+                        log::info!("Screenshot taken");
+                    }
+                    FlashEvent::KeyPressed { .. } => {
+                        unimplemented!("Capturing keys and flashing them will be coming soon!")
+                    }
+                }
+            }
+        });
+
+        // Run keyboard monitor - this blocks until exit
+        if let Err(e) = keyboard_monitor.run(shell_stdin, should_exit_for_monitor) {
+            log::error!("Keyboard monitor error: {}", e);
+        }
+
+        // Signal output thread to stop
+        should_exit.store(true, Ordering::Release);
+
+        // Wait for threads to finish
+        let _ = output_thread.join();
+        drop(flash_handler);
+        Ok::<(), anyhow::Error>(())
+    };
+
+    #[cfg(not(unix))]
+    let shell_result = {
+        // On non-Unix platforms, fall back to simple shell spawn
+        use std::process::Command;
+        let mut shell = Command::new(&program)
+            .spawn()
+            .context(format!("failed to start {:?}", &program))?;
+        let _ = shell.wait();
+        Ok::<(), anyhow::Error>(())
+    };
+
+    shell_result?;
+
+    // Stop capture thread
+    let _ = capture_tx.send(CaptureEvent::Stop);
+
+    // Wait for capture thread to finish
     photograph
         .join()
         .unwrap()
-        .context("Cannot launch the recording thread")?;
+        .context("Cannot finish recording thread")?;
 
     let frame_count = time_codes.lock().unwrap().borrow().len();
     print_recording_summary(&settings, frame_count);
@@ -175,29 +328,44 @@ fn main() -> Result<()> {
     println!("🎆 Applying effects (might take a bit)");
     show_tip();
 
-    apply_big_sur_corner_effect(
-        &time_codes.lock().unwrap(),
-        tempdir.lock().unwrap().borrow(),
-    );
+    // Build post-processing options
+    let post_opts = if let Some((ref wallpaper, padding)) = wallpaper_config {
+        PostProcessingOptions::new(settings.decor(), settings.bg())
+            .with_wallpaper(wallpaper, padding)
+    } else {
+        PostProcessingOptions::new(settings.decor(), settings.bg())
+    };
 
-    if settings.decor() == "shadow" {
-        apply_shadow_effect(
-            &time_codes.lock().unwrap(),
-            tempdir.lock().unwrap().borrow(),
-            settings.bg().to_string(),
-        );
-    }
-
-    if let Some((wallpaper, padding)) = wallpaper_config {
-        apply_wallpaper_effect(
-            &time_codes.lock().unwrap(),
-            tempdir.lock().unwrap().borrow(),
-            &wallpaper,
-            padding,
-        );
+    // Collect frame file paths and apply effects
+    {
+        let temp_path = tempdir.lock().unwrap().path().to_path_buf();
+        let codes = time_codes.lock().unwrap();
+        let frame_files: Vec<_> = codes
+            .iter()
+            .map(|tc| temp_path.join(crate::utils::file_name_for(tc, crate::utils::IMG_EXT)))
+            .collect();
+        post_process_effects(&frame_files, &post_opts);
     }
 
     let target = target_file(settings.output());
+
+    {
+        let screenshots_list = screenshots.lock().unwrap();
+        if !screenshots_list.is_empty() {
+            println!();
+            println!("📸 Processing {} screenshot(s)...", screenshots_list.len());
+            let saved_screenshots =
+                post_process_screenshots(&screenshots_list, &target, &post_opts);
+
+            // Print saved screenshots with tree-style formatting
+            if !saved_screenshots.is_empty() {
+                println!("Screenshots saved:");
+                print_tree_list(&saved_screenshots);
+            }
+        }
+    }
+    println!();
+
     let mut time = Duration::default();
 
     // Start video prompt in background if we might need to ask

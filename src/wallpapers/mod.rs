@@ -40,7 +40,7 @@ pub fn apply_wallpaper_effect(
 }
 
 /// Composite a single frame onto the wallpaper background
-fn composite_frame(
+pub fn composite_frame(
     frame_path: &std::path::Path,
     wallpaper: &DynamicImage,
     wallpaper_width: u32,

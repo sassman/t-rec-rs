@@ -13,6 +13,7 @@ pub fn file_name_for(tc: &u128, ext: &str) -> String {
 
 /// starts the main program and keeps interacting with the user
 /// blocks until termination
+#[allow(dead_code)]
 pub fn sub_shell_thread<T: AsRef<OsStr> + Clone>(program: T) -> Result<ExitStatus> {
     Command::new(program.clone())
         .spawn()

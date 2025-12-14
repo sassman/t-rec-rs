@@ -33,6 +33,20 @@ pub fn clear_screen() {
     print!("{esc}[H", esc = 27 as char);
 }
 
+/// Print items in a tree-style format
+pub fn print_tree_list<I, S>(items: I)
+where
+    I: IntoIterator<Item = S>,
+    S: AsRef<str>,
+{
+    let items: Vec<_> = items.into_iter().collect();
+    let last_idx = items.len().saturating_sub(1);
+    for (i, item) in items.iter().enumerate() {
+        let prefix = if i == last_idx { "└─" } else { "├─" };
+        println!("   {} {}", prefix, item.as_ref());
+    }
+}
+
 /// parses a human duration string into something valid
 pub fn parse_delay(
     s: Option<impl AsRef<str>>,
