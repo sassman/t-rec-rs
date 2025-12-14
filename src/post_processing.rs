@@ -6,7 +6,7 @@
 use image::{DynamicImage, GenericImageView};
 use log::warn;
 use rayon::prelude::*;
-use std::path::{Path, PathBuf};
+use std::path::Path;
 
 use crate::decors::{apply_corner_to_file, apply_shadow_to_file};
 use crate::screenshot::ScreenshotInfo;

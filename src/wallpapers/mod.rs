@@ -5,39 +5,6 @@ pub use validation::{is_builtin_wallpaper, load_and_validate_wallpaper};
 pub use ventura::get_ventura_wallpaper;
 
 use image::{DynamicImage, GenericImageView, Rgba, RgbaImage};
-use rayon::prelude::*;
-use tempfile::TempDir;
-
-use crate::utils::{file_name_for, IMG_EXT};
-
-///
-/// Apply a wallpaper background effect to all frames.
-///
-/// Each frame is composited onto a centered crop of the provided wallpaper
-/// with the specified padding on all sides.
-///
-pub fn apply_wallpaper_effect(
-    time_codes: &[u128],
-    tempdir: &TempDir,
-    wallpaper: &DynamicImage,
-    padding: u32,
-) {
-    let (wallpaper_width, wallpaper_height) = wallpaper.dimensions();
-
-    time_codes.into_par_iter().for_each(|tc| {
-        let file_path = tempdir.path().join(file_name_for(tc, IMG_EXT));
-
-        if let Err(e) = composite_frame(
-            &file_path,
-            wallpaper,
-            wallpaper_width,
-            wallpaper_height,
-            padding,
-        ) {
-            eprintln!("Failed to apply wallpaper to frame: {}", e);
-        }
-    });
-}
 
 /// Composite a single frame onto the wallpaper background
 pub fn composite_frame(
