@@ -291,6 +291,8 @@ impl KeyboardMonitor {
 
         // Check for Ctrl+D (exit)
         if code == KeyCode::Char('d') && modifiers.contains(KeyModifiers::CONTROL) {
+            self.router
+                .send(crate::capture::Event::Capture(CaptureEvent::Stop));
             return KeyAction::Exit;
         }
 

@@ -52,16 +52,18 @@ use crate::pty::PtyShell;
 use crate::screenshot::ScreenshotInfo;
 use crate::utils::{target_file, DEFAULT_EXT, MOVIE_EXT};
 use anyhow::{bail, Context};
+use crossbeam_channel::unbounded;
 use image::FlatSamples;
 use image::{DynamicImage, GenericImageView};
 use std::borrow::Borrow;
 use std::io::{self, Write};
 use std::path::Path;
 use std::sync::atomic::{AtomicBool, Ordering};
-use std::sync::{mpsc, Arc, Mutex};
+use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
 use std::{env, thread};
 use tempfile::TempDir;
+use tokio::sync::broadcast;
 
 pub type Image = FlatSamples<Vec<u8>>;
 pub type ImageOnHeap = Box<Image>;
@@ -120,6 +122,27 @@ fn main() -> Result<()> {
     let mut api = setup()?;
     api.calibrate(win_id)?;
 
+    // TODO: Remove this test code later
+    #[cfg(target_os = "macos")]
+    if args.test_flash {
+        println!("Testing screen flash indicator within a background thread...");
+        println!("Showing flash indicator from main thread...");
+        screen_flash::flash_screenshot_default(win_id);
+        thread::sleep(Duration::from_secs(5));
+
+        thread::spawn(move || {
+            println!("Showing flash indicator from background thread...");
+            screen_flash::flash_screenshot_default(win_id);
+            thread::sleep(Duration::from_secs(5));
+        })
+        .join()
+        .unwrap();
+
+        println!("Test complete!");
+
+        return Ok(());
+    }
+
     // Validate wallpaper BEFORE recording starts
     let wallpaper_config = validate_wallpaper_config(&settings, &api, win_id)?;
 
@@ -147,8 +170,8 @@ fn main() -> Result<()> {
     let screenshots = Arc::new(Mutex::new(Vec::<ScreenshotInfo>::new()));
 
     // Create event channels
-    let (capture_tx, capture_rx) = mpsc::channel::<CaptureEvent>();
-    let (flash_tx, flash_rx) = mpsc::channel::<FlashEvent>();
+    let (capture_tx, mut capture_rx) = broadcast::channel::<CaptureEvent>(100);
+    let (flash_tx, mut flash_rx) = broadcast::channel::<FlashEvent>(100);
 
     // Create event router for keyboard monitor
     let router = EventRouter::new(Some(capture_tx.clone()), Some(flash_tx));
@@ -171,6 +194,7 @@ fn main() -> Result<()> {
             fps,
             screenshots: Some(screenshots.clone()),
         };
+        let capture_rx = capture_tx.subscribe();
         thread::spawn(move || -> Result<()> { capture_thread(capture_rx, api, ctx) })
     };
 
@@ -206,6 +230,17 @@ fn main() -> Result<()> {
     }
     cls!();
 
+    // todo: evaluate if a command spawn would make it easier:
+    //      Spawn shell directly with inherited stdin/stdout/stderr
+    // ```rust
+    // let mut shell_child = std::process::Command::new(&program)
+    //   .stdin(std::process::Stdio::inherit())
+    //   .stdout(std::process::Stdio::inherit())
+    //   .stderr(std::process::Stdio::inherit())
+    //   .spawn()
+    //   .context("Failed to spawn shell")?;
+    // ```
+
     // Spawn shell with PTY for proper terminal interaction
     #[cfg(unix)]
     let shell_result = {
@@ -228,20 +263,6 @@ fn main() -> Result<()> {
             router,
         );
 
-        // Handle flash events in background (for visual feedback)
-        let flash_handler = thread::spawn(move || {
-            while let Ok(event) = flash_rx.recv() {
-                match event {
-                    FlashEvent::ScreenshotTaken => {
-                        log::debug!("Screenshot taken");
-                    }
-                    FlashEvent::KeyPressed { .. } => {
-                        unimplemented!("Capturing keys and flashing them will be coming soon!")
-                    }
-                }
-            }
-        });
-
         // the shell needs some bootstrap time..
         thread::sleep(Duration::from_millis(350));
 
@@ -251,16 +272,52 @@ fn main() -> Result<()> {
             .context("Cannot start capture thread")?;
 
         // Run keyboard monitor - this blocks until exit
-        if let Err(e) = keyboard_monitor.run(shell_stdin, should_exit_for_monitor) {
-            log::error!("Keyboard monitor error: {}", e);
+        let keyboard_monitor_thread = thread::spawn(move || {
+            if let Err(e) = keyboard_monitor.run(shell_stdin, should_exit_for_monitor) {
+                log::error!("Keyboard monitor error: {}", e);
+            }
+        });
+
+        // Handle flash events in main thread (macOS Skylight requires main thread)
+        // Handle `CaptureEvent::Stop` to exit main loop
+        loop {
+            if let Ok(event) = flash_rx.try_recv() {
+                match event {
+                    FlashEvent::ScreenshotTaken => {
+                        log::debug!("Screenshot taken");
+                        let flash_config = screen_flash::FlashConfig::default()
+                            .position(screen_flash::FlashPosition::TopRight)
+                            .duration(1.5);
+                        if let Err(e) =
+                            screen_flash::show_indicator_screenshot_indicator(&flash_config, win_id)
+                        {
+                            log::error!("Cannot show the screenshot indicator: {}", e);
+                        }
+                    }
+                    FlashEvent::KeyPressed { .. } => {
+                        unimplemented!("Capturing keys and flashing them will be coming soon!")
+                    }
+                }
+            }
+
+            if let Ok(event) = capture_rx.try_recv() {
+                match event {
+                    CaptureEvent::Stop => {
+                        log::debug!("Received Stop CaptureEvent in the main loop");
+                        break;
+                    }
+                    _ => {}
+                }
+            }
         }
+        // });
 
         // Signal output thread to stop
         should_exit.store(true, Ordering::Release);
 
         // Wait for threads to finish
         let _ = output_thread.join();
-        drop(flash_handler);
+        drop(keyboard_monitor_thread);
         Ok::<(), anyhow::Error>(())
     };
 

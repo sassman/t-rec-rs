@@ -35,6 +35,9 @@ pub struct CliArgs {
     #[arg(short, long)]
     pub verbose: bool,
 
+    #[arg(long, default_value_t = false, hide = true)]
+    pub test_flash: bool,
+
     /// Quiet mode, suppresses the banner: 'Press Ctrl+D to end recording'
     #[arg(short, long)]
     pub quiet: bool,

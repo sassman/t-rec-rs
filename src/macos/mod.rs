@@ -1,4 +1,5 @@
 mod core_foundation_sys_patches;
+pub mod screen_flash;
 mod screenshot;
 mod window_id;
 

@@ -10,7 +10,63 @@ pub const kCFNumberSInt32Type: CFNumberType = 3;
 #[allow(non_upper_case_globals)]
 pub const kCFNumberSInt64Type: CFNumberType = 4;
 
+/// Core Graphics window level type.
+pub type CGWindowLevel = i32;
+
+// Number of window levels reserved by Apple for internal use
+#[allow(non_upper_case_globals)]
+pub const kCGNumReservedWindowLevels: CGWindowLevel = 16;
+#[allow(non_upper_case_globals)]
+pub const kCGNumReservedBaseWindowLevels: CGWindowLevel = 5;
+
+// Base and boundary levels
+#[allow(non_upper_case_globals)]
+pub const kCGBaseWindowLevel: CGWindowLevel = i32::MIN;
+#[allow(non_upper_case_globals)]
+pub const kCGMinimumWindowLevel: CGWindowLevel = kCGBaseWindowLevel + kCGNumReservedBaseWindowLevels;
+#[allow(non_upper_case_globals)]
+pub const kCGMaximumWindowLevel: CGWindowLevel = i32::MAX - kCGNumReservedWindowLevels;
+
+// Standard window levels (in ascending z-order)
+#[allow(non_upper_case_globals)]
+pub const kCGDesktopWindowLevel: CGWindowLevel = kCGMinimumWindowLevel + 20;
+#[allow(non_upper_case_globals)]
+pub const kCGDesktopIconWindowLevel: CGWindowLevel = kCGDesktopWindowLevel + 20;
+#[allow(non_upper_case_globals)]
+pub const kCGBackstopMenuLevel: CGWindowLevel = -20;
+#[allow(non_upper_case_globals)]
+pub const kCGNormalWindowLevel: CGWindowLevel = 0;
+#[allow(non_upper_case_globals)]
+pub const kCGFloatingWindowLevel: CGWindowLevel = 3;
+#[allow(non_upper_case_globals)]
+pub const kCGTornOffMenuWindowLevel: CGWindowLevel = 3;
+#[allow(non_upper_case_globals)]
+pub const kCGModalPanelWindowLevel: CGWindowLevel = 8;
+#[allow(non_upper_case_globals)]
+pub const kCGUtilityWindowLevel: CGWindowLevel = 19;
+#[allow(non_upper_case_globals)]
+pub const kCGDockWindowLevel: CGWindowLevel = 20;
+#[allow(non_upper_case_globals)]
+pub const kCGMainMenuWindowLevel: CGWindowLevel = 24;
+#[allow(non_upper_case_globals)]
+pub const kCGStatusWindowLevel: CGWindowLevel = 25;
+#[allow(non_upper_case_globals)]
+pub const kCGPopUpMenuWindowLevel: CGWindowLevel = 101;
+#[allow(non_upper_case_globals)]
+pub const kCGOverlayWindowLevel: CGWindowLevel = 102;
+#[allow(non_upper_case_globals)]
+pub const kCGHelpWindowLevel: CGWindowLevel = 200;
+#[allow(non_upper_case_globals)]
+pub const kCGDraggingWindowLevel: CGWindowLevel = 500;
+#[allow(non_upper_case_globals)]
+pub const kCGScreenSaverWindowLevel: CGWindowLevel = 1000;
+#[allow(non_upper_case_globals)]
+pub const kCGAssistiveTechHighWindowLevel: CGWindowLevel = 1500;
+#[allow(non_upper_case_globals)]
+pub const kCGCursorWindowLevel: CGWindowLevel = kCGMaximumWindowLevel - 1;
+
 extern "C" {
     pub fn CFBooleanGetValue(boolean: CFBooleanRef) -> bool;
     pub fn CFNumberGetType(number: CFNumberRef) -> CFNumberType;
+
 }
