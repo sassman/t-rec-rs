@@ -95,9 +95,10 @@ pub struct CliArgs {
     #[arg(short = 'f', long, value_parser = clap::value_parser!(u8).range(4..=15))]
     pub fps: Option<u8>,
 
-    /// Shell or program to launch. Defaults to $SHELL
-    #[arg()]
-    pub program: Option<String>,
+    /// Shell or program to launch with optional arguments. Defaults to $SHELL.
+    /// Use -- to separate t-rec options from shell arguments (e.g., t-rec -- /bin/bash -l)
+    #[arg(trailing_var_arg = true, allow_hyphen_values = true)]
+    pub program: Vec<String>,
 
     // --- Config-related args (not part of recording settings) ---
     /// Use a named profile from the config file
