@@ -93,7 +93,12 @@ fn main() -> Result<()> {
         .program
         .split_first()
         .map(|(prog, rest)| (prog.clone(), rest.to_vec()))
-        .unwrap_or_else(|| (env::var("SHELL").unwrap_or_else(|_| DEFAULT_SHELL.to_owned()), vec![]));
+        .unwrap_or_else(|| {
+            (
+                env::var("SHELL").unwrap_or_else(|_| DEFAULT_SHELL.to_owned()),
+                vec![],
+            )
+        });
     let (win_id, window_name) = current_win_id(&args)?;
     let mut api = setup()?;
     api.calibrate(win_id)?;
@@ -134,8 +139,9 @@ fn main() -> Result<()> {
         };
         thread::spawn(move || -> Result<()> { capture_thread(&rx, api, ctx) })
     };
-    let interact =
-        thread::spawn(move || -> Result<()> { sub_shell_thread(&program, &program_args).map(|_| ()) });
+    let interact = thread::spawn(move || -> Result<()> {
+        sub_shell_thread(&program, &program_args).map(|_| ())
+    });
 
     clear_screen();
     io::stdout().flush().unwrap();
