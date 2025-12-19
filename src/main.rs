@@ -243,6 +243,7 @@ fn main() -> Result<()> {
                 &time_codes.lock().unwrap(),
                 tempdir.lock().unwrap().borrow(),
                 &format!("{}.{}", target, MOVIE_EXT),
+                fps,
             )?;
         }
     }
@@ -320,8 +321,8 @@ fn current_win_id(args: &CliArgs) -> Result<(WindowId, Option<String>)> {
             let terminal = env::var("TERM_PROGRAM").context(
                 "Env variable 'TERM_PROGRAM' was empty but is needed for figure out the WindowId. Please set it to e.g. TERM_PROGRAM=alacitty",
             );
-            if terminal.is_ok() {
-                let (win_id, name) = get_window_id_for(terminal.unwrap()).context(
+            if let Ok(terminal) = terminal {
+                let (win_id, name) = get_window_id_for(terminal).context(
                     "Cannot determine the WindowId of this terminal. Please set env variable 'WINDOWID' and try again.",
                 )?;
                 Ok((win_id, Some(name)))
