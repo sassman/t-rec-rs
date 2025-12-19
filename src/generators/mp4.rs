@@ -40,13 +40,14 @@ pub fn generate_mp4_with_ffmpeg(
     _time_codes: &[u128],
     tempdir: &TempDir,
     target: &str,
+    fps: u8,
 ) -> Result<()> {
     println!("🎬 🎉 🚀 Generating {target}");
     Command::new(PROGRAM)
         .arg("-y")
         .arg("-r")
         // framerate
-        .arg("4")
+        .arg(fps.to_string())
         .arg("-f")
         .arg("image2")
         .arg("-pattern_type")
