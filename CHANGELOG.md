@@ -6,6 +6,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.8.2](https://github.com/sassman/t-rec-rs/compare/v0.8.1...v0.8.2) - 2025-12-19
+
+### Fixed
+
+- fix hardcoded video framerate, now respects cli/profile ([#312](https://github.com/sassman/t-rec-rs/pull/312))
+
 ## [0.8.1](https://github.com/sassman/t-rec-rs/compare/v0.8.0...v0.8.1) - 2025-12-01
 
 ### Added
