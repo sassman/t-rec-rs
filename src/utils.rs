@@ -13,8 +13,12 @@ pub fn file_name_for(tc: &u128, ext: &str) -> String {
 
 /// starts the main program and keeps interacting with the user
 /// blocks until termination
-pub fn sub_shell_thread<T: AsRef<OsStr> + Clone>(program: T) -> Result<ExitStatus> {
+pub fn sub_shell_thread<T: AsRef<OsStr> + Clone, A: AsRef<OsStr>>(
+    program: T,
+    args: &[A],
+) -> Result<ExitStatus> {
     Command::new(program.clone())
+        .args(args)
         .spawn()
         .context(format!("failed to start {:?}", program.as_ref()))?
         .wait()
