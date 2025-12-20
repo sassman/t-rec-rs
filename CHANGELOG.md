@@ -6,6 +6,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.8.3](https://github.com/sassman/t-rec-rs/compare/v0.8.2...v0.8.3) - 2025-12-20
+
+### Other
+
+- introduce a new logo, but backup the old one
+
 ## [0.8.2](https://github.com/sassman/t-rec-rs/compare/v0.8.1...v0.8.2) - 2025-12-19
 
 ### Fixed
