@@ -1,0 +1,21 @@
+[package]
+name = "skylight-osd"
+version = "0.1.0"
+authors.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[dependencies]
+# TODO: once api surface is stable, migrate over to `thiserror`
+anyhow.workspace = true
+log.workspace = true
+
+[target.'cfg(target_os = "macos")'.dependencies]
+objc_id.workspace = true
+objc2-foundation.workspace = true
+objc2.workspace = true
+libloading.workspace = true
+core-graphics.workspace = true
+core-foundation.workspace = true
+core-foundation-sys.workspace = true
