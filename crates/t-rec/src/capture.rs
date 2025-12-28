@@ -274,6 +274,7 @@ mod tests {
         }
     }
 
+    /// Convert a byte sequence into RGBA pixel frames (each byte becomes one 1x1 frame).
     fn frames<T: AsRef<[u8]>>(sequence: T) -> Vec<Vec<u8>> {
         sequence
             .as_ref()
@@ -282,6 +283,7 @@ mod tests {
             .collect()
     }
 
+    /// Run a capture test with the given frames and settings, returning captured timestamps.
     fn run_capture_test(
         test_frames: Vec<Vec<u8>>,
         natural_mode: bool,
@@ -319,5 +321,200 @@ mod tests {
         capture_thread(rx, test_api, ctx)?;
         let result = captured_timestamps.lock().unwrap().clone();
         Ok(result)
+    }
+
+    #[test]
+    fn test_all_unique_frames_are_captured() {
+        // Each frame is different, all should be saved
+        let test_frames = frames([1, 2, 3, 4, 5]);
+        let timestamps = run_capture_test(test_frames, false, None).unwrap();
+
+        assert_eq!(timestamps.len(), 5, "All unique frames should be captured");
+    }
+
+    #[test]
+    fn test_identical_frames_are_skipped_by_default() {
+        // Frames: A, A, A, B, B, C (3 unique values)
+        let test_frames = frames([1, 1, 1, 2, 2, 3]);
+        let timestamps = run_capture_test(test_frames, false, None).unwrap();
+
+        // Only first occurrence of each unique frame should be saved
+        assert_eq!(
+            timestamps.len(),
+            3,
+            "Identical consecutive frames should be skipped"
+        );
+    }
+
+    #[test]
+    fn test_natural_mode_preserves_all_frames() {
+        // Same sequence but natural mode keeps everything
+        let test_frames = frames([1, 1, 1, 2, 2, 3]);
+        let timestamps = run_capture_test(test_frames, true, None).unwrap();
+
+        assert_eq!(timestamps.len(), 6, "Natural mode should keep all frames");
+    }
+
+    #[test]
+    fn test_idle_threshold_preserves_short_pauses() {
+        // With a generous threshold, some identical frames should be preserved
+        // Frame interval is 10ms in test mode, so 50ms threshold allows ~5 identical frames
+        let test_frames = frames([1, 1, 1, 2]); // 3 identical then change
+        let timestamps =
+            run_capture_test(test_frames, false, Some(Duration::from_millis(50))).unwrap();
+
+        // All frames within threshold should be kept
+        assert!(
+            timestamps.len() >= 3,
+            "Frames within idle threshold should be preserved"
+        );
+    }
+
+    #[test]
+    fn test_idle_threshold_skips_long_pauses() {
+        // With a short threshold, long identical sequences get truncated
+        let test_frames = frames([1, 1, 1, 1, 1, 1, 1, 1, 2]); // 8 identical then change
+        let timestamps =
+            run_capture_test(test_frames, false, Some(Duration::from_millis(25))).unwrap();
+
+        // Should have fewer than 9 frames (some idle skipped)
+        assert!(
+            timestamps.len() < 9,
+            "Long idle periods beyond threshold should be skipped"
+        );
+        // But should still have the unique frames
+        assert!(
+            timestamps.len() >= 2,
+            "Unique frames should still be captured"
+        );
+    }
+
+    #[test]
+    fn test_alternating_frames_all_captured() {
+        // Rapidly changing content: A, B, A, B, A
+        let test_frames = frames([1, 2, 1, 2, 1]);
+        let timestamps = run_capture_test(test_frames, false, None).unwrap();
+
+        assert_eq!(
+            timestamps.len(),
+            5,
+            "Alternating frames should all be captured"
+        );
+    }
+
+    #[test]
+    fn test_timestamps_are_monotonically_increasing() {
+        let test_frames = frames([1, 2, 3, 4, 5]);
+        let timestamps = run_capture_test(test_frames, false, None).unwrap();
+
+        for window in timestamps.windows(2) {
+            assert!(
+                window[1] > window[0],
+                "Timestamps should be strictly increasing"
+            );
+        }
+    }
+
+    #[test]
+    fn test_stop_event_terminates_capture() {
+        let test_api = TestApi {
+            frames: frames([1, 2, 3]),
+            index: Default::default(),
+        };
+        let captured_timestamps = Arc::new(Mutex::new(Vec::new()));
+        let temp_directory = Arc::new(Mutex::new(TempDir::new().unwrap()));
+        let (tx, rx) = broadcast::channel::<Event>(10);
+
+        // Send start then immediate stop
+        tx.send(Event::Capture(CaptureEvent::Start)).unwrap();
+        tx.send(Event::Capture(CaptureEvent::Stop)).unwrap();
+
+        let ctx = CaptureContext {
+            win_id: 0,
+            time_codes: captured_timestamps.clone(),
+            tempdir: temp_directory,
+            natural: false,
+            idle_pause: None,
+            fps: 4,
+            screenshots: None,
+        };
+
+        capture_thread(rx, test_api, ctx).unwrap();
+        // Should terminate quickly without error
+    }
+
+    #[test]
+    fn test_shutdown_event_terminates_capture() {
+        let test_api = TestApi {
+            frames: frames([1, 2, 3]),
+            index: Default::default(),
+        };
+        let captured_timestamps = Arc::new(Mutex::new(Vec::new()));
+        let temp_directory = Arc::new(Mutex::new(TempDir::new().unwrap()));
+        let (tx, rx) = broadcast::channel::<Event>(10);
+
+        // Shutdown before start should exit cleanly
+        tx.send(Event::Lifecycle(LifecycleEvent::Shutdown)).unwrap();
+
+        let ctx = CaptureContext {
+            win_id: 0,
+            time_codes: captured_timestamps.clone(),
+            tempdir: temp_directory,
+            natural: false,
+            idle_pause: None,
+            fps: 4,
+            screenshots: None,
+        };
+
+        capture_thread(rx, test_api, ctx).unwrap();
+    }
+
+    #[test]
+    fn test_frames_saved_to_tempdir() {
+        let test_frames = frames([1, 2, 3]);
+        let test_api = TestApi {
+            frames: test_frames,
+            index: Default::default(),
+        };
+        let captured_timestamps = Arc::new(Mutex::new(Vec::new()));
+        let temp_directory = Arc::new(Mutex::new(TempDir::new().unwrap()));
+        let (tx, rx) = broadcast::channel::<Event>(10);
+
+        // Clone the Arc to keep tempdir alive for file check
+        let temp_directory_check = temp_directory.clone();
+
+        let tx_clone = tx.clone();
+        std::thread::spawn(move || {
+            std::thread::sleep(Duration::from_millis(45));
+            let _ = tx_clone.send(Event::Capture(CaptureEvent::Stop));
+        });
+
+        tx.send(Event::Capture(CaptureEvent::Start)).unwrap();
+
+        let ctx = CaptureContext {
+            win_id: 0,
+            time_codes: captured_timestamps.clone(),
+            tempdir: temp_directory,
+            natural: false,
+            idle_pause: None,
+            fps: 4,
+            screenshots: None,
+        };
+
+        capture_thread(rx, test_api, ctx).unwrap();
+
+        // Check that files were actually created (tempdir still alive via temp_directory_check)
+        let temp_guard = temp_directory_check.lock().unwrap();
+        let files: Vec<_> = std::fs::read_dir(temp_guard.path())
+            .unwrap()
+            .filter_map(|e| e.ok())
+            .collect();
+
+        let num_timestamps = captured_timestamps.lock().unwrap().len();
+        assert_eq!(
+            files.len(),
+            num_timestamps,
+            "Number of saved files should match timestamps"
+        );
     }
 }

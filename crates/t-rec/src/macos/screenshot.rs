@@ -71,7 +71,7 @@ mod tests {
     #[test]
     #[cfg(feature = "e2e_tests")]
     fn should_capture_with_cropped_transparent_area() -> Result<()> {
-        use crate::common::{Platform, PlatformApi};
+        use crate::common::{Platform, PlatformApi, PlatformApiFactory};
         use crate::utils::IMG_EXT;
         use image::save_buffer;
 
