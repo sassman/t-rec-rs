@@ -112,6 +112,14 @@ impl Rect {
         Self { origin, size }
     }
 
+    /// Round all coordinates to integers to avoid subpixel rendering artifacts.
+    pub fn rounded(self) -> Self {
+        Self {
+            origin: Point::new(self.origin.x.round(), self.origin.y.round()),
+            size: Size::new(self.size.width.round(), self.size.height.round()),
+        }
+    }
+
     /// Create a rectangle from x, y, width, height.
     pub const fn from_xywh(x: f64, y: f64, width: f64, height: f64) -> Self {
         Self {

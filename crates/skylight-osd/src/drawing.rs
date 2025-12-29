@@ -155,8 +155,9 @@ impl Canvas {
     /// CG coordinate system has origin at bottom-left; this flips to top-left.
     pub fn flip_vertical(&mut self) {
         unsafe {
-            CGContextTranslateCTM(self.ctx, self.size.width, self.size.height);
-            CGContextScaleCTM(self.ctx, -1.0, -1.0);
+            // Proper Y-flip: translate to top, then flip Y axis only
+            CGContextTranslateCTM(self.ctx, 0.0, self.size.height);
+            CGContextScaleCTM(self.ctx, 1.0, -1.0);
         }
     }
 

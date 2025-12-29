@@ -78,6 +78,10 @@ pub enum DisplayTarget {
     // All,
 }
 
+// Link AppKit for NSApplication
+#[link(name = "AppKit", kind = "framework")]
+extern "C" {}
+
 // Display and window functions
 #[link(name = "CoreGraphics", kind = "framework")]
 extern "C" {
@@ -108,10 +112,38 @@ fn get_skylight_lib() -> Option<&'static Library> {
         .as_ref()
 }
 
+/// Ensure NSApplication is initialized for SkyLight windows.
+///
+/// SkyLight windows require an active NSApplication. This function lazily
+/// initializes NSApplication as a background application (no dock icon).
+/// Safe to call multiple times - initialization only happens once.
+fn ensure_nsapplication() {
+    use std::sync::Once;
+    static INIT: Once = Once::new();
+
+    INIT.call_once(|| {
+        unsafe {
+            // Get or create the shared NSApplication
+            let app: *mut objc2::runtime::AnyObject =
+                msg_send![class!(NSApplication), sharedApplication];
+
+            // Set activation policy to accessory (no dock icon, can create windows)
+            // NSApplicationActivationPolicyAccessory = 1
+            let _: bool = msg_send![app, setActivationPolicy: 1i64];
+
+            // Activate the application (required for windows to appear)
+            let _: () = msg_send![app, activateIgnoringOtherApps: true];
+        }
+    });
+}
+
 /// Run the NSRunLoop for a given duration.
 ///
-/// Required for SkyLight windows to appear after NSApplication is initialized.
+/// Required for SkyLight windows to appear. Automatically initializes
+/// NSApplication if not already done.
 pub fn run_loop_for_seconds(seconds: f64) {
+    ensure_nsapplication();
+
     unsafe {
         let future_date: *mut objc2::runtime::AnyObject =
             msg_send![class!(NSDate), dateWithTimeIntervalSinceNow: seconds];
@@ -359,7 +391,8 @@ impl SkylightWindowBuilder {
             None => (display_bounds, MENU_BAR_HEIGHT),
         };
 
-        let frame = calculate_frame(config, &bounds, top_inset);
+        // Round coordinates to avoid subpixel rendering artifacts
+        let frame = calculate_frame(config, &bounds, top_inset).rounded();
 
         debug!(
             "Calculated window frame {frame:?} for config {config:?} on target {target:?} with scale = {scale}",
@@ -404,6 +437,9 @@ impl SkylightWindow {
 
     /// Internal creation method with all parameters.
     fn create(frame: Rect, level: WindowLevel, sticky: bool, alpha: f32) -> crate::Result<Self> {
+        // Ensure NSApplication is initialized before creating SkyLight windows
+        ensure_nsapplication();
+
         let lib = get_skylight_lib()
             .ok_or_else(|| anyhow::anyhow!("Failed to load SkyLight framework"))?;
 
