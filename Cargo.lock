@@ -745,6 +745,22 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "04744f49eae99ab78e0d5c0b603ab218f515ea8cfe5a456d7629ad883a3b6e7d"
 
 [[package]]
+name = "osd-flash"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "core-foundation",
+ "core-foundation-sys",
+ "core-graphics",
+ "foreign-types-shared",
+ "libloading",
+ "log",
+ "objc2",
+ "objc2-foundation",
+ "objc_id",
+]
+
+[[package]]
 name = "parking_lot"
 version = "0.12.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1027,21 +1043,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "skylight-osd"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "core-foundation",
- "core-foundation-sys",
- "core-graphics",
- "libloading",
- "log",
- "objc2",
- "objc2-foundation",
- "objc_id",
-]
-
-[[package]]
 name = "smallvec"
 version = "1.15.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1080,10 +1081,10 @@ dependencies = [
  "objc",
  "objc-foundation",
  "objc_id",
+ "osd-flash",
  "rayon",
  "serde",
  "simplerand",
- "skylight-osd",
  "tempfile",
  "tokio",
  "toml",

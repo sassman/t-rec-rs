@@ -1,8 +1,12 @@
-# skylight-osd
+# osd-flash
 
-On-screen display overlays for macOS using the private SkyLight framework.
+On-screen display (OSD) flash indicators for various platforms.
 
 This crate provides a simple API for creating overlay windows that appear above all other content, similar to macOS system notifications or the screenshot flash indicator.
+
+## Backends
+
+- **skylight** (macOS): Uses Apple's private SkyLight framework for overlay windows that appear above all other content, including fullscreen apps.
 
 ## Features
 
@@ -14,13 +18,12 @@ This crate provides a simple API for creating overlay windows that appear above 
 
 ## Requirements
 
-- macOS only (uses private SkyLight framework)
-- Works on macOS 10.14+
+- macOS: Uses private SkyLight framework, works on macOS 10.14+
 
 ## Quick Start
 
 ```rust
-use skylight_osd::prelude::*;
+use osd_flash::prelude::*;
 
 // Show the built-in camera flash
 let config = FlashConfig::new()
@@ -28,7 +31,7 @@ let config = FlashConfig::new()
     .position(FlashPosition::TopRight)
     .duration(1.5);
 
-skylight_osd::flash_screenshot(&config, 0);
+osd_flash::flash_screenshot(&config, 0);
 ```
 
 ## Examples
@@ -37,35 +40,35 @@ skylight_osd::flash_screenshot(&config, 0);
 Shows the built-in camera icon, similar to macOS screenshot feedback.
 
 ```bash
-cargo run -p skylight-osd --example camera_flash
+cargo run -p osd-flash --example camera_flash
 ```
 
 ### Custom Icon
 Demonstrates building custom icons using the `IconBuilder` API.
 
 ```bash
-cargo run -p skylight-osd --example custom_icon
+cargo run -p osd-flash --example custom_icon
 ```
 
 ### Notification Badge
 Creates notification-style badges at different screen corners.
 
 ```bash
-cargo run -p skylight-osd --example notification_badge
+cargo run -p osd-flash --example notification_badge
 ```
 
 ### Recording Indicator
 Shows a red recording dot, useful for screen recording apps.
 
 ```bash
-cargo run -p skylight-osd --example recording_indicator
+cargo run -p osd-flash --example recording_indicator
 ```
 
 ### Hex Colors
 Demonstrates using hex color codes for branded icons.
 
 ```bash
-cargo run -p skylight-osd --example hex_colors
+cargo run -p osd-flash --example hex_colors
 ```
 
 ## API Overview
@@ -75,7 +78,7 @@ cargo run -p skylight-osd --example hex_colors
 Configure the flash indicator:
 
 ```rust
-use skylight_osd::prelude::*;
+use osd_flash::prelude::*;
 
 let config = FlashConfig::new()
     .icon_size(100.0)           // Size in points
@@ -89,7 +92,7 @@ let config = FlashConfig::new()
 Create custom icons from shapes:
 
 ```rust
-use skylight_osd::prelude::*;
+use osd_flash::prelude::*;
 
 let icon = IconBuilder::new(120.0)
     .padding(12.0)
@@ -98,12 +101,12 @@ let icon = IconBuilder::new(120.0)
     .build();
 ```
 
-### SkylightWindowBuilder
+### SkylightWindowBuilder (macOS)
 
-Low-level window creation:
+Low-level window creation using the SkyLight backend:
 
 ```rust
-use skylight_osd::prelude::*;
+use osd_flash::prelude::*;
 
 let mut window = SkylightWindowBuilder::new()
     .frame(Rect::from_xywh(100.0, 100.0, 120.0, 120.0))
@@ -120,7 +123,7 @@ window.show(1.5)?;
 Multiple ways to define colors:
 
 ```rust
-use skylight_osd::prelude::*;
+use osd_flash::prelude::*;
 
 // Preset colors
 let white = Color::WHITE;
@@ -136,7 +139,7 @@ let orange = Color::rgb8(255, 128, 0);
 let github = Color::from_hex("#24292e").unwrap();
 ```
 
-## Window Levels
+## Window Levels (macOS)
 
 Control z-ordering of the overlay:
 

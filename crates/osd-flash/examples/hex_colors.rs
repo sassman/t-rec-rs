@@ -2,9 +2,9 @@
 //!
 //! Demonstrates using hex color codes to create branded icons.
 //!
-//! Run with: cargo run -p skylight-osd --example hex_colors
+//! Run with: cargo run -p osd-flash --example hex_colors
 
-use skylight_osd::prelude::*;
+use osd_flash::prelude::*;
 
 fn branded_icon(size: f64, primary: &str, secondary: &str) -> Icon {
     let primary_color = Color::from_hex(primary).unwrap_or(Color::BLUE);
@@ -15,13 +15,23 @@ fn branded_icon(size: f64, primary: &str, secondary: &str) -> Icon {
         .padding(12.0)
         .background(primary_color.with_alpha(0.95), 18.0)
         // Decorative circles
-        .circle(center - 15.0, center - 10.0, 12.0, secondary_color.with_alpha(0.9))
-        .circle(center + 15.0, center - 10.0, 12.0, secondary_color.with_alpha(0.9))
+        .circle(
+            center - 15.0,
+            center - 10.0,
+            12.0,
+            secondary_color.with_alpha(0.9),
+        )
+        .circle(
+            center + 15.0,
+            center - 10.0,
+            12.0,
+            secondary_color.with_alpha(0.9),
+        )
         .circle(center, center + 12.0, 14.0, secondary_color.with_alpha(0.9))
         .build()
 }
 
-fn main() -> skylight_osd::Result<()> {
+fn main() -> osd_flash::Result<()> {
     let size = 100.0;
 
     // GitHub colors
@@ -43,7 +53,7 @@ fn main() -> skylight_osd::Result<()> {
     Ok(())
 }
 
-fn show_icon(icon: &Icon, size: f64, position: FlashPosition) -> skylight_osd::Result<()> {
+fn show_icon(icon: &Icon, size: f64, position: FlashPosition) -> osd_flash::Result<()> {
     let config = FlashConfig::new()
         .icon_size(size)
         .position(position)

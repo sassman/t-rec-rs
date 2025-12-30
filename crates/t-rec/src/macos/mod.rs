@@ -16,7 +16,7 @@ use window_id::window_list;
 // TODO(release): this shim is for backwards compatibility
 //       and shall be removed eventually
 pub mod screen_flash {
-    pub use skylight_osd::*;
+    pub use osd_flash::*;
 }
 
 pub const DEFAULT_SHELL: &str = "/bin/sh";

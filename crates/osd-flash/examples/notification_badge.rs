@@ -2,9 +2,9 @@
 //!
 //! Shows how to create notification-style badges at different screen positions.
 //!
-//! Run with: cargo run -p skylight-osd --example notification_badge
+//! Run with: cargo run -p osd-flash --example notification_badge
 
-use skylight_osd::prelude::*;
+use osd_flash::prelude::*;
 
 fn create_badge(text_color: Color, bg_color: Color, size: f64) -> Icon {
     let center = size / 2.0;
@@ -20,12 +20,16 @@ fn create_badge(text_color: Color, bg_color: Color, size: f64) -> Icon {
         .build()
 }
 
-fn show_badge_at_position(position: FlashPosition, color: Color, label: &str) -> skylight_osd::Result<()> {
+fn show_badge_at_position(
+    position: FlashPosition,
+    color: Color,
+    label: &str,
+) -> osd_flash::Result<()> {
     let size = 80.0;
     let icon = create_badge(Color::WHITE, color, size);
 
     // Calculate frame based on position
-    let config = skylight_osd::FlashConfig::new()
+    let config = osd_flash::FlashConfig::new()
         .icon_size(size)
         .position(position)
         .margin(30.0);
@@ -42,12 +46,28 @@ fn show_badge_at_position(position: FlashPosition, color: Color, label: &str) ->
     Ok(())
 }
 
-fn main() -> skylight_osd::Result<()> {
+fn main() -> osd_flash::Result<()> {
     // Show badges at different corners with different colors
-    show_badge_at_position(FlashPosition::TopRight, Color::rgba(0.9, 0.2, 0.2, 0.95), "red (top-right)")?;
-    show_badge_at_position(FlashPosition::TopLeft, Color::rgba(0.2, 0.6, 0.9, 0.95), "blue (top-left)")?;
-    show_badge_at_position(FlashPosition::BottomRight, Color::rgba(0.9, 0.6, 0.1, 0.95), "orange (bottom-right)")?;
-    show_badge_at_position(FlashPosition::BottomLeft, Color::rgba(0.6, 0.2, 0.8, 0.95), "purple (bottom-left)")?;
+    show_badge_at_position(
+        FlashPosition::TopRight,
+        Color::rgba(0.9, 0.2, 0.2, 0.95),
+        "red (top-right)",
+    )?;
+    show_badge_at_position(
+        FlashPosition::TopLeft,
+        Color::rgba(0.2, 0.6, 0.9, 0.95),
+        "blue (top-left)",
+    )?;
+    show_badge_at_position(
+        FlashPosition::BottomRight,
+        Color::rgba(0.9, 0.6, 0.1, 0.95),
+        "orange (bottom-right)",
+    )?;
+    show_badge_at_position(
+        FlashPosition::BottomLeft,
+        Color::rgba(0.6, 0.2, 0.8, 0.95),
+        "purple (bottom-left)",
+    )?;
 
     println!("Done!");
     Ok(())

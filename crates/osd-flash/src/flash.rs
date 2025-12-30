@@ -24,24 +24,24 @@
 //!     .build();
 //! ```
 
-mod color;
-mod drawing;
-mod geometry;
-mod icon;
-mod skylight;
+pub use crate::color::Color;
+pub use crate::geometry::{Point, Rect, Size};
+pub use crate::icon::IconBuilder;
 
-pub use color::Color;
-pub use drawing::{Canvas, Shape};
-pub use geometry::{Point, Rect, Size};
-pub use icon::IconBuilder;
-pub use skylight::{DisplayTarget, SkylightWindow, SkylightWindowBuilder, WindowLevel};
+#[cfg(target_os = "macos")]
+use crate::icon::CameraIcon;
 
-pub use skylight::run_loop_for_seconds;
+#[cfg(target_os = "macos")]
+pub use crate::backends::{
+    run_loop_for_seconds, DisplayTarget, SkylightCanvas, SkylightWindow, SkylightWindowBuilder,
+    WindowLevel,
+};
 
 /// Position for the flash indicator on screen.
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, Default)]
 pub enum FlashPosition {
     /// Top-right corner (default, like macOS notifications)
+    #[default]
     TopRight,
     /// Top-left corner
     TopLeft,
@@ -53,12 +53,6 @@ pub enum FlashPosition {
     Center,
     /// Custom position (x, y from top-left)
     Custom { x: f64, y: f64 },
-}
-
-impl Default for FlashPosition {
-    fn default() -> Self {
-        Self::TopRight
-    }
 }
 
 /// Configuration for the screen flash.
@@ -79,7 +73,7 @@ impl Default for FlashConfig {
         Self {
             icon_size: 120.0,
             position: FlashPosition::TopRight,
-            duration_secs: 0.5,
+            duration_secs: 1.2,
             margin: 20.0,
         }
     }
@@ -122,6 +116,7 @@ impl FlashConfig {
 ///
 /// # Note
 /// Must run on main thread for SkyLight windows to appear (run loop requirement).
+#[cfg(target_os = "macos")]
 pub fn flash_screenshot(config: &FlashConfig, win_id: u64) {
     if let Err(e) = show_indicator_screenshot_indicator(config, win_id) {
         log::warn!("Failed to show screenshot indicator: {}", e);
@@ -129,13 +124,15 @@ pub fn flash_screenshot(config: &FlashConfig, win_id: u64) {
 }
 
 /// Show visual feedback with default configuration.
+#[cfg(target_os = "macos")]
 pub fn flash_screenshot_default(win_id: u64) {
     flash_screenshot(&FlashConfig::default(), win_id);
 }
 
+#[cfg(target_os = "macos")]
 pub fn show_indicator_screenshot_indicator(config: &FlashConfig, win_id: u64) -> crate::Result<()> {
     // Build the camera icon
-    let icon = icon::camera_icon(config.icon_size);
+    let icon = CameraIcon::new(config.icon_size).build();
 
     // Create and show the SkyLight window
     let mut window =
@@ -157,7 +154,7 @@ mod tests {
         let config = FlashConfig::default();
         assert_eq!(config.icon_size, 120.0);
         assert_eq!(config.position, FlashPosition::TopRight);
-        assert_eq!(config.duration_secs, 3.0);
+        assert_eq!(config.duration_secs, 1.2);
     }
 
     #[test]

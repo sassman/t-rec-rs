@@ -2,8 +2,6 @@
 //!
 //! Provides simple, ergonomic types for working with positions, sizes, and rectangles.
 
-use core_graphics::geometry::{CGPoint, CGRect, CGSize};
-
 /// A 2D point.
 #[derive(Debug, Clone, Copy, PartialEq, Default)]
 pub struct Point {
@@ -28,18 +26,6 @@ impl Point {
             x: self.x + dx,
             y: self.y + dy,
         }
-    }
-}
-
-impl From<Point> for CGPoint {
-    fn from(p: Point) -> Self {
-        CGPoint { x: p.x, y: p.y }
-    }
-}
-
-impl From<CGPoint> for Point {
-    fn from(p: CGPoint) -> Self {
-        Self { x: p.x, y: p.y }
     }
 }
 
@@ -81,23 +67,6 @@ impl Size {
     }
 }
 
-impl From<Size> for CGSize {
-    fn from(s: Size) -> Self {
-        CGSize {
-            width: s.width,
-            height: s.height,
-        }
-    }
-}
-
-impl From<CGSize> for Size {
-    fn from(s: CGSize) -> Self {
-        Self {
-            width: s.width,
-            height: s.height,
-        }
-    }
-}
 
 /// A rectangle defined by origin and size.
 #[derive(Debug, Clone, Copy, PartialEq, Default)]
@@ -189,23 +158,6 @@ impl Rect {
     }
 }
 
-impl From<Rect> for CGRect {
-    fn from(r: Rect) -> Self {
-        CGRect {
-            origin: r.origin.into(),
-            size: r.size.into(),
-        }
-    }
-}
-
-impl From<CGRect> for Rect {
-    fn from(r: CGRect) -> Self {
-        Self {
-            origin: r.origin.into(),
-            size: r.size.into(),
-        }
-    }
-}
 
 #[cfg(test)]
 mod tests {
@@ -262,13 +214,5 @@ mod tests {
         assert_eq!(r.origin.y, 10.0);
         assert_eq!(r.size.width, 80.0);
         assert_eq!(r.size.height, 80.0);
-    }
-
-    #[test]
-    fn test_cg_conversions() {
-        let rect = Rect::from_xywh(10.0, 20.0, 100.0, 50.0);
-        let cg_rect: CGRect = rect.into();
-        let back: Rect = cg_rect.into();
-        assert_eq!(rect, back);
     }
 }

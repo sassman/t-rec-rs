@@ -13,10 +13,13 @@ use libloading::{Library, Symbol};
 use log::debug;
 use objc2::{class, msg_send};
 
-use super::drawing::Canvas;
-use super::geometry::{Point, Rect, Size};
-use super::icon::Icon;
-use super::{FlashConfig, FlashPosition};
+use super::canvas::SkylightCanvas;
+// Import geometry extensions for CG type conversions
+#[allow(unused_imports)]
+use super::geometry_ext;
+use crate::geometry::{Point, Rect, Size};
+use crate::icon::Icon;
+use crate::{FlashConfig, FlashPosition};
 
 // Private API types
 type CGSConnectionID = i32;
@@ -44,7 +47,7 @@ pub enum WindowLevel {
 impl WindowLevel {
     /// Convert to the raw Core Graphics window level value.
     pub fn to_cg_level(self) -> i32 {
-        use crate::core_foundation_sys_patches::*;
+        use super::cg_patches::*;
         match self {
             WindowLevel::Normal => kCGMinimumWindowLevel,
             WindowLevel::Floating => kCGFloatingWindowLevel,
@@ -567,7 +570,7 @@ impl SkylightWindow {
 
     /// Draw an icon onto the window.
     pub fn draw(&mut self, icon: &Icon) -> crate::Result<()> {
-        let mut canvas = unsafe { Canvas::new(self.context, self.size) };
+        let mut canvas = unsafe { SkylightCanvas::new(self.context, self.size) };
         icon.draw(&mut canvas);
         Ok(())
     }
@@ -682,7 +685,7 @@ mod tests {
 
     #[test]
     fn test_window_level_to_cg_level() {
-        use crate::core_foundation_sys_patches::{
+        use crate::backends::skylight::cg_patches::{
             kCGFloatingWindowLevel, kCGMaximumWindowLevel, kCGMinimumWindowLevel,
             kCGModalPanelWindowLevel,
         };

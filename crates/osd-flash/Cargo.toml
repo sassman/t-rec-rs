@@ -1,6 +1,7 @@
 [package]
-name = "skylight-osd"
+name = "osd-flash"
 version = "0.1.0"
+description = "On-screen display (OSD) flash indicators for visual feedback, such as screenshot flash effects or status icons"
 authors.workspace = true
 edition.workspace = true
 license.workspace = true
@@ -19,3 +20,4 @@ libloading.workspace = true
 core-graphics.workspace = true
 core-foundation.workspace = true
 core-foundation-sys.workspace = true
+foreign-types-shared = "0.3"

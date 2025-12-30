@@ -2,11 +2,11 @@
 //!
 //! Shows how to build a custom icon using the IconBuilder API.
 //!
-//! Run with: cargo run -p skylight-osd --example custom_icon
+//! Run with: cargo run -p osd-flash --example custom_icon
 
-use skylight_osd::prelude::*;
+use osd_flash::prelude::*;
 
-fn main() -> skylight_osd::Result<()> {
+fn main() -> osd_flash::Result<()> {
     let size = 120.0;
 
     // Build a custom "check" icon (green background with white checkmark circle)

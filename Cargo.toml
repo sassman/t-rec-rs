@@ -10,7 +10,7 @@ license = "GPL-3.0-only"
 repository = "https://github.com/sassman/t-rec-rs"
 
 [workspace.dependencies]
-skylight-osd = { path = "crates/skylight-osd" }
+osd-flash = { path = "crates/osd-flash" }
 
 anyhow = "1.0"
 log = "0.4"
