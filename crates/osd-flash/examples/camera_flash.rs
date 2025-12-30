@@ -6,18 +6,20 @@
 
 use osd_flash::prelude::*;
 
-fn main() {
-    // Use the built-in camera icon with default settings
-    let config = FlashConfig::new()
-        .icon_size(120.0)
-        .position(FlashPosition::TopRight)
-        .duration(1.5)
-        .margin(20.0);
+fn main() -> osd_flash::Result<()> {
+    let size = 120.0;
 
     println!("Showing camera flash in top-right corner...");
 
-    // flash_screenshot requires a window ID; use 0 for main display
-    osd_flash::flash_screenshot(&config, 0);
+    OsdFlashBuilder::new()
+        .dimensions(size)
+        .position(FlashPosition::TopRight)
+        .margin(20.0)
+        .level(WindowLevel::AboveAll)
+        .build()?
+        .draw(CameraIcon::new(size).build())
+        .show_for_seconds(1.5)?;
 
     println!("Done!");
+    Ok(())
 }

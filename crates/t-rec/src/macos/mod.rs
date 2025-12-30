@@ -13,12 +13,6 @@ use screenshot::capture_window_screenshot;
 use std::env;
 use window_id::window_list;
 
-// TODO(release): this shim is for backwards compatibility
-//       and shall be removed eventually
-pub mod screen_flash {
-    pub use osd_flash::*;
-}
-
 pub const DEFAULT_SHELL: &str = "/bin/sh";
 
 impl PlatformApiFactory for Platform {

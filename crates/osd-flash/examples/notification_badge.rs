@@ -28,20 +28,16 @@ fn show_badge_at_position(
     let size = 80.0;
     let icon = create_badge(Color::WHITE, color, size);
 
-    // Calculate frame based on position
-    let config = osd_flash::FlashConfig::new()
-        .icon_size(size)
-        .position(position)
-        .margin(30.0);
-
     println!("Showing {} badge...", label);
 
-    let mut window = SkylightWindowBuilder::from_config(&config)
+    OsdFlashBuilder::new()
+        .dimensions(size)
+        .position(position)
+        .margin(30.0)
         .level(WindowLevel::AboveAll)
-        .build()?;
-
-    window.draw(&icon)?;
-    window.show(1.0)?;
+        .build()?
+        .draw(icon)
+        .show_for_seconds(1.0)?;
 
     Ok(())
 }

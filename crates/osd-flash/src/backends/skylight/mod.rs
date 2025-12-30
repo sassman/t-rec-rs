@@ -10,9 +10,11 @@
 mod canvas;
 pub(crate) mod cg_patches;
 mod geometry_ext;
+mod osd_window;
 mod window;
 
 pub use canvas::SkylightCanvas;
+pub use osd_window::SkylightOsdWindow;
 pub use window::{
     run_loop_for_seconds, DisplayTarget, SkylightWindow, SkylightWindowBuilder, WindowLevel,
 };

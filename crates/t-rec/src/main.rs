@@ -159,16 +159,33 @@ fn validate_prerequisites(settings: &ProfileSettings) -> Result<()> {
 /// Test flash indicator (macOS only).
 #[cfg(target_os = "macos")]
 fn run_test_flash(win_id: WindowId) -> Result<()> {
+    use osd_flash::prelude::*;
     use std::thread;
+
+    fn show_camera_flash(win_id: u64) -> osd_flash::Result<()> {
+        OsdFlashBuilder::new()
+            .dimensions(120.0)
+            .position(FlashPosition::TopRight)
+            .margin(20.0)
+            .level(WindowLevel::AboveAll)
+            .attach_to_window(win_id)
+            .build()?
+            .draw(CameraIcon::new(120.0).build())
+            .show_for_seconds(1.5)
+    }
 
     println!("Testing screen flash indicator within a background thread...");
     println!("Showing flash indicator from main thread...");
-    screen_flash::flash_screenshot_default(win_id);
+    if let Err(e) = show_camera_flash(win_id) {
+        log::warn!("Failed to show flash: {}", e);
+    }
     thread::sleep(Duration::from_secs(5));
 
     thread::spawn(move || {
         println!("Showing flash indicator from background thread...");
-        screen_flash::flash_screenshot_default(win_id);
+        if let Err(e) = show_camera_flash(win_id) {
+            log::warn!("Failed to show flash: {}", e);
+        }
         thread::sleep(Duration::from_secs(5));
     })
     .join()

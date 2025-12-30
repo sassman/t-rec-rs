@@ -25,20 +25,15 @@ fn main() -> osd_flash::Result<()> {
         )
         .build();
 
-    let config = FlashConfig::new()
-        .icon_size(size)
-        .position(FlashPosition::Center)
-        .duration(2.0);
-
     println!("Showing custom success icon in center...");
 
-    // Create window using builder
-    let mut window = SkylightWindowBuilder::from_config(&config)
+    OsdFlashBuilder::new()
+        .dimensions(size)
+        .position(FlashPosition::Center)
         .level(WindowLevel::AboveAll)
-        .build()?;
-
-    window.draw(&icon)?;
-    window.show(config.duration_secs)?;
+        .build()?
+        .draw(icon)
+        .show_for_seconds(2.0)?;
 
     println!("Done!");
     Ok(())

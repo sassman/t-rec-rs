@@ -17,7 +17,7 @@ use super::canvas::SkylightCanvas;
 // Import geometry extensions for CG type conversions
 #[allow(unused_imports)]
 use super::geometry_ext;
-use crate::geometry::{Margin, Point, Rect, Size};
+use crate::geometry::{Point, Rect, Size};
 use crate::icon::Icon;
 use crate::{FlashConfig, FlashPosition};
 
@@ -195,7 +195,7 @@ fn get_display_info() -> (Rect, f64) {
 /// Get window bounds by window ID using CGWindowListCopyWindowInfo.
 ///
 /// Returns the window's frame in screen coordinates, or None if not found.
-fn get_window_bounds(window_id: u64) -> Option<Rect> {
+pub(super) fn get_window_bounds(window_id: u64) -> Option<Rect> {
     use core_foundation::array::CFArray;
     use core_foundation::base::{CFType, TCFType};
     use core_foundation::dictionary::CFDictionary;
@@ -575,6 +575,19 @@ impl SkylightWindow {
         Ok(())
     }
 
+    /// Get the raw context pointer for direct drawing.
+    ///
+    /// # Safety
+    /// The returned pointer is only valid for the lifetime of this window.
+    pub fn context_ptr(&self) -> *mut c_void {
+        self.context
+    }
+
+    /// Get the window size.
+    pub fn size(&self) -> Size {
+        self.size
+    }
+
     /// Show the window for the specified duration.
     pub fn show(&mut self, duration_secs: f64) -> crate::Result<()> {
         unsafe {
@@ -605,6 +618,7 @@ impl Drop for SkylightWindow {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::geometry::Margin;
 
     #[test]
     fn test_calculate_frame_top_right() {

@@ -37,34 +37,31 @@ fn main() -> osd_flash::Result<()> {
     // GitHub colors
     println!("Showing GitHub-themed icon...");
     let github_icon = branded_icon(size, "#24292e", "#ffffff");
-    show_icon(&github_icon, size, FlashPosition::TopRight)?;
+    show_icon(github_icon, size, FlashPosition::TopRight)?;
 
     // Spotify colors
     println!("Showing Spotify-themed icon...");
     let spotify_icon = branded_icon(size, "#1DB954", "#191414");
-    show_icon(&spotify_icon, size, FlashPosition::Center)?;
+    show_icon(spotify_icon, size, FlashPosition::Center)?;
 
     // Custom gradient-like effect with Discord colors
     println!("Showing Discord-themed icon...");
     let discord_icon = branded_icon(size, "#5865F2", "#ffffff");
-    show_icon(&discord_icon, size, FlashPosition::BottomRight)?;
+    show_icon(discord_icon, size, FlashPosition::BottomRight)?;
 
     println!("Done!");
     Ok(())
 }
 
-fn show_icon(icon: &Icon, size: f64, position: FlashPosition) -> osd_flash::Result<()> {
-    let config = FlashConfig::new()
-        .icon_size(size)
+fn show_icon(icon: Icon, size: f64, position: FlashPosition) -> osd_flash::Result<()> {
+    OsdFlashBuilder::new()
+        .dimensions(size)
         .position(position)
-        .margin(25.0);
-
-    let mut window = SkylightWindowBuilder::from_config(&config)
+        .margin(25.0)
         .level(WindowLevel::AboveAll)
-        .build()?;
-
-    window.draw(icon)?;
-    window.show(1.2)?;
+        .build()?
+        .draw(icon)
+        .show_for_seconds(1.2)?;
 
     Ok(())
 }

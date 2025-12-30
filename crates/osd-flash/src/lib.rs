@@ -30,6 +30,7 @@ mod color;
 mod flash;
 mod geometry;
 mod shape;
+mod window;
 
 /// Icon building API for creating custom on-screen indicators.
 pub mod icon;
@@ -42,6 +43,7 @@ pub use anyhow::Result;
 pub use canvas::Canvas;
 pub use flash::*;
 pub use shape::Shape;
+pub use window::{DisplayTarget, Drawable, OsdFlashBuilder, OsdWindow, WindowLevel};
 
 /// Prelude for convenient imports.
 pub mod prelude {
@@ -51,12 +53,13 @@ pub mod prelude {
     pub use crate::geometry::{Margin, Point, Rect, Size};
     pub use crate::icon::{CameraIcon, Icon, IconBuilder, RecordingIcon};
     pub use crate::shape::Shape;
+    pub use crate::window::{DisplayTarget, Drawable, OsdFlashBuilder, OsdWindow, WindowLevel};
     pub use crate::{FlashConfig, FlashPosition};
 
-    // Backend-specific types
+    // Backend-specific types (for advanced usage)
     #[cfg(target_os = "macos")]
     pub use crate::backends::{
-        run_loop_for_seconds, DisplayTarget, SkylightCanvas, SkylightWindow, SkylightWindowBuilder,
-        WindowLevel,
+        run_loop_for_seconds, SkylightCanvas, SkylightOsdWindow, SkylightWindow,
+        SkylightWindowBuilder,
     };
 }
