@@ -54,7 +54,7 @@ pub mod prelude {
     pub use crate::icon::{CameraIcon, Icon, IconBuilder, RecordingIcon};
     pub use crate::shape::Shape;
     pub use crate::window::{DisplayTarget, Drawable, OsdFlashBuilder, OsdWindow, WindowLevel};
-    pub use crate::{FlashConfig, FlashPosition};
+    pub use crate::FlashPosition;
 
     // Backend-specific types (for advanced usage)
     #[cfg(target_os = "macos")]

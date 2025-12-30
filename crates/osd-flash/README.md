@@ -11,7 +11,7 @@ This crate provides a simple API for creating overlay windows that appear above 
 ## Features
 
 - **Overlay windows** that appear above all apps, including fullscreen
-- **Built-in camera icon** for screenshot feedback
+- **Built-in icons** (camera, recording) for common use cases
 - **IconBuilder API** for creating custom indicators
 - **Flexible positioning** (corners, center, or custom coordinates)
 - **Hex color support** for branded icons
@@ -25,13 +25,15 @@ This crate provides a simple API for creating overlay windows that appear above 
 ```rust
 use osd_flash::prelude::*;
 
-// Show the built-in camera flash
-let config = FlashConfig::new()
-    .icon_size(120.0)
+// Show a camera flash indicator
+OsdFlashBuilder::new()
+    .dimensions(120.0)
     .position(FlashPosition::TopRight)
-    .duration(1.5);
-
-osd_flash::flash_screenshot(&config, 0);
+    .margin(20.0)
+    .level(WindowLevel::AboveAll)
+    .build()?
+    .draw(CameraIcon::new(120.0).build())
+    .show_for_seconds(1.5)?;
 ```
 
 ## Examples
@@ -73,18 +75,22 @@ cargo run -p osd-flash --example hex_colors
 
 ## API Overview
 
-### FlashConfig
+### OsdFlashBuilder
 
-Configure the flash indicator:
+The main entry point for creating OSD flash windows:
 
 ```rust
 use osd_flash::prelude::*;
 
-let config = FlashConfig::new()
-    .icon_size(100.0)           // Size in points
+OsdFlashBuilder::new()
+    .dimensions(100.0)              // Size in points (square)
     .position(FlashPosition::Center)
-    .duration(2.0)              // Duration in seconds
-    .margin(20.0);              // Margin from screen edge
+    .margin(20.0)                   // Margin from screen edge
+    .level(WindowLevel::AboveAll)   // Z-order
+    .attach_to_window(window_id)    // Optional: attach to specific window
+    .build()?
+    .draw(CameraIcon::new(100.0).build())
+    .show_for_seconds(2.0)?;
 ```
 
 ### IconBuilder
@@ -101,21 +107,16 @@ let icon = IconBuilder::new(120.0)
     .build();
 ```
 
-### SkylightWindowBuilder (macOS)
-
-Low-level window creation using the SkyLight backend:
+### Built-in Icons
 
 ```rust
 use osd_flash::prelude::*;
 
-let mut window = SkylightWindowBuilder::new()
-    .frame(Rect::from_xywh(100.0, 100.0, 120.0, 120.0))
-    .level(WindowLevel::AboveAll)
-    .sticky(true)  // Appear on all spaces
-    .build()?;
+// Camera icon for screenshot feedback
+let camera = CameraIcon::new(120.0).build();
 
-window.draw(&icon)?;
-window.show(1.5)?;
+// Recording indicator (red dot)
+let recording = RecordingIcon::new(60.0).build();
 ```
 
 ### Colors

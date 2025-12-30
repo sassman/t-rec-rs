@@ -6,20 +6,17 @@
 use std::ffi::c_void;
 use std::sync::OnceLock;
 
-use core_graphics::display::{CGDisplayBounds, CGMainDisplayID};
 use core_graphics::geometry::CGRect;
 
 use libloading::{Library, Symbol};
-use log::debug;
 use objc2::{class, msg_send};
 
 use super::canvas::SkylightCanvas;
 // Import geometry extensions for CG type conversions
 #[allow(unused_imports)]
 use super::geometry_ext;
-use crate::geometry::{Point, Rect, Size};
+use crate::geometry::{Rect, Size};
 use crate::icon::Icon;
-use crate::{FlashConfig, FlashPosition};
 
 // Private API types
 type CGSConnectionID = i32;
@@ -88,9 +85,6 @@ extern "C" {}
 // Display and window functions
 #[link(name = "CoreGraphics", kind = "framework")]
 extern "C" {
-    fn CGDisplayCopyDisplayMode(display: u32) -> *mut c_void;
-    fn CGDisplayModeGetPixelWidth(mode: *mut c_void) -> usize;
-    fn CGDisplayModeRelease(mode: *mut c_void);
     fn CGContextRelease(context: *mut c_void);
 }
 
@@ -155,43 +149,6 @@ pub fn run_loop_for_seconds(seconds: f64) {
     }
 }
 
-/// Get display bounds and scale factor for a specific display.
-///
-/// Returns bounds in the global display coordinate space (points, not pixels).
-/// CGDisplayBounds already returns point coordinates, which is what SkyLight expects.
-fn get_display_info_for_id(display_id: u32) -> (Rect, f64) {
-    unsafe {
-        let bounds: CGRect = CGDisplayBounds(display_id);
-
-        // Calculate scale factor for Retina displays (for informational purposes)
-        let mode = CGDisplayCopyDisplayMode(display_id);
-        let scale = if !mode.is_null() {
-            let pixel_width = CGDisplayModeGetPixelWidth(mode);
-            let s = pixel_width as f64 / bounds.size.width;
-            CGDisplayModeRelease(mode);
-            s
-        } else {
-            1.0
-        };
-
-        // CGDisplayBounds returns point coordinates in the global display space
-        // No scaling needed - SkyLight works with these coordinates directly
-        let display_bounds = Rect::from_xywh(
-            bounds.origin.x,
-            bounds.origin.y,
-            bounds.size.width,
-            bounds.size.height,
-        );
-
-        (display_bounds, scale)
-    }
-}
-
-/// Get display bounds and scale factor for the main display.
-fn get_display_info() -> (Rect, f64) {
-    get_display_info_for_id(unsafe { CGMainDisplayID() })
-}
-
 /// Get window bounds by window ID using CGWindowListCopyWindowInfo.
 ///
 /// Returns the window's frame in screen coordinates, or None if not found.
@@ -242,68 +199,6 @@ pub(super) fn get_window_bounds(window_id: u64) -> Option<Rect> {
         }
         None
     }
-}
-
-/// Get display bounds based on target.
-fn get_target_display_info(target: DisplayTarget) -> (Rect, f64, Option<Rect>) {
-    match target {
-        DisplayTarget::Main => {
-            let (bounds, scale) = get_display_info();
-            (bounds, scale, None)
-        }
-        DisplayTarget::Display(id) => {
-            let (bounds, scale) = get_display_info_for_id(id);
-            debug!("Using display ID {} with bounds {:?}", id, bounds);
-            (bounds, scale, None)
-        }
-        DisplayTarget::Window(window_id) => {
-            let window_bounds = get_window_bounds(window_id);
-            // For window target, use the main display but return window bounds for positioning
-            let (display_bounds, scale) = get_display_info();
-            debug!(
-                "Using window ID {window_id} with bounds {window_bounds:?} on display bounds {display_bounds:?} at scale {scale}s",
-            );
-            (display_bounds, scale, window_bounds)
-        }
-    }
-}
-
-/// Menu bar height in points (approximate).
-const MENU_BAR_HEIGHT: f64 = 25.0;
-
-/// Calculate window frame based on position config.
-///
-/// The `top_inset` parameter accounts for the menu bar when positioning on a display,
-/// or should be 0.0 when positioning relative to a window.
-fn calculate_frame(config: &FlashConfig, bounds: &Rect, top_inset: f64) -> Rect {
-    let size = config.icon_size;
-    let margin = &config.margin;
-
-    let origin = match config.position {
-        FlashPosition::TopRight => Point::new(
-            bounds.origin.x / 2.0 + bounds.size.width / 2.0 - size / 2.0 - margin.right / 2.0,
-            bounds.origin.y / 2.0 + margin.top + top_inset,
-        ),
-        FlashPosition::TopLeft => Point::new(
-            bounds.origin.x / 2.0 + margin.left / 2.0,
-            bounds.origin.y / 2.0 + margin.top + top_inset,
-        ),
-        FlashPosition::BottomRight => Point::new(
-            bounds.origin.x / 2.0 + bounds.size.width / 2.0 - size / 2.0 - margin.right / 2.0,
-            bounds.origin.y / 2.0 + bounds.size.height / 2.0 - size / 2.0 - margin.bottom / 2.0,
-        ),
-        FlashPosition::BottomLeft => Point::new(
-            bounds.origin.x / 2.0 + margin.left / 2.0,
-            bounds.origin.y / 2.0 + bounds.size.height / 2.0 - size / 2.0 - margin.bottom / 2.0,
-        ),
-        FlashPosition::Center => Point::new(
-            bounds.origin.x / 2.0 + bounds.size.width / 4.0 - size / 4.0,
-            bounds.origin.y / 2.0 + bounds.size.height / 4.0 - size / 4.0,
-        ),
-        FlashPosition::Custom { x, y } => Point::new(x, y),
-    };
-
-    Rect::new(origin, Size::square(size))
 }
 
 /// Builder for creating SkyLight overlay windows.
@@ -375,35 +270,6 @@ impl SkylightWindowBuilder {
         self
     }
 
-    /// Build the window from a FlashConfig.
-    ///
-    /// This is a convenience method that extracts frame from the config.
-    pub fn from_config(config: &FlashConfig) -> Self {
-        Self::from_config_with_target(config, DisplayTarget::Main)
-    }
-
-    /// Build the window from a FlashConfig with a specific display target.
-    pub fn from_config_with_target(config: &FlashConfig, target: DisplayTarget) -> Self {
-        let (display_bounds, scale, window_bounds) = get_target_display_info(target);
-
-        // Determine bounds and top inset based on target type
-        let (bounds, top_inset) = match window_bounds {
-            // When targeting a window, use window bounds without menu bar offset
-            Some(wb) => (wb, 0.0),
-            // When targeting a display, use display bounds with menu bar offset
-            None => (display_bounds, MENU_BAR_HEIGHT),
-        };
-
-        // Round coordinates to avoid subpixel rendering artifacts
-        let frame = calculate_frame(config, &bounds, top_inset).rounded();
-
-        debug!(
-            "Calculated window frame {frame:?} for config {config:?} on target {target:?} with scale = {scale}",
-        );
-
-        Self::new().frame(frame).display(target)
-    }
-
     /// Build the SkyLight window.
     pub fn build(self) -> crate::Result<SkylightWindow> {
         let frame = self
@@ -429,13 +295,6 @@ impl SkylightWindow {
     /// Create a new SkyLight overlay window using the builder.
     pub fn builder() -> SkylightWindowBuilder {
         SkylightWindowBuilder::new()
-    }
-
-    /// Create a new SkyLight overlay window from a FlashConfig.
-    ///
-    /// This is a convenience constructor that uses default window settings.
-    pub fn new(config: &FlashConfig) -> crate::Result<Self> {
-        SkylightWindowBuilder::from_config(config).build()
     }
 
     /// Internal creation method with all parameters.
@@ -618,76 +477,6 @@ impl Drop for SkylightWindow {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::geometry::Margin;
-
-    #[test]
-    fn test_calculate_frame_top_right() {
-        let config = FlashConfig {
-            icon_size: 100.0,
-            position: FlashPosition::TopRight,
-            duration_secs: 0.5,
-            margin: Margin::all(20.0),
-        };
-        let display = Rect::from_xywh(0.0, 0.0, 1920.0, 1080.0);
-        let frame = calculate_frame(&config, &display, MENU_BAR_HEIGHT);
-
-        assert_eq!(frame.size.width, 100.0);
-        assert_eq!(frame.size.height, 100.0);
-        // x = 0/2 + 1920/2 - 100/2 - 20/2 = 900
-        assert_eq!((frame.origin.x - 900.0).abs(), 0.0);
-        // y = 0/2 + 20 = 20
-        assert_eq!((frame.origin.y - 20.0).abs(), 25.0);
-    }
-
-    #[test]
-    fn test_calculate_frame_top_right_window() {
-        let config = FlashConfig {
-            icon_size: 100.0,
-            position: FlashPosition::TopRight,
-            duration_secs: 0.5,
-            margin: Margin::all(20.0),
-        };
-        // Window on secondary display with negative coordinates
-        let window = Rect::from_xywh(-813.0, -670.0, 1062.0, 628.0);
-        let frame = calculate_frame(&config, &window, 0.0);
-
-        assert_eq!(frame.size.width, 100.0);
-        assert_eq!(frame.size.height, 100.0);
-        // x = -813/2 + 1062/2 - 100/2 - 20/2 = -406.5 + 531 - 50 - 10 = 64.5
-        assert!((frame.origin.x - 64.5).abs() < 1.0);
-        // y = -670/2 + 20 = -335 + 20 = -315
-        assert!((frame.origin.y - (-315.0)).abs() < 1.0);
-    }
-
-    #[test]
-    fn test_calculate_frame_center() {
-        let config = FlashConfig {
-            icon_size: 100.0,
-            position: FlashPosition::Center,
-            duration_secs: 0.5,
-            margin: Margin::all(20.0),
-        };
-        let display = Rect::from_xywh(0.0, 0.0, 1000.0, 1000.0);
-        let frame = calculate_frame(&config, &display, 0.0);
-
-        assert_eq!(frame.origin.x, 225.0);
-        assert_eq!(frame.origin.y, 225.0);
-    }
-
-    #[test]
-    fn test_calculate_frame_custom() {
-        let config = FlashConfig {
-            icon_size: 100.0,
-            position: FlashPosition::Custom { x: 50.0, y: 75.0 },
-            duration_secs: 0.5,
-            margin: Margin::all(20.0),
-        };
-        let display = Rect::from_xywh(0.0, 0.0, 1920.0, 1080.0);
-        let frame = calculate_frame(&config, &display, 0.0);
-
-        assert_eq!(frame.origin.x, 50.0);
-        assert_eq!(frame.origin.y, 75.0);
-    }
 
     #[test]
     fn test_skylight_lib_loading() {
