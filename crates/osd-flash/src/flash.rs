@@ -25,7 +25,7 @@
 //! ```
 
 pub use crate::color::Color;
-pub use crate::geometry::{Point, Rect, Size};
+pub use crate::geometry::{Margin, Point, Rect, Size};
 pub use crate::icon::IconBuilder;
 
 #[cfg(target_os = "macos")]
@@ -64,8 +64,8 @@ pub struct FlashConfig {
     pub position: FlashPosition,
     /// Duration to show the flash in seconds
     pub duration_secs: f64,
-    /// Margin from screen edge in points
-    pub margin: f64,
+    /// Margin from screen edges
+    pub margin: Margin,
 }
 
 impl Default for FlashConfig {
@@ -74,7 +74,7 @@ impl Default for FlashConfig {
             icon_size: 120.0,
             position: FlashPosition::TopRight,
             duration_secs: 1.2,
-            margin: 20.0,
+            margin: Margin::all(20.0),
         }
     }
 }
@@ -103,9 +103,15 @@ impl FlashConfig {
         self
     }
 
-    /// Set the margin from screen edge.
-    pub fn margin(mut self, margin: f64) -> Self {
-        self.margin = margin;
+    /// Set the margin from screen edges.
+    ///
+    /// Accepts various margin formats:
+    /// - `f64`: Same margin on all sides
+    /// - `(f64, f64)`: (vertical, horizontal) margins
+    /// - `(f64, f64, f64, f64)`: (top, right, bottom, left) margins
+    /// - `Margin`: Direct margin value
+    pub fn margin(mut self, margin: impl Into<Margin>) -> Self {
+        self.margin = margin.into();
         self
     }
 }
@@ -168,7 +174,7 @@ mod tests {
         assert_eq!(config.icon_size, 80.0);
         assert_eq!(config.position, FlashPosition::Center);
         assert_eq!(config.duration_secs, 1.0);
-        assert_eq!(config.margin, 30.0);
+        assert_eq!(config.margin, Margin::all(30.0));
     }
 
     #[test]

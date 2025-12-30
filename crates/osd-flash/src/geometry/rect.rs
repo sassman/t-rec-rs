@@ -1,71 +1,6 @@
-//! Geometry types for the screen flash module.
-//!
-//! Provides simple, ergonomic types for working with positions, sizes, and rectangles.
+//! Rectangle type.
 
-/// A 2D point.
-#[derive(Debug, Clone, Copy, PartialEq, Default)]
-pub struct Point {
-    pub x: f64,
-    pub y: f64,
-}
-
-impl Point {
-    /// Create a new point.
-    pub const fn new(x: f64, y: f64) -> Self {
-        Self { x, y }
-    }
-
-    /// Create a point at the origin (0, 0).
-    pub const fn zero() -> Self {
-        Self { x: 0.0, y: 0.0 }
-    }
-
-    /// Offset the point by the given amounts.
-    pub fn offset(self, dx: f64, dy: f64) -> Self {
-        Self {
-            x: self.x + dx,
-            y: self.y + dy,
-        }
-    }
-}
-
-/// A 2D size.
-#[derive(Debug, Clone, Copy, PartialEq, Default)]
-pub struct Size {
-    pub width: f64,
-    pub height: f64,
-}
-
-impl Size {
-    /// Create a new size.
-    pub const fn new(width: f64, height: f64) -> Self {
-        Self { width, height }
-    }
-
-    /// Create a square size.
-    pub const fn square(side: f64) -> Self {
-        Self {
-            width: side,
-            height: side,
-        }
-    }
-
-    /// Create a zero size.
-    pub const fn zero() -> Self {
-        Self {
-            width: 0.0,
-            height: 0.0,
-        }
-    }
-
-    /// Scale the size by a factor.
-    pub fn scale(self, factor: f64) -> Self {
-        Self {
-            width: self.width * factor,
-            height: self.height * factor,
-        }
-    }
-}
+use super::{Point, Size};
 
 /// A rectangle defined by origin and size.
 #[derive(Debug, Clone, Copy, PartialEq, Default)]
@@ -162,35 +97,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_point_new() {
-        let p = Point::new(10.0, 20.0);
-        assert_eq!(p.x, 10.0);
-        assert_eq!(p.y, 20.0);
-    }
-
-    #[test]
-    fn test_point_offset() {
-        let p = Point::new(10.0, 20.0).offset(5.0, -5.0);
-        assert_eq!(p.x, 15.0);
-        assert_eq!(p.y, 15.0);
-    }
-
-    #[test]
-    fn test_size_square() {
-        let s = Size::square(100.0);
-        assert_eq!(s.width, 100.0);
-        assert_eq!(s.height, 100.0);
-    }
-
-    #[test]
-    fn test_size_scale() {
-        let s = Size::new(100.0, 50.0).scale(2.0);
-        assert_eq!(s.width, 200.0);
-        assert_eq!(s.height, 100.0);
-    }
-
-    #[test]
-    fn test_rect_center() {
+    fn test_center() {
         let r = Rect::from_xywh(10.0, 20.0, 100.0, 50.0);
         let c = r.center();
         assert_eq!(c.x, 60.0);
@@ -198,7 +105,7 @@ mod tests {
     }
 
     #[test]
-    fn test_rect_centered() {
+    fn test_centered() {
         let center = Point::new(50.0, 50.0);
         let r = Rect::centered(center, Size::new(20.0, 10.0));
         assert_eq!(r.origin.x, 40.0);
@@ -206,7 +113,7 @@ mod tests {
     }
 
     #[test]
-    fn test_rect_inset() {
+    fn test_inset() {
         let r = Rect::from_xywh(0.0, 0.0, 100.0, 100.0).inset(10.0, 10.0);
         assert_eq!(r.origin.x, 10.0);
         assert_eq!(r.origin.y, 10.0);

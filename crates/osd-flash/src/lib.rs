@@ -35,7 +35,6 @@ mod shape;
 pub mod icon;
 
 /// Platform-specific backend implementations.
-#[cfg(target_os = "macos")]
 pub mod backends;
 
 // TODO: once stable migrate to `thiserror` and own error types
@@ -49,7 +48,7 @@ pub mod prelude {
     // Common types
     pub use crate::canvas::Canvas;
     pub use crate::color::Color;
-    pub use crate::geometry::{Point, Rect, Size};
+    pub use crate::geometry::{Margin, Point, Rect, Size};
     pub use crate::icon::{CameraIcon, Icon, IconBuilder, RecordingIcon};
     pub use crate::shape::Shape;
     pub use crate::{FlashConfig, FlashPosition};

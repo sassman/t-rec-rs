@@ -17,7 +17,7 @@ use super::canvas::SkylightCanvas;
 // Import geometry extensions for CG type conversions
 #[allow(unused_imports)]
 use super::geometry_ext;
-use crate::geometry::{Point, Rect, Size};
+use crate::geometry::{Margin, Point, Rect, Size};
 use crate::icon::Icon;
 use crate::{FlashConfig, FlashPosition};
 
@@ -277,24 +277,24 @@ const MENU_BAR_HEIGHT: f64 = 25.0;
 /// or should be 0.0 when positioning relative to a window.
 fn calculate_frame(config: &FlashConfig, bounds: &Rect, top_inset: f64) -> Rect {
     let size = config.icon_size;
-    let margin = config.margin;
+    let margin = &config.margin;
 
     let origin = match config.position {
         FlashPosition::TopRight => Point::new(
-            bounds.origin.x / 2.0 + bounds.size.width / 2.0 - size / 2.0 - margin / 2.0,
-            bounds.origin.y / 2.0 + margin + top_inset,
+            bounds.origin.x / 2.0 + bounds.size.width / 2.0 - size / 2.0 - margin.right / 2.0,
+            bounds.origin.y / 2.0 + margin.top + top_inset,
         ),
         FlashPosition::TopLeft => Point::new(
-            bounds.origin.x / 2.0 + margin / 2.0,
-            bounds.origin.y / 2.0 + margin + top_inset,
+            bounds.origin.x / 2.0 + margin.left / 2.0,
+            bounds.origin.y / 2.0 + margin.top + top_inset,
         ),
         FlashPosition::BottomRight => Point::new(
-            bounds.origin.x / 2.0 + bounds.size.width / 2.0 - size / 2.0 - margin / 2.0,
-            bounds.origin.y / 2.0 + bounds.size.height / 2.0 - size / 2.0 - margin / 2.0,
+            bounds.origin.x / 2.0 + bounds.size.width / 2.0 - size / 2.0 - margin.right / 2.0,
+            bounds.origin.y / 2.0 + bounds.size.height / 2.0 - size / 2.0 - margin.bottom / 2.0,
         ),
         FlashPosition::BottomLeft => Point::new(
-            bounds.origin.x / 2.0 + margin / 2.0,
-            bounds.origin.y / 2.0 + bounds.size.height / 2.0 - size / 2.0 - margin / 2.0,
+            bounds.origin.x / 2.0 + margin.left / 2.0,
+            bounds.origin.y / 2.0 + bounds.size.height / 2.0 - size / 2.0 - margin.bottom / 2.0,
         ),
         FlashPosition::Center => Point::new(
             bounds.origin.x / 2.0 + bounds.size.width / 4.0 - size / 4.0,
@@ -612,7 +612,7 @@ mod tests {
             icon_size: 100.0,
             position: FlashPosition::TopRight,
             duration_secs: 0.5,
-            margin: 20.0,
+            margin: Margin::all(20.0),
         };
         let display = Rect::from_xywh(0.0, 0.0, 1920.0, 1080.0);
         let frame = calculate_frame(&config, &display, MENU_BAR_HEIGHT);
@@ -631,7 +631,7 @@ mod tests {
             icon_size: 100.0,
             position: FlashPosition::TopRight,
             duration_secs: 0.5,
-            margin: 20.0,
+            margin: Margin::all(20.0),
         };
         // Window on secondary display with negative coordinates
         let window = Rect::from_xywh(-813.0, -670.0, 1062.0, 628.0);
@@ -651,7 +651,7 @@ mod tests {
             icon_size: 100.0,
             position: FlashPosition::Center,
             duration_secs: 0.5,
-            margin: 20.0,
+            margin: Margin::all(20.0),
         };
         let display = Rect::from_xywh(0.0, 0.0, 1000.0, 1000.0);
         let frame = calculate_frame(&config, &display, 0.0);
@@ -666,7 +666,7 @@ mod tests {
             icon_size: 100.0,
             position: FlashPosition::Custom { x: 50.0, y: 75.0 },
             duration_secs: 0.5,
-            margin: 20.0,
+            margin: Margin::all(20.0),
         };
         let display = Rect::from_xywh(0.0, 0.0, 1920.0, 1080.0);
         let frame = calculate_frame(&config, &display, 0.0);
