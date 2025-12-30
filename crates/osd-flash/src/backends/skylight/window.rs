@@ -9,7 +9,6 @@ use std::sync::OnceLock;
 use core_graphics::geometry::CGRect;
 
 use libloading::{Library, Symbol};
-use objc2::{class, msg_send};
 
 use super::canvas::SkylightCanvas;
 // Import geometry extensions for CG type conversions
@@ -78,74 +77,58 @@ pub enum DisplayTarget {
     // All,
 }
 
-// Link AppKit for NSApplication
-#[link(name = "AppKit", kind = "framework")]
-extern "C" {}
-
-// Display and window functions
-#[link(name = "CoreGraphics", kind = "framework")]
-extern "C" {
-    fn CGContextRelease(context: *mut c_void);
-}
-
-// For getting window bounds
-#[link(name = "CoreGraphics", kind = "framework")]
-extern "C" {
-    fn CGWindowListCopyWindowInfo(option: u32, relativeToWindow: u32) -> *const c_void;
-}
-
 // Window list options
 const K_CG_WINDOW_LIST_OPTION_INCLUDING_WINDOW: u32 = 1 << 3;
 
 #[link(name = "CoreFoundation", kind = "framework")]
 extern "C" {
+    // Display and window functions
+    fn CGContextRelease(context: *mut c_void);
+    // For getting window bounds
+    fn CGWindowListCopyWindowInfo(option: u32, relativeToWindow: u32) -> *const c_void;
     fn CFRelease(cf: *const c_void);
+    fn CFRunLoopRunInMode(
+        mode: *const c_void,
+        seconds: f64,
+        return_after_source_handled: bool,
+    ) -> i32;
+    static kCFRunLoopDefaultMode: *const c_void;
+}
+
+// AppKit for NSApplicationLoad
+#[link(name = "AppKit", kind = "framework")]
+extern "C" {
+    fn NSApplicationLoad() -> bool;
+}
+
+/// Ensure Cocoa framework is initialized.
+/// This must be called before SLSMainConnectionID() for proper SkyLight operation.
+fn ensure_cocoa_initialized() {
+    use std::sync::Once;
+    static INIT: Once = Once::new();
+
+    INIT.call_once(|| {
+        unsafe { NSApplicationLoad() };
+    });
 }
 
 /// Get or load the SkyLight library.
 fn get_skylight_lib() -> Option<&'static Library> {
+    // Ensure Cocoa is initialized before loading SkyLight
+    ensure_cocoa_initialized();
+
     SKYLIGHT_LIB
         .get_or_init(|| unsafe { Library::new(SKYLIGHT_PATH).ok() })
         .as_ref()
 }
 
-/// Ensure NSApplication is initialized for SkyLight windows.
+/// Run the CFRunLoop for a given duration.
 ///
-/// SkyLight windows require an active NSApplication. This function lazily
-/// initializes NSApplication as a background application (no dock icon).
-/// Safe to call multiple times - initialization only happens once.
-fn ensure_nsapplication() {
-    use std::sync::Once;
-    static INIT: Once = Once::new();
-
-    INIT.call_once(|| {
-        unsafe {
-            // Get or create the shared NSApplication
-            let app: *mut objc2::runtime::AnyObject =
-                msg_send![class!(NSApplication), sharedApplication];
-
-            // Set activation policy to accessory (no dock icon, can create windows)
-            // NSApplicationActivationPolicyAccessory = 1
-            let _: bool = msg_send![app, setActivationPolicy: 1i64];
-
-            // Activate the application (required for windows to appear)
-            let _: () = msg_send![app, activateIgnoringOtherApps: true];
-        }
-    });
-}
-
-/// Run the NSRunLoop for a given duration.
-///
-/// Required for SkyLight windows to appear. Automatically initializes
-/// NSApplication if not already done.
-pub fn run_loop_for_seconds(seconds: f64) {
-    ensure_nsapplication();
-
+/// Uses `CFRunLoopRunInMode` to process events for the specified duration.
+/// This is required for SkyLight windows to appear on screen.
+fn run_loop_for_seconds(seconds: f64) {
     unsafe {
-        let future_date: *mut objc2::runtime::AnyObject =
-            msg_send![class!(NSDate), dateWithTimeIntervalSinceNow: seconds];
-        let runloop: *mut objc2::runtime::AnyObject = msg_send![class!(NSRunLoop), currentRunLoop];
-        let _: () = msg_send![runloop, runUntilDate: future_date];
+        CFRunLoopRunInMode(kCFRunLoopDefaultMode, seconds, false);
     }
 }
 
@@ -299,9 +282,6 @@ impl SkylightWindow {
 
     /// Internal creation method with all parameters.
     fn create(frame: Rect, level: WindowLevel, sticky: bool, alpha: f32) -> crate::Result<Self> {
-        // Ensure NSApplication is initialized before creating SkyLight windows
-        ensure_nsapplication();
-
         let lib = get_skylight_lib()
             .ok_or_else(|| anyhow::anyhow!("Failed to load SkyLight framework"))?;
 
@@ -448,12 +428,14 @@ impl SkylightWindow {
     }
 
     /// Show the window for the specified duration.
+    ///
+    /// Uses CFRunLoop to process events while the window is visible.
     pub fn show(&mut self, duration_secs: f64) -> crate::Result<()> {
         unsafe {
             // Show window (order 1 = above)
             (self.order_window)(self.connection_id, self.window_id, 1, 0);
 
-            // Run the NSRunLoop - required for SkyLight windows to appear
+            // Run CFRunLoop - required for SkyLight windows to appear
             run_loop_for_seconds(duration_secs);
 
             // Hide window (order 0 = out)

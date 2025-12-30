@@ -96,6 +96,8 @@ fn get_main_display_bounds() -> Rect {
 }
 
 /// Calculate window frame based on position and margin.
+///
+/// All coordinates are divided by 2 for Retina display scaling.
 fn calculate_frame(
     dimensions: &Size,
     position: &FlashPosition,
@@ -105,27 +107,24 @@ fn calculate_frame(
 ) -> Rect {
     let size = dimensions.width; // Assuming square for now
 
+    // Pre-scale all inputs for Retina displays
+    let bx = bounds.origin.x / 2.0;
+    let by = bounds.origin.y / 2.0;
+    let bw = bounds.size.width / 2.0;
+    let bh = bounds.size.height / 2.0;
+    let s = size / 2.0;
+    let mt = margin.top / 2.0;
+    let mr = margin.right / 2.0;
+    let mb = margin.bottom / 2.0;
+    let ml = margin.left / 2.0;
+    let ti = top_inset / 2.0;
+
     let origin = match position {
-        FlashPosition::TopRight => Point::new(
-            bounds.origin.x / 2.0 + bounds.size.width / 2.0 - size / 2.0 - margin.right / 2.0,
-            bounds.origin.y / 2.0 + margin.top + top_inset,
-        ),
-        FlashPosition::TopLeft => Point::new(
-            bounds.origin.x / 2.0 + margin.left / 2.0,
-            bounds.origin.y / 2.0 + margin.top + top_inset,
-        ),
-        FlashPosition::BottomRight => Point::new(
-            bounds.origin.x / 2.0 + bounds.size.width / 2.0 - size / 2.0 - margin.right / 2.0,
-            bounds.origin.y / 2.0 + bounds.size.height / 2.0 - size / 2.0 - margin.bottom / 2.0,
-        ),
-        FlashPosition::BottomLeft => Point::new(
-            bounds.origin.x / 2.0 + margin.left / 2.0,
-            bounds.origin.y / 2.0 + bounds.size.height / 2.0 - size / 2.0 - margin.bottom / 2.0,
-        ),
-        FlashPosition::Center => Point::new(
-            bounds.origin.x / 2.0 + bounds.size.width / 4.0 - size / 4.0,
-            bounds.origin.y / 2.0 + bounds.size.height / 4.0 - size / 4.0,
-        ),
+        FlashPosition::TopRight => Point::new(bx + bw - s - mr, by + mt + ti),
+        FlashPosition::TopLeft => Point::new(bx + ml, by + mt + ti),
+        FlashPosition::BottomRight => Point::new(bx + bw - s - mr, by + bh - s - mb),
+        FlashPosition::BottomLeft => Point::new(bx + ml, by + bh - s - mb),
+        FlashPosition::Center => Point::new(bx + (bw - s) / 2.0, by + (bh - s) / 2.0),
         FlashPosition::Custom { x, y } => Point::new(*x, *y),
     };
 

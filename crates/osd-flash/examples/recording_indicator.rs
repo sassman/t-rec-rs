@@ -7,7 +7,8 @@
 use osd_flash::prelude::*;
 
 fn main() -> osd_flash::Result<()> {
-    let size = 60.0;
+    let size = 80.0;
+    let margin = 30.0;
 
     println!("Showing recording indicator (top-left)...");
     println!("This simulates a 'recording in progress' indicator.");
@@ -15,7 +16,7 @@ fn main() -> osd_flash::Result<()> {
     OsdFlashBuilder::new()
         .dimensions(size)
         .position(FlashPosition::TopLeft)
-        .margin(15.0)
+        .margin(margin)
         .level(WindowLevel::AboveAll)
         .build()?
         .draw(RecordingIcon::new(size).build())

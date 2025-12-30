@@ -59,7 +59,6 @@ pub mod prelude {
     // Backend-specific types (for advanced usage)
     #[cfg(target_os = "macos")]
     pub use crate::backends::{
-        run_loop_for_seconds, SkylightCanvas, SkylightOsdWindow, SkylightWindow,
-        SkylightWindowBuilder,
+        SkylightCanvas, SkylightOsdWindow, SkylightWindow, SkylightWindowBuilder,
     };
 }

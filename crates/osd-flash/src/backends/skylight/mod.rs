@@ -15,6 +15,4 @@ mod window;
 
 pub use canvas::SkylightCanvas;
 pub use osd_window::SkylightOsdWindow;
-pub use window::{
-    run_loop_for_seconds, DisplayTarget, SkylightWindow, SkylightWindowBuilder, WindowLevel,
-};
+pub use window::{DisplayTarget, SkylightWindow, SkylightWindowBuilder, WindowLevel};
