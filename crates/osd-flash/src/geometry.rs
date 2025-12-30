@@ -67,7 +67,6 @@ impl Size {
     }
 }
 
-
 /// A rectangle defined by origin and size.
 #[derive(Debug, Clone, Copy, PartialEq, Default)]
 pub struct Rect {
@@ -157,7 +156,6 @@ impl Rect {
         }
     }
 }
-
 
 #[cfg(test)]
 mod tests {
