@@ -694,6 +694,7 @@ dependencies = [
  "core-foundation",
  "core-foundation-sys",
  "core-graphics",
+ "crossterm",
  "foreign-types-shared",
  "libloading",
  "log",

@@ -25,6 +25,13 @@ pub enum Shape {
     },
     /// A filled ellipse.
     Ellipse { rect: Rect, color: Color },
+    /// Text label.
+    Text {
+        text: String,
+        position: Point,
+        size: f64,
+        color: Color,
+    },
 }
 
 impl Shape {
@@ -74,6 +81,26 @@ impl Shape {
     /// Create an ellipse shape.
     pub fn ellipse(rect: Rect, color: Color) -> Self {
         Self::Ellipse { rect, color }
+    }
+
+    /// Create a text shape.
+    pub fn text(text: impl Into<String>, position: Point, size: f64, color: Color) -> Self {
+        Self::Text {
+            text: text.into(),
+            position,
+            size,
+            color,
+        }
+    }
+
+    /// Create a text shape at x, y coordinates.
+    pub fn text_at(text: impl Into<String>, x: f64, y: f64, size: f64, color: Color) -> Self {
+        Self::Text {
+            text: text.into(),
+            position: Point::new(x, y),
+            size,
+            color,
+        }
     }
 }
 

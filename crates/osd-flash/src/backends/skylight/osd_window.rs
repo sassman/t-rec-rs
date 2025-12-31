@@ -1,5 +1,6 @@
 //! SkyLight implementation of the OsdWindow trait.
 
+use crate::canvas::Canvas;
 use crate::geometry::{Point, Rect, Size};
 use crate::window::{DisplayTarget, Drawable, OsdFlashBuilder, OsdWindow, WindowLevel};
 use crate::FlashPosition;
@@ -17,6 +18,7 @@ const MENU_BAR_HEIGHT: f64 = 25.0;
 pub struct SkylightOsdWindow {
     window: SkylightWindow,
     size: Size,
+    cleared: bool,
 }
 
 impl SkylightOsdWindow {
@@ -63,13 +65,21 @@ impl SkylightOsdWindow {
         Ok(Self {
             window,
             size: dimensions,
+            cleared: false,
         })
     }
 }
 
 impl OsdWindow for SkylightOsdWindow {
-    fn draw(self, drawable: impl Drawable) -> Self {
+    fn draw(mut self, drawable: impl Drawable) -> Self {
         let mut canvas = unsafe { SkylightCanvas::new(self.window.context_ptr(), self.size) };
+
+        // Clear only on first draw, allowing layered composition
+        if !self.cleared {
+            canvas.clear();
+            self.cleared = true;
+        }
+
         drawable.draw(&mut canvas);
         self
     }
@@ -98,6 +108,7 @@ fn get_main_display_bounds() -> Rect {
 /// Calculate window frame based on position and margin.
 ///
 /// All coordinates are divided by 2 for Retina display scaling.
+/// The frame size uses original dimensions (unscaled), while positioning uses scaled values.
 fn calculate_frame(
     dimensions: &Size,
     position: &FlashPosition,
@@ -105,14 +116,13 @@ fn calculate_frame(
     bounds: &Rect,
     top_inset: f64,
 ) -> Rect {
-    let size = dimensions.width; // Assuming square for now
-
-    // Pre-scale all inputs for Retina displays
+    // Pre-scale positioning inputs for Retina displays
     let bx = bounds.origin.x / 2.0;
     let by = bounds.origin.y / 2.0;
     let bw = bounds.size.width / 2.0;
     let bh = bounds.size.height / 2.0;
-    let s = size / 2.0;
+    let sw = dimensions.width / 2.0; // scaled width for positioning
+    let sh = dimensions.height / 2.0; // scaled height for positioning
     let mt = margin.top / 2.0;
     let mr = margin.right / 2.0;
     let mb = margin.bottom / 2.0;
@@ -120,15 +130,16 @@ fn calculate_frame(
     let ti = top_inset / 2.0;
 
     let origin = match position {
-        FlashPosition::TopRight => Point::new(bx + bw - s - mr, by + mt + ti),
+        FlashPosition::TopRight => Point::new(bx + bw - sw - mr, by + mt + ti),
         FlashPosition::TopLeft => Point::new(bx + ml, by + mt + ti),
-        FlashPosition::BottomRight => Point::new(bx + bw - s - mr, by + bh - s - mb),
-        FlashPosition::BottomLeft => Point::new(bx + ml, by + bh - s - mb),
-        FlashPosition::Center => Point::new(bx + (bw - s) / 2.0, by + (bh - s) / 2.0),
+        FlashPosition::BottomRight => Point::new(bx + bw - sw - mr, by + bh - sh - mb),
+        FlashPosition::BottomLeft => Point::new(bx + ml, by + bh - sh - mb),
+        FlashPosition::Center => Point::new(bx + (bw - sw) / 2.0, by + (bh - sh) / 2.0),
         FlashPosition::Custom { x, y } => Point::new(*x, *y),
     };
 
-    Rect::new(origin, Size::square(size)).rounded()
+    // Frame size uses original (unscaled) dimensions
+    Rect::new(origin, *dimensions).rounded()
 }
 
 /// Convert platform-agnostic WindowLevel to SkyLight-specific level.

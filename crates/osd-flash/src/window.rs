@@ -56,8 +56,15 @@ pub trait Drawable {
 
 impl Drawable for Icon {
     fn draw(&self, canvas: &mut dyn Canvas) {
-        canvas.clear();
+        // Don't clear - allows layered composition with multiple draw() calls
         canvas.draw_shapes(&self.shapes);
+        canvas.flush();
+    }
+}
+
+impl Drawable for crate::shape::Shape {
+    fn draw(&self, canvas: &mut dyn Canvas) {
+        canvas.draw_shape(self);
         canvas.flush();
     }
 }
