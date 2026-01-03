@@ -2,7 +2,9 @@
 
 use crate::canvas::Canvas;
 use crate::geometry::{Point, Rect, Size};
-use crate::window::{DisplayTarget, Drawable, OsdFlashBuilder, OsdWindow, WindowLevel};
+use crate::window::{
+    DisplayTarget, Drawable, OsdFlashBuilder, OsdWindow, WindowLevel,
+};
 use crate::FlashPosition;
 
 use super::canvas::SkylightCanvas;

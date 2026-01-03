@@ -46,8 +46,10 @@ pub use shape::Shape;
 pub use window::{DisplayTarget, Drawable, OsdFlashBuilder, OsdWindow, WindowLevel};
 
 /// Prelude for convenient imports.
+///
+/// This module exports the platform-agnostic public API. For advanced usage
+/// requiring direct backend access, import from `osd_flash::backends` directly.
 pub mod prelude {
-    // Common types
     pub use crate::canvas::Canvas;
     pub use crate::color::Color;
     pub use crate::geometry::{Margin, Point, Rect, Size};
@@ -55,10 +57,4 @@ pub mod prelude {
     pub use crate::shape::Shape;
     pub use crate::window::{DisplayTarget, Drawable, OsdFlashBuilder, OsdWindow, WindowLevel};
     pub use crate::FlashPosition;
-
-    // Backend-specific types (for advanced usage)
-    #[cfg(target_os = "macos")]
-    pub use crate::backends::{
-        SkylightCanvas, SkylightOsdWindow, SkylightWindow, SkylightWindowBuilder,
-    };
 }

@@ -5,7 +5,9 @@
 //!
 //! Run with: cargo run -p osd-flash --example cfrunloop_only
 
-use osd_flash::backends::{SkylightCanvas, SkylightWindowBuilder, WindowLevel};
+use osd_flash::backends::skylight::{
+    SkylightCanvas, SkylightWindowBuilder, SkylightWindowLevel,
+};
 use osd_flash::prelude::*;
 
 fn main() -> osd_flash::Result<()> {
@@ -47,7 +49,7 @@ fn show_window(position: FlashPosition, use_recording_icon: bool) -> osd_flash::
     // Create window using the builder
     let mut window = SkylightWindowBuilder::new()
         .frame(frame)
-        .level(WindowLevel::AboveAll)
+        .level(SkylightWindowLevel::AboveAll)
         .build()?;
 
     // Draw the icon
