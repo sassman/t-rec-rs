@@ -5,9 +5,10 @@
 //! backends.
 
 use crate::canvas::Canvas;
-use crate::geometry::{Margin, Size};
-use crate::icon::Icon;
-use crate::FlashPosition;
+use crate::color::Color;
+use crate::geometry::Size;
+use crate::layout::{Margin, Padding};
+use crate::{FlashPosition, Rect};
 
 /// Target for the OSD window display.
 ///
@@ -51,22 +52,7 @@ pub enum WindowLevel {
 /// This allows the window API to accept any drawable type, not just `Icon`.
 pub trait Drawable {
     /// Draw this object onto the given canvas.
-    fn draw(&self, canvas: &mut dyn Canvas);
-}
-
-impl Drawable for Icon {
-    fn draw(&self, canvas: &mut dyn Canvas) {
-        // Don't clear - allows layered composition with multiple draw() calls
-        canvas.draw_shapes(&self.shapes);
-        canvas.flush();
-    }
-}
-
-impl Drawable for crate::shape::Shape {
-    fn draw(&self, canvas: &mut dyn Canvas) {
-        canvas.draw_shape(self);
-        canvas.flush();
-    }
+    fn draw(&self, canvas: &mut dyn Canvas, bounds: &Rect);
 }
 
 /// Trait for platform-specific OSD windows.
@@ -105,6 +91,9 @@ pub struct OsdFlashBuilder {
     dimensions: Size,
     position: FlashPosition,
     margin: Margin,
+    padding: Padding,
+    background: Option<Color>,
+    corner_radius: f64,
     level: WindowLevel,
     display_target: DisplayTarget,
 }
@@ -122,6 +111,9 @@ impl OsdFlashBuilder {
             dimensions: Size::square(120.0),
             position: FlashPosition::TopRight,
             margin: Margin::all(20.0),
+            padding: Padding::zero(),
+            background: None,
+            corner_radius: 0.0,
             level: WindowLevel::AboveAll,
             display_target: DisplayTarget::Main,
         }
@@ -152,6 +144,40 @@ impl OsdFlashBuilder {
     /// - `Margin`: Direct margin value
     pub fn margin(mut self, margin: impl Into<Margin>) -> Self {
         self.margin = margin.into();
+        self
+    }
+
+    /// Set the padding inside the window.
+    ///
+    /// Padding defines the space between the window frame and the content area.
+    /// Content is drawn within the padded area, while the background fills
+    /// the entire window including padding.
+    ///
+    /// Accepts various padding formats:
+    /// - `f64`: Same padding on all sides
+    /// - `(f64, f64)`: (vertical, horizontal) padding
+    /// - `(f64, f64, f64, f64)`: (top, right, bottom, left) padding
+    /// - `Padding`: Direct padding value
+    pub fn padding(mut self, padding: impl Into<Padding>) -> Self {
+        self.padding = padding.into();
+        self
+    }
+
+    /// Set the background color of the window.
+    ///
+    /// When set, the window will automatically draw a background rectangle
+    /// covering the entire window area (including padding) with the specified
+    /// color and corner radius.
+    pub fn background(mut self, color: Color) -> Self {
+        self.background = Some(color);
+        self
+    }
+
+    /// Set the corner radius for the window background.
+    ///
+    /// Only applies when a background color is set via `.background()`.
+    pub fn corner_radius(mut self, radius: f64) -> Self {
+        self.corner_radius = radius;
         self
     }
 
@@ -187,6 +213,21 @@ impl OsdFlashBuilder {
     /// Get the configured margin.
     pub fn get_margin(&self) -> Margin {
         self.margin
+    }
+
+    /// Get the configured padding.
+    pub fn get_padding(&self) -> Padding {
+        self.padding
+    }
+
+    /// Get the configured background color.
+    pub fn get_background(&self) -> Option<Color> {
+        self.background
+    }
+
+    /// Get the configured corner radius.
+    pub fn get_corner_radius(&self) -> f64 {
+        self.corner_radius
     }
 
     /// Get the configured window level.

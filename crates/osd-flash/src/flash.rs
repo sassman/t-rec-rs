@@ -2,8 +2,8 @@
 //!
 //! This module provides the core types for positioning on-screen indicators.
 
-pub use crate::color::Color;
-pub use crate::geometry::{Margin, Point, Rect, Size};
+pub use crate::geometry::{Point, Rect, Size};
+pub use crate::layout::Margin;
 pub use crate::icon::IconBuilder;
 
 /// Position for the flash indicator on screen.

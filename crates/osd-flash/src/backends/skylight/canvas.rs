@@ -13,7 +13,7 @@ use foreign_types_shared::ForeignType;
 use crate::canvas::Canvas as CanvasTrait;
 use crate::color::Color;
 use crate::geometry::{Point, Rect, Size};
-use crate::shape::Shape;
+use crate::style::{Paint, TextStyle};
 
 // Import geometry extensions for CG type conversions
 #[allow(unused_imports)]
@@ -43,7 +43,8 @@ extern "C" {
 // Core Text for text rendering
 #[link(name = "CoreText", kind = "framework")]
 extern "C" {
-    fn CTFontCreateWithName(name: *const c_void, size: f64, matrix: *const c_void) -> *const c_void;
+    fn CTFontCreateWithName(name: *const c_void, size: f64, matrix: *const c_void)
+        -> *const c_void;
     fn CTLineCreateWithAttributedString(attr_string: *const c_void) -> *const c_void;
     fn CTLineDraw(line: *const c_void, context: *mut c_void);
 }
@@ -124,7 +125,14 @@ const K_CF_STRING_ENCODING_UTF8: u32 = 0x08000100;
 /// The coordinate system is automatically flipped to use top-left origin.
 pub struct SkylightCanvas {
     ctx: CGContext,
+    /// Content size in user coordinates (for size() method)
     size: Size,
+    /// Frame height in window coordinates for Y-coordinate flipping
+    frame_height: f64,
+    /// Offset in window coordinates (for padding)
+    offset: Point,
+    /// Scale factor to convert user coordinates to window coordinates
+    scale: f64,
 }
 
 impl SkylightCanvas {
@@ -135,15 +143,69 @@ impl SkylightCanvas {
     /// # Safety
     /// The context pointer must be valid for the lifetime of the Canvas.
     pub unsafe fn new(ctx: *mut c_void, size: Size) -> Self {
+        Self::with_frame_and_offset(ctx, size, size.height, Point::zero())
+    }
+
+    /// Create a new canvas with an offset applied to all drawing operations.
+    ///
+    /// The offset is in logical coordinates (top-left origin).
+    /// This is useful for applying padding to content.
+    ///
+    /// # Safety
+    /// The context pointer must be valid for the lifetime of the Canvas.
+    pub unsafe fn with_offset(ctx: *mut c_void, size: Size, offset: Point) -> Self {
+        Self::with_frame_and_offset(ctx, size, size.height, offset)
+    }
+
+    /// Create a new canvas with frame height for Y-flipping and content offset.
+    ///
+    /// - `size`: Content size (returned by size() method)
+    /// - `frame_height`: Total frame height for Y-coordinate flipping
+    /// - `offset`: Offset applied to drawing operations (for padding)
+    /// - `scale`: Scale factor to apply to all drawing coordinates (for Retina)
+    ///
+    /// # Safety
+    /// The context pointer must be valid for the lifetime of the Canvas.
+    pub unsafe fn with_frame_and_offset(
+        ctx: *mut c_void,
+        size: Size,
+        frame_height: f64,
+        offset: Point,
+    ) -> Self {
+        Self::with_scale(ctx, size, frame_height, offset, 1.0)
+    }
+
+    /// Create a new canvas with custom scale factor.
+    ///
+    /// - `size`: Content size in user coordinates (returned by size() method)
+    /// - `frame_height`: Frame height in window coordinates for Y-flipping
+    /// - `offset`: Offset in window coordinates (for padding)
+    /// - `scale`: Scale factor (e.g., 0.5 for Retina where user coords are 2x window coords)
+    ///
+    /// # Safety
+    /// The context pointer must be valid for the lifetime of the Canvas.
+    pub unsafe fn with_scale(
+        ctx: *mut c_void,
+        size: Size,
+        frame_height: f64,
+        offset: Point,
+        scale: f64,
+    ) -> Self {
         let ctx = CGContext::from_existing_context_ptr(ctx as *mut _);
         // Don't flip the context globally - handle per-shape instead
         // This allows text to render correctly
-        Self { ctx, size }
+        Self {
+            ctx,
+            size,
+            frame_height,
+            offset,
+            scale,
+        }
     }
 
     /// Convert Y from top-left origin to bottom-left origin (CG native)
     fn flip_y(&self, y: f64) -> f64 {
-        self.size.height - y
+        self.frame_height - y
     }
 
     /// Get the center point of the canvas.
@@ -158,21 +220,35 @@ impl SkylightCanvas {
     }
 
     /// Draw a rounded rectangle.
-    fn fill_rounded_rect(&self, rect: Rect, corner_radius: f64, color: Color) {
+    fn fill_rounded_rect(&self, rect: &Rect, corner_radius: f64, color: Color) {
         unsafe {
             self.set_fill_color(color);
-            // Flip Y for top-left origin
+            // Scale input coordinates from user space to window space
+            let scaled_rect = Rect::from_xywh(
+                rect.origin.x * self.scale,
+                rect.origin.y * self.scale,
+                rect.size.width * self.scale,
+                rect.size.height * self.scale,
+            );
+            let scaled_radius = corner_radius * self.scale;
+            // Apply offset and flip Y for top-left origin
+            let offset_rect = Rect::from_xywh(
+                scaled_rect.origin.x + self.offset.x,
+                scaled_rect.origin.y + self.offset.y,
+                scaled_rect.size.width,
+                scaled_rect.size.height,
+            );
             let flipped_rect = Rect::from_xywh(
-                rect.origin.x,
-                self.flip_y(rect.origin.y + rect.size.height),
-                rect.size.width,
-                rect.size.height,
+                offset_rect.origin.x,
+                self.flip_y(offset_rect.origin.y + offset_rect.size.height),
+                offset_rect.size.width,
+                offset_rect.size.height,
             );
             let cg_rect: CGRect = flipped_rect.into();
             let path = CGPathCreateWithRoundedRect(
                 cg_rect,
-                corner_radius,
-                corner_radius,
+                scaled_radius,
+                scaled_radius,
                 std::ptr::null(),
             );
             let cg_path = CGPath::from_ptr(path as *mut _);
@@ -187,13 +263,20 @@ impl SkylightCanvas {
     fn fill_circle(&self, center: Point, radius: f64, color: Color) {
         unsafe {
             self.set_fill_color(color);
-            // Flip Y for top-left origin
-            let flipped_y = self.flip_y(center.y);
+            // Scale input coordinates from user space to window space
+            let scaled_center = Point::new(center.x * self.scale, center.y * self.scale);
+            let scaled_radius = radius * self.scale;
+            // Apply offset and flip Y for top-left origin
+            let offset_center = Point::new(
+                scaled_center.x + self.offset.x,
+                scaled_center.y + self.offset.y,
+            );
+            let flipped_y = self.flip_y(offset_center.y);
             CGContextAddArc(
                 self.ctx.as_ptr() as *mut c_void,
-                center.x,
+                offset_center.x,
                 flipped_y,
-                radius,
+                scaled_radius,
                 0.0,
                 2.0 * PI,
                 0,
@@ -202,15 +285,30 @@ impl SkylightCanvas {
         }
     }
 
-    /// Draw text at a position.
-    fn draw_text(&self, text: &str, position: Point, font_size: f64, color: Color) {
+    /// Draw text at a position (internal implementation).
+    fn draw_text_internal(
+        &self,
+        text: &str,
+        position: &Point,
+        font_size: f64,
+        font_family: &str,
+        color: &Color,
+    ) {
+        // Scale input coordinates from user space to window space
+        let scaled_position = Point::new(position.x * self.scale, position.y * self.scale);
+        let scaled_font_size = font_size * self.scale;
+        // Apply offset to position
+        let offset_position = Point::new(
+            scaled_position.x + self.offset.x,
+            scaled_position.y + self.offset.y,
+        );
+
         unsafe {
             // Create font name string
-            let font_name = "Helvetica Neue";
             let font_name_cf = CFStringCreateWithBytes(
                 std::ptr::null(),
-                font_name.as_ptr(),
-                font_name.len() as i64,
+                font_family.as_ptr(),
+                font_family.len() as i64,
                 K_CF_STRING_ENCODING_UTF8,
                 false,
             );
@@ -218,8 +316,8 @@ impl SkylightCanvas {
                 return;
             }
 
-            // Create font
-            let font = CTFontCreateWithName(font_name_cf, font_size, std::ptr::null());
+            // Create font with scaled size
+            let font = CTFontCreateWithName(font_name_cf, scaled_font_size, std::ptr::null());
             CFRelease(font_name_cf);
             if font.is_null() {
                 return;
@@ -250,8 +348,8 @@ impl SkylightCanvas {
                 keys.as_ptr(),
                 values.as_ptr(),
                 2,
-                &kCFTypeDictionaryKeyCallBacks as *const _ as *const c_void,
-                &kCFTypeDictionaryValueCallBacks as *const _ as *const c_void,
+                &kCFTypeDictionaryKeyCallBacks as *const _,
+                &kCFTypeDictionaryValueCallBacks as *const _,
             );
 
             // Create attributed string
@@ -268,7 +366,7 @@ impl SkylightCanvas {
                     // Context is in native CG coordinates (bottom-left origin)
                     // Text baseline is at the specified Y position
                     // Flip Y and account for text rendering from baseline
-                    let flipped_y = self.flip_y(position.y + font_size * 0.8);
+                    let flipped_y = self.flip_y(offset_position.y + scaled_font_size * 0.8);
 
                     // Use identity text matrix - no flipping needed
                     CGContextSetTextMatrix(
@@ -278,7 +376,7 @@ impl SkylightCanvas {
 
                     CGContextSetTextPosition(
                         self.ctx.as_ptr() as *mut c_void,
-                        position.x,
+                        offset_position.x,
                         flipped_y,
                     );
                     CTLineDraw(line, self.ctx.as_ptr() as *mut c_void);
@@ -305,43 +403,32 @@ impl CanvasTrait for SkylightCanvas {
         self.ctx.clear_rect(rect);
     }
 
-    fn draw_shape(&mut self, shape: &Shape) {
-        match shape {
-            Shape::RoundedRect {
-                rect,
-                corner_radius,
-                color,
-            } => {
-                self.fill_rounded_rect(*rect, *corner_radius, *color);
-            }
-            Shape::Circle {
-                center,
-                radius,
-                color,
-            } => {
-                self.fill_circle(*center, *radius, *color);
-            }
-            Shape::Ellipse { rect, color } => {
-                let center = rect.center();
-                let radius = rect.size.width.min(rect.size.height) / 2.0;
-                self.fill_circle(center, radius, *color);
-            }
-            Shape::Text {
-                text,
-                position,
-                size,
-                color,
-            } => {
-                self.draw_text(text, *position, *size, *color);
-            }
-        }
+    fn draw_rect(&mut self, rect: &Rect, paint: &Paint) {
+        self.fill_rounded_rect(rect, 0.0, paint.effective_color());
+    }
+
+    fn draw_rounded_rect(&mut self, rect: &Rect, corner_radius: f64, paint: &Paint) {
+        self.fill_rounded_rect(rect, corner_radius, paint.effective_color());
+    }
+
+    fn draw_circle(&mut self, center: &Point, radius: f64, paint: &Paint) {
+        self.fill_circle(*center, radius, paint.effective_color());
+    }
+
+    fn draw_ellipse(&mut self, rect: &Rect, paint: &Paint) {
+        // Approximate ellipse as circle using smaller dimension
+        // TODO: Implement proper ellipse drawing with CGContextAddEllipseInRect
+        let center = rect.center();
+        let radius = rect.size.width.min(rect.size.height) / 2.0;
+        self.fill_circle(center, radius, paint.effective_color());
+    }
+
+    fn draw_text(&mut self, text: &str, position: &Point, style: &TextStyle) {
+        let color = style.effective_color();
+        self.draw_text_internal(text, position, style.size, &style.font_family, &color);
     }
 
     fn flush(&self) {
         self.ctx.flush();
-    }
-
-    fn size(&self) -> Size {
-        self.size
     }
 }

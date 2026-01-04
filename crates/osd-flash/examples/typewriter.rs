@@ -144,49 +144,55 @@ fn show_keyboard_key(label: &str) -> osd_flash::Result<()> {
         .position(FlashPosition::Center)
         .build()?
         // Layer 1: Drop shadow (soft shadow beneath the key)
-        .draw(Shape::rounded_rect(
-            Rect::from_xywh(3.0, 5.0, key_width - 4.0, key_height - 4.0),
-            corner_radius + 2.0,
+        .draw(StyledShape::new(
+            Shape::rounded_rect(
+                Rect::from_xywh(3.0, 5.0, key_width - 4.0, key_height - 4.0),
+                corner_radius + 2.0,
+            ),
             key_colors::DROP_SHADOW,
         ))
         // Layer 2: Key body/base (the "sides" of the 3D key)
-        .draw(Shape::rounded_rect(
-            Rect::from_xywh(0.0, 0.0, key_width - 2.0, key_height - 2.0),
-            corner_radius,
+        .draw(StyledShape::new(
+            Shape::rounded_rect(
+                Rect::from_xywh(0.0, 0.0, key_width - 2.0, key_height - 2.0),
+                corner_radius,
+            ),
             key_colors::KEY_BODY,
         ))
         // Layer 3: Bottom edge (darker edge for depth)
-        .draw(Shape::rounded_rect(
-            Rect::from_xywh(1.0, key_height - depth - 4.0, key_width - 4.0, depth + 2.0),
-            corner_radius - 2.0,
+        .draw(StyledShape::new(
+            Shape::rounded_rect(
+                Rect::from_xywh(1.0, key_height - depth - 4.0, key_width - 4.0, depth + 2.0),
+                corner_radius - 2.0,
+            ),
             key_colors::BOTTOM_EDGE,
         ))
         // Layer 4: Key surface (the top face you press)
-        .draw(Shape::rounded_rect(
-            Rect::from_xywh(inset, inset, key_width - inset * 2.0 - 2.0, key_height - inset * 2.0 - depth),
-            corner_radius - 2.0,
+        .draw(StyledShape::new(
+            Shape::rounded_rect(
+                Rect::from_xywh(inset, inset, key_width - inset * 2.0 - 2.0, key_height - inset * 2.0 - depth),
+                corner_radius - 2.0,
+            ),
             key_colors::KEY_SURFACE,
         ))
         // Layer 5: Inner shadow (subtle recess on the surface)
-        .draw(Shape::rounded_rect(
-            Rect::from_xywh(inset + 2.0, inset + 2.0, key_width - inset * 2.0 - 6.0, 3.0),
-            2.0,
+        .draw(StyledShape::new(
+            Shape::rounded_rect(
+                Rect::from_xywh(inset + 2.0, inset + 2.0, key_width - inset * 2.0 - 6.0, 3.0),
+                2.0,
+            ),
             key_colors::INNER_SHADOW,
         ))
         // Layer 6: Top highlight (light reflection at the top edge)
-        .draw(Shape::rounded_rect(
-            Rect::from_xywh(inset + 4.0, inset + 1.0, key_width - inset * 2.0 - 10.0, 2.0),
-            1.0,
+        .draw(StyledShape::new(
+            Shape::rounded_rect(
+                Rect::from_xywh(inset + 4.0, inset + 1.0, key_width - inset * 2.0 - 10.0, 2.0),
+                1.0,
+            ),
             key_colors::TOP_HIGHLIGHT,
         ))
         // Layer 7: Key label
-        .draw(Shape::text_at(
-            label,
-            text_x,
-            text_y,
-            font_size,
-            key_colors::TEXT,
-        ))
+        .draw(StyledText::at(label, text_x, text_y, font_size, key_colors::TEXT))
         .show_for_seconds(0.9)?;
 
     Ok(())

@@ -110,9 +110,13 @@ mod tests {
     #[test]
     fn test_default() {
         let icon = RecordingIcon::new(80.0).build();
-        assert_eq!(icon.size, 80.0);
         // Recording icon has: background + glow + dot + highlight = 4 shapes
         assert_eq!(icon.shapes.len(), 4);
+        assert_eq!(
+            icon.shapes.first().unwrap().shape.bounds().size.height,
+            80.0
+        );
+        assert_eq!(icon.shapes.first().unwrap().shape.bounds().size.width, 80.0);
     }
 
     #[test]
@@ -121,7 +125,6 @@ mod tests {
             .dot_color(Color::GREEN)
             .glow_color(Color::rgba(0.0, 1.0, 0.0, 0.4))
             .build();
-        assert_eq!(icon.size, 100.0);
         assert_eq!(icon.shapes.len(), 4);
     }
 

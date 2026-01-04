@@ -160,7 +160,6 @@ mod tests {
     #[test]
     fn test_default() {
         let icon = CameraIcon::new(120.0).build();
-        assert_eq!(icon.size, 120.0);
         // Camera icon has: background + body + viewfinder + 3 lens parts + flash = 7 shapes
         assert_eq!(icon.shapes.len(), 7);
     }
@@ -171,7 +170,6 @@ mod tests {
             .background_color(Color::DARK_GRAY)
             .flash_color(Color::RED)
             .build();
-        assert_eq!(icon.size, 100.0);
         assert_eq!(icon.shapes.len(), 7);
     }
 

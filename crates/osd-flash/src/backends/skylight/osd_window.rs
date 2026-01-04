@@ -1,10 +1,11 @@
 //! SkyLight implementation of the OsdWindow trait.
 
 use crate::canvas::Canvas;
+use crate::color::Color;
 use crate::geometry::{Point, Rect, Size};
-use crate::window::{
-    DisplayTarget, Drawable, OsdFlashBuilder, OsdWindow, WindowLevel,
-};
+use crate::layout::Padding;
+use crate::style::Paint;
+use crate::window::{DisplayTarget, Drawable, OsdFlashBuilder, OsdWindow, WindowLevel};
 use crate::FlashPosition;
 
 use super::canvas::SkylightCanvas;
@@ -19,8 +20,18 @@ const MENU_BAR_HEIGHT: f64 = 25.0;
 /// SkyLight-based OSD window implementation.
 pub struct SkylightOsdWindow {
     window: SkylightWindow,
-    size: Size,
-    cleared: bool,
+    /// Content dimensions (frame minus padding)
+    content_size: Size,
+    /// Full window size (what the user specifies)
+    frame_size: Size,
+    /// Padding around content
+    padding: Padding,
+    /// Background color (if any)
+    background: Option<Color>,
+    /// Corner radius for background
+    corner_radius: f64,
+    /// Whether we've drawn the initial background
+    background_drawn: bool,
 }
 
 impl SkylightOsdWindow {
@@ -29,6 +40,9 @@ impl SkylightOsdWindow {
         let dimensions = builder.get_dimensions();
         let position = builder.get_position();
         let margin = builder.get_margin();
+        let padding = builder.get_padding();
+        let background = builder.get_background();
+        let corner_radius = builder.get_corner_radius();
         let level = builder.get_level();
         let display_target = builder.get_display_target();
 
@@ -43,16 +57,20 @@ impl SkylightOsdWindow {
                 // Fall back to main display if window not found
                 let window_bounds =
                     get_window_bounds(window_id).unwrap_or_else(get_main_display_bounds);
-                (
-                    window_bounds,
-                    0.0,
-                    SkylightDisplayTarget::Window(window_id),
-                )
+                (window_bounds, 0.0, SkylightDisplayTarget::Window(window_id))
             }
         };
 
-        // Calculate frame based on position and margin
-        let frame = calculate_frame(&dimensions, &position, &margin, &bounds, top_inset);
+        // dimensions is the full frame size (what the user specifies)
+        // content_size is the area inside the padding
+        let frame_size = dimensions;
+        let content_size = Size::new(
+            dimensions.width - padding.horizontal(),
+            dimensions.height - padding.vertical(),
+        );
+
+        // Calculate frame based on position and margin (handles scaling internally)
+        let frame = calculate_frame(&frame_size, &position, &margin, &bounds, top_inset);
 
         // Convert WindowLevel to SkyLight-specific level
         let skylight_level = convert_window_level(level);
@@ -66,23 +84,50 @@ impl SkylightOsdWindow {
 
         Ok(Self {
             window,
-            size: dimensions,
-            cleared: false,
+            content_size,
+            frame_size,
+            padding,
+            background,
+            corner_radius,
+            background_drawn: false,
         })
     }
 }
 
 impl OsdWindow for SkylightOsdWindow {
     fn draw(mut self, drawable: impl Drawable) -> Self {
-        let mut canvas = unsafe { SkylightCanvas::new(self.window.context_ptr(), self.size) };
+        // On first draw: clear window and draw background if set
+        if !self.background_drawn {
+            let mut full_canvas =
+                unsafe { SkylightCanvas::new(self.window.context_ptr(), self.frame_size) };
+            full_canvas.clear();
 
-        // Clear only on first draw, allowing layered composition
-        if !self.cleared {
-            canvas.clear();
-            self.cleared = true;
+            // Draw background if configured
+            if let Some(bg_color) = self.background {
+                let bg_rect =
+                    Rect::from_xywh(0.0, 0.0, self.frame_size.width, self.frame_size.height);
+                let paint = Paint::fill(bg_color);
+                full_canvas.draw_rounded_rect(&bg_rect, self.corner_radius, &paint);
+                full_canvas.flush();
+            }
+
+            self.background_drawn = true;
         }
 
-        drawable.draw(&mut canvas);
+        // Create canvas with padding offset for content positioning.
+        // Content is drawn within the padded area.
+        let offset = Point::new(self.padding.left, self.padding.top);
+        let mut canvas = unsafe {
+            SkylightCanvas::with_frame_and_offset(
+                self.window.context_ptr(),
+                self.content_size,
+                self.frame_size.height,
+                offset,
+            )
+        };
+        let bounds = Rect::new(Point::new(0.0, 0.0), self.content_size);
+
+        drawable.draw(&mut canvas, &bounds);
         self
     }
 
@@ -107,40 +152,43 @@ fn get_main_display_bounds() -> Rect {
     }
 }
 
+/// Retina scale factor: CGDisplayBounds returns physical pixels, SkyLight expects logical points.
+const DISPLAY_SCALE: f64 = 2.0;
+
 /// Calculate window frame based on position and margin.
 ///
-/// All coordinates are divided by 2 for Retina display scaling.
-/// The frame size uses original dimensions (unscaled), while positioning uses scaled values.
+/// All coordinates are in logical points.
 fn calculate_frame(
     dimensions: &Size,
     position: &FlashPosition,
-    margin: &crate::geometry::Margin,
+    margin: &crate::layout::Margin,
     bounds: &Rect,
     top_inset: f64,
 ) -> Rect {
-    // Pre-scale positioning inputs for Retina displays
-    let bx = bounds.origin.x / 2.0;
-    let by = bounds.origin.y / 2.0;
-    let bw = bounds.size.width / 2.0;
-    let bh = bounds.size.height / 2.0;
-    let sw = dimensions.width / 2.0; // scaled width for positioning
-    let sh = dimensions.height / 2.0; // scaled height for positioning
-    let mt = margin.top / 2.0;
-    let mr = margin.right / 2.0;
-    let mb = margin.bottom / 2.0;
-    let ml = margin.left / 2.0;
-    let ti = top_inset / 2.0;
+    // Scale display bounds from physical pixels to logical points
+    let bx = bounds.origin.x / DISPLAY_SCALE;
+    let by = bounds.origin.y / DISPLAY_SCALE;
+    let bw = bounds.size.width / DISPLAY_SCALE;
+    let bh = bounds.size.height / DISPLAY_SCALE;
+
+    // User dimensions, margins, and insets are already in logical points - don't scale
+    let sw = dimensions.width;
+    let sh = dimensions.height;
+    let mt = margin.top;
+    let mr = margin.right;
+    let mb = margin.bottom;
+    let ml = margin.left;
+    let ti = top_inset;
 
     let origin = match position {
         FlashPosition::TopRight => Point::new(bx + bw - sw - mr, by + mt + ti),
         FlashPosition::TopLeft => Point::new(bx + ml, by + mt + ti),
         FlashPosition::BottomRight => Point::new(bx + bw - sw - mr, by + bh - sh - mb),
         FlashPosition::BottomLeft => Point::new(bx + ml, by + bh - sh - mb),
-        FlashPosition::Center => Point::new(bx + (bw - sw) / 2.0, by + (bh - sh) / 2.0),
+        FlashPosition::Center => Point::new(bx + bw / 2.0 - sw / 4.0, by + bh / 2.0 - sh / 4.0),
         FlashPosition::Custom { x, y } => Point::new(*x, *y),
     };
 
-    // Frame size uses original (unscaled) dimensions
     Rect::new(origin, *dimensions).rounded()
 }
 

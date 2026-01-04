@@ -16,6 +16,7 @@ use super::canvas::SkylightCanvas;
 use super::geometry_ext;
 use crate::geometry::{Rect, Size};
 use crate::icon::Icon;
+use crate::Drawable;
 
 // Private API types
 type CGSConnectionID = i32;
@@ -410,7 +411,10 @@ impl SkylightWindow {
     /// Draw an icon onto the window.
     pub fn draw(&mut self, icon: &Icon) -> crate::Result<()> {
         let mut canvas = unsafe { SkylightCanvas::new(self.context, self.size) };
-        icon.draw(&mut canvas);
+        icon.draw(
+            &mut canvas,
+            &Rect::from_xywh(0.0, 0.0, self.size.width, self.size.height),
+        );
         Ok(())
     }
 

@@ -5,9 +5,7 @@
 //!
 //! Run with: cargo run -p osd-flash --example cfrunloop_only
 
-use osd_flash::backends::skylight::{
-    SkylightCanvas, SkylightWindowBuilder, SkylightWindowLevel,
-};
+use osd_flash::backends::skylight::{SkylightCanvas, SkylightWindowBuilder, SkylightWindowLevel};
 use osd_flash::prelude::*;
 
 fn main() -> osd_flash::Result<()> {
@@ -43,12 +41,12 @@ fn main() -> osd_flash::Result<()> {
 }
 
 fn show_window(position: FlashPosition, use_recording_icon: bool) -> osd_flash::Result<()> {
-    let frame = get_frame_for_position(position);
+    let bounds = get_frame_for_position(position);
     let size = 80.0;
 
     // Create window using the builder
     let mut window = SkylightWindowBuilder::new()
-        .frame(frame)
+        .frame(bounds)
         .level(SkylightWindowLevel::AboveAll)
         .build()?;
 
@@ -56,9 +54,9 @@ fn show_window(position: FlashPosition, use_recording_icon: bool) -> osd_flash::
     let mut canvas = unsafe { SkylightCanvas::new(window.context_ptr(), window.size()) };
 
     if use_recording_icon {
-        RecordingIcon::new(size).build().draw(&mut canvas);
+        RecordingIcon::new(size).build().draw(&mut canvas, &bounds);
     } else {
-        CameraIcon::new(size).build().draw(&mut canvas);
+        CameraIcon::new(size).build().draw(&mut canvas, &bounds);
     }
 
     // Show for 1.5 seconds

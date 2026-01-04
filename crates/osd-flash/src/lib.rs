@@ -28,9 +28,17 @@
 mod canvas;
 mod color;
 mod flash;
-mod geometry;
 mod shape;
 mod window;
+
+/// Geometry types for positioning and sizing.
+pub mod geometry;
+
+/// Layout types for spacing (padding, border, box model).
+pub mod layout;
+
+/// Styling types for rendering (paint, text style).
+pub mod style;
 
 /// Icon building API for creating custom on-screen indicators.
 pub mod icon;
@@ -41,6 +49,7 @@ pub mod backends;
 // TODO: once stable migrate to `thiserror` and own error types
 pub use anyhow::Result;
 pub use canvas::Canvas;
+pub use color::Color;
 pub use flash::*;
 pub use shape::Shape;
 pub use window::{DisplayTarget, Drawable, OsdFlashBuilder, OsdWindow, WindowLevel};
@@ -52,9 +61,11 @@ pub use window::{DisplayTarget, Drawable, OsdFlashBuilder, OsdWindow, WindowLeve
 pub mod prelude {
     pub use crate::canvas::Canvas;
     pub use crate::color::Color;
-    pub use crate::geometry::{Margin, Point, Rect, Size};
-    pub use crate::icon::{CameraIcon, Icon, IconBuilder, RecordingIcon};
+    pub use crate::geometry::{Point, Rect, Size};
+    pub use crate::icon::{CameraIcon, Icon, IconBuilder, RecordingIcon, StyledShape, StyledText};
+    pub use crate::layout::{Border, LayoutBox, Margin, Padding};
     pub use crate::shape::Shape;
+    pub use crate::style::{FontWeight, Paint, TextAlignment, TextStyle};
     pub use crate::window::{DisplayTarget, Drawable, OsdFlashBuilder, OsdWindow, WindowLevel};
     pub use crate::FlashPosition;
 }
