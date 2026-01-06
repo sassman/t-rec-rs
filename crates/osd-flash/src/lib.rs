@@ -27,8 +27,14 @@
 // Common modules (platform-agnostic)
 mod canvas;
 mod color;
+mod duration_ext;
 mod flash;
 mod shape;
+
+/// Animation system for OSD flash indicators.
+pub mod animation;
+
+// Window module depends on animation, so it's declared after
 mod window;
 
 /// Geometry types for positioning and sizing.
@@ -50,6 +56,7 @@ pub mod backends;
 pub use anyhow::Result;
 pub use canvas::Canvas;
 pub use color::Color;
+pub use duration_ext::DurationExt;
 pub use flash::*;
 pub use shape::Shape;
 pub use window::{DisplayTarget, Drawable, OsdFlashBuilder, OsdWindow, WindowLevel};
@@ -59,6 +66,13 @@ pub use window::{DisplayTarget, Drawable, OsdFlashBuilder, OsdWindow, WindowLeve
 /// This module exports the platform-agnostic public API. For advanced usage
 /// requiring direct backend access, import from `osd_flash::backends` directly.
 pub mod prelude {
+    // Animation
+    pub use crate::animation::{
+        AnimatedWindow, AnimationBuilder, Easing, Keyframe, KeyframeBuilder, Repeat, Transform,
+    };
+    pub use crate::duration_ext::DurationExt;
+
+    // Core types
     pub use crate::canvas::Canvas;
     pub use crate::color::Color;
     pub use crate::geometry::{Point, Rect, Size};

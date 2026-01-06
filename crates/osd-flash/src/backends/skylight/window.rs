@@ -447,6 +447,28 @@ impl SkylightWindow {
         }
         Ok(())
     }
+
+    /// Show the window (make it visible) without running the event loop.
+    ///
+    /// Used by animation to show the window before starting the animation loop.
+    pub fn show_visible(&self) -> crate::Result<()> {
+        unsafe {
+            // Show window (order 1 = above)
+            (self.order_window)(self.connection_id, self.window_id, 1, 0);
+        }
+        Ok(())
+    }
+
+    /// Hide the window (make it invisible).
+    ///
+    /// Used by animation after the animation loop completes.
+    pub fn hide(&self) -> crate::Result<()> {
+        unsafe {
+            // Hide window (order 0 = out)
+            (self.order_window)(self.connection_id, self.window_id, 0, 0);
+        }
+        Ok(())
+    }
 }
 
 impl Drop for SkylightWindow {

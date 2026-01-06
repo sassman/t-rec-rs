@@ -84,13 +84,17 @@ extern "C" {
     static kCTForegroundColorAttributeName: *const c_void;
 }
 
-// Core Graphics color and text
+// Core Graphics color, text, and state management
 #[link(name = "CoreGraphics", kind = "framework")]
 extern "C" {
     fn CGColorCreateGenericRGB(r: f64, g: f64, b: f64, a: f64) -> *const c_void;
     fn CGColorRelease(color: *const c_void);
     fn CGContextSetTextPosition(context: *mut c_void, x: f64, y: f64);
     fn CGContextSetTextMatrix(context: *mut c_void, t: CGAffineTransform);
+    fn CGContextSaveGState(context: *mut c_void);
+    fn CGContextRestoreGState(context: *mut c_void);
+    fn CGContextTranslateCTM(context: *mut c_void, tx: f64, ty: f64);
+    fn CGContextScaleCTM(context: *mut c_void, sx: f64, sy: f64);
 }
 
 #[repr(C)]
@@ -430,5 +434,41 @@ impl CanvasTrait for SkylightCanvas {
 
     fn flush(&self) {
         self.ctx.flush();
+    }
+
+    fn save_state(&mut self) {
+        unsafe {
+            CGContextSaveGState(self.ctx.as_ptr() as *mut c_void);
+        }
+    }
+
+    fn restore_state(&mut self) {
+        unsafe {
+            CGContextRestoreGState(self.ctx.as_ptr() as *mut c_void);
+        }
+    }
+
+    fn scale(&mut self, scale: f64, center: &Point) {
+        // Scale around the center point:
+        // 1. Translate so center is at origin
+        // 2. Apply scale
+        // 3. Translate back
+        //
+        // In CG coordinates (bottom-left origin), we need to flip the center Y.
+        let scaled_center = Point::new(center.x * self.scale, center.y * self.scale);
+        let offset_center = Point::new(
+            scaled_center.x + self.offset.x,
+            scaled_center.y + self.offset.y,
+        );
+        let flipped_y = self.flip_y(offset_center.y);
+
+        unsafe {
+            // Translate to center
+            CGContextTranslateCTM(self.ctx.as_ptr() as *mut c_void, offset_center.x, flipped_y);
+            // Apply scale
+            CGContextScaleCTM(self.ctx.as_ptr() as *mut c_void, scale, scale);
+            // Translate back
+            CGContextTranslateCTM(self.ctx.as_ptr() as *mut c_void, -offset_center.x, -flipped_y);
+        }
     }
 }

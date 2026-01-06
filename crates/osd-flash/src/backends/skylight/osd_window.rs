@@ -1,11 +1,15 @@
 //! SkyLight implementation of the OsdWindow trait.
 
+use crate::animation::animated_window::AnimatedWindow;
+use crate::animation::transform::Transform;
 use crate::canvas::Canvas;
 use crate::color::Color;
 use crate::geometry::{Point, Rect, Size};
+use crate::icon::{Icon, StyledShape};
 use crate::layout::Padding;
 use crate::style::Paint;
-use crate::window::{DisplayTarget, Drawable, OsdFlashBuilder, OsdWindow, WindowLevel};
+use crate::window::{DisplayTarget, OsdFlashBuilder, OsdWindow, WindowLevel};
+use crate::Drawable;
 use crate::FlashPosition;
 
 use super::canvas::SkylightCanvas;
@@ -30,8 +34,6 @@ pub struct SkylightOsdWindow {
     background: Option<Color>,
     /// Corner radius for background
     corner_radius: f64,
-    /// Whether we've drawn the initial background
-    background_drawn: bool,
 }
 
 impl SkylightOsdWindow {
@@ -89,33 +91,27 @@ impl SkylightOsdWindow {
             padding,
             background,
             corner_radius,
-            background_drawn: false,
         })
     }
 }
 
-impl OsdWindow for SkylightOsdWindow {
-    fn draw(mut self, drawable: impl Drawable) -> Self {
-        // On first draw: clear window and draw background if set
-        if !self.background_drawn {
-            let mut full_canvas =
-                unsafe { SkylightCanvas::new(self.window.context_ptr(), self.frame_size) };
-            full_canvas.clear();
+impl SkylightOsdWindow {
+    /// Draw content onto the window (internal helper).
+    fn draw_content(&self, content: &Icon) {
+        // Clear and draw background
+        let mut full_canvas =
+            unsafe { SkylightCanvas::new(self.window.context_ptr(), self.frame_size) };
+        full_canvas.clear();
 
-            // Draw background if configured
-            if let Some(bg_color) = self.background {
-                let bg_rect =
-                    Rect::from_xywh(0.0, 0.0, self.frame_size.width, self.frame_size.height);
-                let paint = Paint::fill(bg_color);
-                full_canvas.draw_rounded_rect(&bg_rect, self.corner_radius, &paint);
-                full_canvas.flush();
-            }
-
-            self.background_drawn = true;
+        // Draw background if configured
+        if let Some(bg_color) = self.background {
+            let bg_rect =
+                Rect::from_xywh(0.0, 0.0, self.frame_size.width, self.frame_size.height);
+            let paint = Paint::fill(bg_color);
+            full_canvas.draw_rounded_rect(&bg_rect, self.corner_radius, &paint);
         }
 
-        // Create canvas with padding offset for content positioning.
-        // Content is drawn within the padded area.
+        // Create canvas with padding offset for content positioning
         let offset = Point::new(self.padding.left, self.padding.top);
         let mut canvas = unsafe {
             SkylightCanvas::with_frame_and_offset(
@@ -127,12 +123,104 @@ impl OsdWindow for SkylightOsdWindow {
         };
         let bounds = Rect::new(Point::new(0.0, 0.0), self.content_size);
 
-        drawable.draw(&mut canvas, &bounds);
-        self
+        content.draw(&mut canvas, &bounds);
+        canvas.flush();
+    }
+}
+
+impl OsdWindow for SkylightOsdWindow {
+    fn draw(self, content: impl Into<Icon>) -> AnimatedWindow<Self> {
+        AnimatedWindow::new(self, content.into())
     }
 
-    fn show_for_seconds(mut self, seconds: f64) -> crate::Result<()> {
-        self.window.show(seconds)
+    fn show_window(&self) -> crate::Result<()> {
+        self.window.show_visible()
+    }
+
+    fn hide_window(&self) -> crate::Result<()> {
+        self.window.hide()
+    }
+
+    fn draw_and_show(&self, content: Icon, seconds: f64) -> crate::Result<()> {
+        // Draw the content
+        self.draw_content(&content);
+
+        // Show window, run loop, hide window
+        self.window.show_visible()?;
+
+        // Run the event loop for the specified duration
+        use std::ffi::c_void;
+        #[link(name = "CoreFoundation", kind = "framework")]
+        extern "C" {
+            fn CFRunLoopRunInMode(
+                mode: *const c_void,
+                seconds: f64,
+                return_after_source_handled: bool,
+            ) -> i32;
+            static kCFRunLoopDefaultMode: *const c_void;
+        }
+        unsafe {
+            CFRunLoopRunInMode(kCFRunLoopDefaultMode, seconds, false);
+        }
+
+        self.window.hide()
+    }
+
+    fn render_animation_frame(
+        &self,
+        content: &Icon,
+        transform: &Transform,
+        shapes: &[StyledShape],
+    ) -> crate::Result<()> {
+        // Create canvas for full frame
+        let mut full_canvas =
+            unsafe { SkylightCanvas::new(self.window.context_ptr(), self.frame_size) };
+
+        // Always clear to transparent first (needed for rounded corners)
+        full_canvas.clear();
+
+        // Draw background if configured
+        if let Some(bg_color) = self.background {
+            let bg_rect =
+                Rect::from_xywh(0.0, 0.0, self.frame_size.width, self.frame_size.height);
+            let paint = Paint::fill(bg_color);
+            full_canvas.draw_rounded_rect(&bg_rect, self.corner_radius, &paint);
+        }
+
+        // Create canvas with padding offset for content positioning
+        let offset = Point::new(self.padding.left, self.padding.top);
+        let mut canvas = unsafe {
+            SkylightCanvas::with_frame_and_offset(
+                self.window.context_ptr(),
+                self.content_size,
+                self.frame_size.height,
+                offset,
+            )
+        };
+        let bounds = Rect::new(Point::new(0.0, 0.0), self.content_size);
+        let center = Point::new(self.content_size.width / 2.0, self.content_size.height / 2.0);
+
+        // Apply transform if not identity
+        if !transform.is_identity() {
+            canvas.save_state();
+            canvas.scale(transform.scale, &center);
+        }
+
+        // Draw base content
+        content.draw(&mut canvas, &bounds);
+
+        // Draw overlay shapes (from animation keyframes)
+        for styled_shape in shapes {
+            styled_shape.draw(&mut canvas, &bounds);
+        }
+
+        // Restore transform if applied
+        if !transform.is_identity() {
+            canvas.restore_state();
+        }
+
+        canvas.flush();
+        Ok(())
     }
 }
 

@@ -4,9 +4,12 @@
 //! on-screen indicators. The actual rendering is delegated to platform-specific
 //! backends.
 
+use crate::animation::animated_window::AnimatedWindow;
+use crate::animation::transform::Transform;
 use crate::canvas::Canvas;
 use crate::color::Color;
 use crate::geometry::Size;
+use crate::icon::{Icon, StyledShape};
 use crate::layout::{Margin, Padding};
 use crate::{FlashPosition, Rect};
 
@@ -58,12 +61,53 @@ pub trait Drawable {
 /// Trait for platform-specific OSD windows.
 ///
 /// Backends implement this trait to provide the actual window rendering.
+/// The high-level API chain is:
+///
+/// ```ignore
+/// OsdFlashBuilder::new()
+///     .build()?           // → impl OsdWindow
+///     .draw(icon)         // → AnimatedWindow
+///     .animate(...)       // → AnimationBuilder (optional)
+///     .show_for_seconds() // → Result<()>
+/// ```
 pub trait OsdWindow: Sized {
-    /// Draw a drawable object onto the window.
-    fn draw(self, drawable: impl Drawable) -> Self;
+    /// Draw an icon and return an AnimatedWindow for display or animation.
+    ///
+    /// This transfers ownership of the window to the AnimatedWindow wrapper,
+    /// which provides both static display and animation capabilities.
+    ///
+    /// Accepts any type that can be converted to an Icon, including:
+    /// - `Icon` - a complete icon
+    /// - `StyledShape` - a single styled shape
+    /// - `Vec<StyledShape>` - multiple styled shapes
+    fn draw(self, content: impl Into<Icon>) -> AnimatedWindow<Self>;
 
-    /// Show the window for the specified duration in seconds.
-    fn show_for_seconds(self, seconds: f64) -> crate::Result<()>;
+    /// Show the window (make it visible).
+    ///
+    /// Used by the animation runner to display the window before starting
+    /// the animation loop.
+    fn show_window(&self) -> crate::Result<()>;
+
+    /// Hide the window (make it invisible).
+    ///
+    /// Used by the animation runner after the animation completes.
+    fn hide_window(&self) -> crate::Result<()>;
+
+    /// Draw content and show for a duration (static display).
+    ///
+    /// This is used for non-animated display.
+    fn draw_and_show(&self, content: Icon, seconds: f64) -> crate::Result<()>;
+
+    /// Render a single animation frame.
+    ///
+    /// Called by the animation runner at each frame (typically 60fps).
+    /// The transform and shapes are interpolated values from keyframes.
+    fn render_animation_frame(
+        &self,
+        content: &Icon,
+        transform: &Transform,
+        shapes: &[StyledShape],
+    ) -> crate::Result<()>;
 }
 
 /// Builder for creating OSD flash windows.

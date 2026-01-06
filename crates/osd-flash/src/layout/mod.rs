@@ -1,10 +1,10 @@
 //! Layout types for positioning and spacing.
 //!
-//! This module provides abstractions for the CSS-like box model:
-//! - [`Margin`] - External spacing around the border box
-//! - [`Padding`] - Internal spacing between border and content
-//! - [`Border`] - Border specification (width affects content bounds)
-//! - [`LayoutBox`] - Combines bounds, margin, border, and padding
+//! Provides CSS-like box model abstractions:
+//! - `Margin` - external spacing around the border box
+//! - `Padding` - internal spacing between border and content
+//! - `Border` - border specification (width affects content bounds)
+//! - `LayoutBox` - combines bounds, margin, border, and padding
 
 mod border;
 mod box_model;

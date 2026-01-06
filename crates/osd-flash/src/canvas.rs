@@ -47,6 +47,24 @@ pub trait Canvas {
     /// Flush any buffered drawing operations.
     fn flush(&self);
 
+    /// Save the current graphics state (transform, clip, etc.).
+    ///
+    /// Used for animation transforms that need to be applied temporarily.
+    fn save_state(&mut self);
+
+    /// Restore the previously saved graphics state.
+    ///
+    /// Call this after applying temporary transforms.
+    fn restore_state(&mut self);
+
+    /// Apply a scale transform around the given center point.
+    ///
+    /// # Arguments
+    ///
+    /// * `scale` - Scale factor (1.0 = no change, 0.5 = half size, 2.0 = double)
+    /// * `center` - Point to scale around
+    fn scale(&mut self, scale: f64, center: &Point);
+
     // Draw another drawable (composition)
     fn draw(&mut self, drawable: &dyn Drawable, bounds: &Rect)
     where
