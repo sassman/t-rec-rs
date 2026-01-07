@@ -102,7 +102,7 @@ fn main() -> Result<()> {
     api.calibrate(win_id)?;
 
     // TODO(release): this should be removed eventually
-    #[cfg(target_os = "macos")]
+    #[cfg(all(target_os = "macos", feature = "osd-flash-indicator"))]
     if args.test_flash {
         return run_test_flash(win_id);
     }
@@ -156,8 +156,8 @@ fn validate_prerequisites(settings: &ProfileSettings) -> Result<()> {
     Ok(())
 }
 
-/// Test flash indicator (macOS only).
-#[cfg(target_os = "macos")]
+/// Test flash indicator (macOS only, requires osd-flash-indicator feature).
+#[cfg(all(target_os = "macos", feature = "osd-flash-indicator"))]
 fn run_test_flash(win_id: WindowId) -> Result<()> {
     use osd_flash::prelude::*;
     use std::thread;

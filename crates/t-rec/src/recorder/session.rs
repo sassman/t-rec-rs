@@ -357,6 +357,13 @@ impl RecordingSession {
         });
 
         use super::presenter::{create_presenter, Presenter};
+
+        #[cfg(all(target_os = "macos", feature = "osd-flash-indicator"))]
+        log::debug!("OSD flash indicator: enabled (Skylight)");
+
+        #[cfg(not(all(target_os = "macos", feature = "osd-flash-indicator")))]
+        log::debug!("OSD flash indicator: disabled (no-op)");
+
         let mut presenter = create_presenter(config.win_id);
 
         // Shell bootstrap delay

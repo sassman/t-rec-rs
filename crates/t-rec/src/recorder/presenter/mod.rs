@@ -1,10 +1,12 @@
 //! Visual feedback during recording (screenshot indicators, keystroke overlays).
 //!
-//! On macOS, must run on the main thread due to Skylight requirements.
+//! On macOS with `osd-flash-indicator` feature enabled, uses Skylight for on-screen display.
+//! Otherwise falls back to a no-op implementation.
+//!
+//! The Skylight presenter must run on the main thread due to macOS requirements.
 
-#[cfg(target_os = "macos")]
+#[cfg(all(target_os = "macos", feature = "osd-flash-indicator"))]
 mod macos;
-#[cfg(not(target_os = "macos"))]
 mod noop;
 
 use std::thread;
@@ -44,12 +46,12 @@ pub trait Presenter {
     }
 }
 
-#[cfg(target_os = "macos")]
+#[cfg(all(target_os = "macos", feature = "osd-flash-indicator"))]
 pub fn create_presenter(win_id: WindowId) -> impl Presenter {
     macos::SkylightPresenter::new(win_id)
 }
 
-#[cfg(not(target_os = "macos"))]
+#[cfg(not(all(target_os = "macos", feature = "osd-flash-indicator")))]
 pub fn create_presenter(win_id: WindowId) -> impl Presenter {
     noop::NoopPresenter::new(win_id)
 }

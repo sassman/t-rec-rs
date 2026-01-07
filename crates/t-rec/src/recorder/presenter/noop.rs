@@ -1,7 +1,7 @@
 //! No-op presenter for platforms without visual feedback.
 
 use super::Presenter;
-use crate::capture::FlashEvent;
+use crate::event_router::FlashEvent;
 use crate::Result;
 use crate::WindowId;
 
