@@ -1,0 +1,70 @@
+[package]
+name = "core-animation"
+version = "0.1.0"
+description = "Ergonomic Rust bindings for macOS Core Animation with builder patterns"
+authors.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[features]
+default = []
+screenshot = []
+# Enable t-rec integration for recording examples to GIF
+record = []
+
+[dev-dependencies]
+# For the record_demo example
+t-rec = { path = "../t-rec", features = ["lib"] }
+
+[target.'cfg(target_os = "macos")'.dependencies]
+objc2.workspace = true
+objc2-quartz-core = { workspace = true, features = [
+    "CALayer",
+    "CAShapeLayer",
+    "CATransform3D",
+    "CAMediaTiming",
+    "CAMediaTimingFunction",
+    "CATransaction",
+    "CAAnimation",
+    "CAEmitterLayer",
+    "CAEmitterCell",
+    "objc2-core-foundation",
+    "objc2-core-graphics",
+] }
+objc2-core-foundation = { workspace = true, features = [
+    "CFRunLoop",
+    "CFDate",
+    "CFDictionary",
+    "CFString",
+    "CFAttributedString",
+] }
+objc2-core-graphics = { workspace = true, features = [
+    "CGColor",
+    "CGColorSpace",
+    "CGPath",
+    "CGBitmapContext",
+    "CGContext",
+    "CGImage",
+    "CGAffineTransform",
+    "CGDirectDisplay",
+    "CGWindow",
+] }
+objc2-core-text = { workspace = true, features = [
+    "CTFont",
+    "CTLine",
+    "CTStringAttributes",
+    "objc2-core-graphics",
+] }
+objc2-foundation.workspace = true
+objc2-app-kit = { workspace = true, features = [
+    "NSApplication",
+    "NSResponder",
+    "NSRunningApplication",
+    "NSWindow",
+    "NSGraphics",
+    "NSView",
+    "NSScreen",
+    "NSBitmapImageRep",
+    "NSImageRep",
+] }

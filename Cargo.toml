@@ -11,13 +11,21 @@ repository = "https://github.com/sassman/t-rec-rs"
 
 [workspace.dependencies]
 osd-flash = { path = "crates/osd-flash" }
+core-animation = { path = "crates/core-animation" }
 
 anyhow = "1.0"
 log = "0.4"
 
-objc2-foundation = "0.3.2"
+# Modern objc2-* crates (preferred)
 objc2 = "0.6.3"
+objc2-foundation = "0.3.2"
+objc2-app-kit = "0.3.2"
+objc2-quartz-core = "0.3.2"
+objc2-core-graphics = { version = "0.3", features = ["CGColor", "CGColorSpace", "CGPath", "CGContext", "CGAffineTransform"] }
+objc2-core-foundation = { version = "0.3", features = ["CFRunLoop", "CFDate", "CFArray", "CFDictionary", "CFString", "CFNumber", "CFAttributedString"] }
+objc2-core-text = { version = "0.3", features = ["CTFont", "CTLine", "CTStringAttributes", "objc2-core-graphics"] }
 
+# Legacy crates (being phased out)
 objc_id = "0.1.1"
 objc-foundation = "0.1.1"
 objc = "0.2.7"
