@@ -5,9 +5,12 @@
 //! where the circle brightens as it contracts and dims as it expands.
 //!
 //! Run with: cargo run -p core-animation --example breathing_circle
-//! With screenshot: cargo run -p core-animation --example breathing_circle --features screenshot
+//! With recording: cargo run -p core-animation --example breathing_circle --features record
 
 use core_animation::prelude::*;
+
+#[path = "common/mod.rs"]
+mod common;
 
 fn main() {
     println!("Breathing Circle - Soft Pulsing Orb\n");
@@ -112,17 +115,15 @@ fn main() {
     println!("Watch the breathing orb for 10 seconds...");
     println!("Notice how opacity peaks when the circle is smallest.\n");
 
-    // Show with optional screenshot
-    #[cfg(feature = "screenshot")]
-    {
-        use std::path::Path;
-        window.show_for_with_screenshot(
-            10.seconds(),
-            Path::new("crates/core-animation/examples/screenshots/breathing_circle.png"),
-        );
-    }
+    // Show with optional recording
+    #[cfg(feature = "record")]
+    common::show_with_recording(
+        &window,
+        "crates/core-animation/examples/screenshots/breathing_circle",
+        10.seconds(),
+    );
 
-    #[cfg(not(feature = "screenshot"))]
+    #[cfg(not(feature = "record"))]
     window.show_for(10.seconds());
 
     println!("Done!");

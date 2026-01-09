@@ -66,6 +66,10 @@ x11rb = "0.13.1"
 default = ["osd-flash-indicator"]
 e2e_tests = []
 
+# Library feature for programmatic recording (headless mode)
+# Enables HeadlessRecorder for recording windows without PTY/shell
+lib = []
+
 # On-screen display indicator for screenshots (macOS only)
 # Disable with: cargo build --no-default-features
 osd-flash-indicator = ["dep:osd-flash"]

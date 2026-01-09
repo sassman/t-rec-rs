@@ -18,6 +18,7 @@ mod recorder;
 mod screenshot;
 mod summary;
 mod tips;
+pub mod types;
 mod wallpapers;
 
 mod capture;

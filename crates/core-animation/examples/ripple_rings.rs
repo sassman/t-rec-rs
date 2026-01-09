@@ -13,9 +13,12 @@
 //! - `Easing::Out` for realistic ripple physics (fast start, slow end)
 //!
 //! Run with: cargo run -p core-animation --example ripple_rings
-//! With screenshot: cargo run -p core-animation --example ripple_rings --features screenshot
+//! With recording: cargo run -p core-animation --example ripple_rings --features record
 
 use core_animation::prelude::*;
+
+#[path = "common/mod.rs"]
+mod common;
 
 fn main() {
     println!("Ripple Rings - Water Ripple Effect\n");
@@ -184,17 +187,15 @@ fn main() {
     println!("  - Staggered phase creates continuous emanation");
     println!("  - Easing::Out gives realistic ripple physics\n");
 
-    // Show with optional screenshot
-    #[cfg(feature = "screenshot")]
-    {
-        use std::path::Path;
-        window.show_for_with_screenshot(
-            15.seconds(),
-            Path::new("crates/core-animation/examples/screenshots/ripple_rings.png"),
-        );
-    }
+    // Show with optional recording
+    #[cfg(feature = "record")]
+    common::show_with_recording(
+        &window,
+        "crates/core-animation/examples/screenshots/ripple_rings",
+        15.seconds(),
+    );
 
-    #[cfg(not(feature = "screenshot"))]
+    #[cfg(not(feature = "record"))]
     window.show_for(15.seconds());
 
     println!("Done!");

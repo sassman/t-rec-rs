@@ -10,12 +10,20 @@ repository.workspace = true
 [features]
 default = []
 screenshot = []
-# Enable t-rec integration for recording examples to GIF
+# Enable t-rec integration for recording examples to GIF and MP4.
+# This is a dev-only feature for generating demo content, not shipped by default.
+# Requires ImageMagick and ffmpeg to be installed.
+#
+# NOTE: The t-rec dependency is in dev-dependencies to avoid cyclic dependency
+# (t-rec depends on osd-flash, which depends on core-animation).
+# This means the `record` feature only works for examples/tests, not library users.
 record = []
 
 [dev-dependencies]
-# For the record_demo example
-t-rec = { path = "../t-rec", features = ["lib"] }
+# For recording examples to GIF/MP4 (only used with --features record)
+# IMPORTANT: default-features = false to avoid cyclic dependency
+t-rec = { path = "../t-rec", features = ["lib"], default-features = false }
+anyhow.workspace = true
 
 [target.'cfg(target_os = "macos")'.dependencies]
 objc2.workspace = true

@@ -3,9 +3,12 @@
 //! Demonstrates the convenience builder for particles bursting from a point.
 //!
 //! Run with: cargo run -p core-animation --example point_burst
-//! With screenshot: cargo run -p core-animation --example point_burst --features screenshot
+//! With recording: cargo run -p core-animation --example point_burst --features record
 
 use core_animation::prelude::*;
+
+#[path = "common/mod.rs"]
+mod common;
 
 fn main() {
     println!("PointBurstBuilder Example\n");
@@ -68,16 +71,14 @@ fn main() {
     println!("PointBurstBuilder simplifies the common pattern of");
     println!("particles exploding outward from a single point.\n");
 
-    #[cfg(feature = "screenshot")]
-    {
-        use std::path::Path;
-        window.show_for_with_screenshot(
-            12.seconds(),
-            Path::new("crates/core-animation/examples/screenshots/point_burst.png"),
-        );
-    }
+    #[cfg(feature = "record")]
+    common::show_with_recording(
+        &window,
+        "crates/core-animation/examples/screenshots/point_burst",
+        12.seconds(),
+    );
 
-    #[cfg(not(feature = "screenshot"))]
+    #[cfg(not(feature = "record"))]
     window.show_for(12.seconds());
 
     println!("Done!");

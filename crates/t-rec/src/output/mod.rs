@@ -138,13 +138,13 @@ impl OutputGenerator {
     fn build_post_processing_options(&self) -> PostProcessingOptions<'_> {
         if let Some((ref wallpaper, padding)) = self.config.post_process.wallpaper {
             PostProcessingOptions::new(
-                &self.config.post_process.decor,
+                self.config.post_process.decor,
                 &self.config.post_process.bg_color,
             )
             .with_wallpaper(wallpaper, padding)
         } else {
             PostProcessingOptions::new(
-                &self.config.post_process.decor,
+                self.config.post_process.decor,
                 &self.config.post_process.bg_color,
             )
         }

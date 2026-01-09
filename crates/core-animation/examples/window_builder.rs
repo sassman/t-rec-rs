@@ -1,9 +1,12 @@
 //! WindowBuilder example - creating layer-backed windows with a builder API.
 //!
 //! Run with: cargo run -p core-animation --example window_builder
-//! With screenshot: cargo run -p core-animation --example window_builder --features screenshot
+//! With recording: cargo run -p core-animation --example window_builder --features record
 
 use core_animation::prelude::*;
+
+#[path = "common/mod.rs"]
+mod common;
 
 fn main() {
     println!("WindowBuilder Example\n");
@@ -39,16 +42,14 @@ fn main() {
     println!("Window size: {:?}", window.size());
     println!("Showing for 5 seconds...\n");
 
-    #[cfg(feature = "screenshot")]
-    {
-        use std::path::Path;
-        window.show_for_with_screenshot(
-            5.seconds(),
-            Path::new("crates/core-animation/examples/screenshots/window_builder.png"),
-        );
-    }
+    #[cfg(feature = "record")]
+    common::show_with_recording(
+        &window,
+        "crates/core-animation/examples/screenshots/window_builder",
+        5.seconds(),
+    );
 
-    #[cfg(not(feature = "screenshot"))]
+    #[cfg(not(feature = "record"))]
     window.show_for(5.seconds());
 
     println!("Done!");

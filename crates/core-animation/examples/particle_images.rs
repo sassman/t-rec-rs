@@ -3,11 +3,14 @@
 //! Shows soft_glow, circle, star, and spark particle images side by side.
 //!
 //! Run with: cargo run -p core-animation --example particle_images
-//! With screenshot: cargo run -p core-animation --example particle_images --features screenshot
+//! With recording: cargo run -p core-animation --example particle_images --features record
 
 use std::f64::consts::PI;
 
 use core_animation::prelude::*;
+
+#[path = "common/mod.rs"]
+mod common;
 
 fn main() {
     println!("Particle Images Showcase\n");
@@ -126,16 +129,14 @@ fn main() {
     }
     println!();
 
-    #[cfg(feature = "screenshot")]
-    {
-        use std::path::Path;
-        window.show_for_with_screenshot(
-            15.seconds(),
-            Path::new("crates/core-animation/examples/screenshots/particle_images.png"),
-        );
-    }
+    #[cfg(feature = "record")]
+    common::show_with_recording(
+        &window,
+        "crates/core-animation/examples/screenshots/particle_images",
+        15.seconds(),
+    );
 
-    #[cfg(not(feature = "screenshot"))]
+    #[cfg(not(feature = "record"))]
     window.show_for(15.seconds());
 
     println!("Done!");

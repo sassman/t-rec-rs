@@ -33,11 +33,14 @@
 //! and the closure pattern for particle configuration.
 //!
 //! Run with: cargo run -p core-animation --example emitter
-//! With screenshot: cargo run -p core-animation --example emitter --features screenshot
+//! With recording: cargo run -p core-animation --example emitter --features record
 
 use std::f64::consts::PI;
 
 use core_animation::prelude::*;
+
+#[path = "common/mod.rs"]
+mod common;
 
 fn main() {
     println!("Particle Emitter Example\n");
@@ -74,16 +77,14 @@ fn main() {
     println!("  - lifetime: 10 seconds");
     println!("  - At steady state: ~1000 particles on screen\n");
 
-    #[cfg(feature = "screenshot")]
-    {
-        use std::path::Path;
-        window.show_for_with_screenshot(
-            15.seconds(),
-            Path::new("crates/core-animation/examples/screenshots/emitter.png"),
-        );
-    }
+    #[cfg(feature = "record")]
+    common::show_with_recording(
+        &window,
+        "crates/core-animation/examples/screenshots/emitter",
+        15.seconds(),
+    );
 
-    #[cfg(not(feature = "screenshot"))]
+    #[cfg(not(feature = "record"))]
     window.show_for(15.seconds());
 
     println!("Done!");

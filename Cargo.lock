@@ -186,6 +186,7 @@ dependencies = [
 name = "core-animation"
 version = "0.1.0"
 dependencies = [
+ "anyhow",
  "objc2",
  "objc2-app-kit",
  "objc2-core-foundation",
@@ -193,6 +194,7 @@ dependencies = [
  "objc2-core-text",
  "objc2-foundation",
  "objc2-quartz-core",
+ "t-rec",
 ]
 
 [[package]]

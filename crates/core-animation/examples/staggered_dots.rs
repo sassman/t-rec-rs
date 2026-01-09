@@ -5,9 +5,12 @@
 //! points in the cycle, creating a smooth wave effect.
 //!
 //! Run with: cargo run -p core-animation --example staggered_dots
-//! With screenshot: cargo run -p core-animation --example staggered_dots --features screenshot
+//! With recording: cargo run -p core-animation --example staggered_dots --features record
 
 use core_animation::prelude::*;
+
+#[path = "common/mod.rs"]
+mod common;
 
 fn main() {
     println!("Staggered Dots - Loading Indicator\n");
@@ -140,17 +143,15 @@ fn main() {
     println!("Watch the staggered dots for 10 seconds...");
     println!("Notice how phase_offset creates the wave effect.\n");
 
-    // Show with optional screenshot
-    #[cfg(feature = "screenshot")]
-    {
-        use std::path::Path;
-        window.show_for_with_screenshot(
-            10.seconds(),
-            Path::new("crates/core-animation/examples/screenshots/staggered_dots.png"),
-        );
-    }
+    // Show with optional recording
+    #[cfg(feature = "record")]
+    common::show_with_recording(
+        &window,
+        "crates/core-animation/examples/screenshots/staggered_dots",
+        10.seconds(),
+    );
 
-    #[cfg(not(feature = "screenshot"))]
+    #[cfg(not(feature = "record"))]
     window.show_for(10.seconds());
 
     println!("Done!");

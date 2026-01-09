@@ -1,10 +1,14 @@
 #!/usr/bin/env bash
-# Updates the screenshots for all examples that support automatic screenshot capture.
+# Generates recordings (GIF and MP4) for all examples that support automatic recording.
 #
 # Usage: ./tools/update-example-screenshots.sh
 #
-# Screenshots are saved to examples/screenshots/
-# Examples are auto-detected by looking for `#[cfg(feature = "screenshot")]` in the source.
+# Outputs are saved to examples/screenshots/
+# Examples are auto-detected by looking for `#[cfg(feature = "record")]` in the source.
+#
+# Prerequisites:
+# - ImageMagick (brew install imagemagick)
+# - ffmpeg (brew install ffmpeg)
 
 set -e
 
@@ -13,18 +17,18 @@ CRATE_DIR="$(dirname "$SCRIPT_DIR")"
 
 cd "$CRATE_DIR/../.."
 
-echo "Updating example screenshots for core-animation..."
+echo "Generating example recordings for core-animation..."
 echo ""
 
-# Find examples that have screenshot support (contain the feature gate)
-EXAMPLES=$(grep -l 'cfg(feature = "screenshot")' crates/core-animation/examples/*.rs 2>/dev/null | xargs -I{} basename {} .rs | sort)
+# Find examples that have recording support (contain the feature gate)
+EXAMPLES=$(grep -l 'cfg(feature = "record")' crates/core-animation/examples/*.rs 2>/dev/null | xargs -I{} basename {} .rs | sort)
 
 if [ -z "$EXAMPLES" ]; then
-    echo "No examples with screenshot support found."
+    echo "No examples with recording support found."
     exit 0
 fi
 
-echo "Found examples with screenshot support:"
+echo "Found examples with recording support:"
 for example in $EXAMPLES; do
     echo "  - $example"
 done
@@ -34,11 +38,11 @@ echo ""
 mkdir -p crates/core-animation/examples/screenshots
 
 for example in $EXAMPLES; do
-    echo "Running $example..."
-    cargo run -p core-animation --example "$example" --features screenshot
+    echo "Recording $example..."
+    cargo run -p core-animation --release --example "$example" --features record
     echo ""
 done
 
-echo "Done! Screenshots saved to crates/core-animation/examples/screenshots/"
+echo "Done! Recordings saved to crates/core-animation/examples/screenshots/"
 echo ""
 ls -la crates/core-animation/examples/screenshots/

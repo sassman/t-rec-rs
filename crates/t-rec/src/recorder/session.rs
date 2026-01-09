@@ -14,6 +14,7 @@ use crate::event_router::*;
 use crate::input::{HotkeyConfig, InputState, KeyboardMonitor};
 use crate::output::OutputConfig;
 use crate::screenshot::ScreenshotInfo;
+use crate::types::{BackgroundColor, Decor};
 
 use anyhow::Context;
 use image::DynamicImage;
@@ -31,12 +32,14 @@ use crate::{Result, WindowId};
 use crate::pty::PtyShell;
 
 /// Configuration for post-processing effects.
+///
+/// Uses type-safe enums for decoration and background color configuration.
 #[derive(Clone)]
 pub struct PostProcessConfig {
-    /// Decoration style ("none", "shadow", etc.)
-    pub decor: String,
+    /// Decoration style (None or Shadow)
+    pub decor: Decor,
     /// Background color for shadow effect
-    pub bg_color: String,
+    pub bg_color: BackgroundColor,
     /// Optional pre-validated wallpaper configuration (image, padding)
     pub wallpaper: Option<(DynamicImage, u32)>,
     /// Pause to add at the start of the GIF
@@ -99,8 +102,8 @@ pub struct SessionConfigBuilder {
     generate_video: Option<bool>,
     verbose: Option<bool>,
     quiet: Option<bool>,
-    decor: Option<String>,
-    bg_color: Option<String>,
+    decor: Option<Decor>,
+    bg_color: Option<BackgroundColor>,
     wallpaper: Option<(DynamicImage, u32)>,
     start_delay: Option<Duration>,
     end_delay: Option<Duration>,
@@ -134,8 +137,9 @@ impl SessionConfigBuilder {
         self.generate_gif = Some(!settings.video_only());
         self.generate_video = Some(settings.video() || settings.video_only());
         self.output_path = Some(PathBuf::from(settings.output()));
-        self.decor = Some(settings.decor().to_string());
-        self.bg_color = Some(settings.bg().to_string());
+        // Parse decor and bg from config strings to enums
+        self.decor = Some(settings.decor().parse().unwrap_or_default());
+        self.bg_color = Some(settings.bg().parse().unwrap_or_default());
         self
     }
 
@@ -181,8 +185,8 @@ impl SessionConfigBuilder {
             verbose: self.verbose.unwrap_or(false),
             quiet: self.quiet.unwrap_or(false),
             post_process: PostProcessConfig {
-                decor: self.decor.unwrap_or_else(|| "shadow".to_string()),
-                bg_color: self.bg_color.unwrap_or_else(|| "#000000".to_string()),
+                decor: self.decor.unwrap_or_default(),
+                bg_color: self.bg_color.unwrap_or_default(),
                 wallpaper: self.wallpaper,
                 start_delay: self.start_delay.unwrap_or(Duration::ZERO),
                 end_delay: self.end_delay.unwrap_or(Duration::ZERO),

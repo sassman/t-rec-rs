@@ -2,6 +2,12 @@
 //!
 //! This module provides a unified pipeline for applying visual effects
 //! to captured frames and screenshots.
+//!
+//! # Type-Safe Configuration
+//!
+//! Post-processing options use type-safe enums for configuration:
+//! - [`Decor`](crate::types::Decor) for decoration style (None, Shadow)
+//! - [`BackgroundColor`](crate::types::BackgroundColor) for background color
 
 use image::{DynamicImage, GenericImageView};
 use log::warn;
@@ -10,27 +16,58 @@ use std::path::Path;
 
 use crate::decors::{apply_corner_to_file, apply_shadow_to_file};
 use crate::screenshot::ScreenshotInfo;
+use crate::types::{BackgroundColor, Decor};
 use crate::wallpapers::composite_frame;
 use crate::Result;
 
 /// Options for post-processing effects.
 ///
 /// These options control which effects are applied to frames/screenshots.
+/// Uses type-safe enums for decoration and background color configuration.
+///
+/// # Example
+///
+/// ```ignore
+/// use t_rec::post_processing::PostProcessingOptions;
+/// use t_rec::types::{Decor, BackgroundColor};
+///
+/// let opts = PostProcessingOptions::new(Decor::Shadow, &BackgroundColor::White);
+/// ```
 #[derive(Clone)]
 pub struct PostProcessingOptions<'a> {
-    /// Decoration style ("none", "shadow", etc.)
-    pub decor: &'a str,
+    /// Decoration style (None or Shadow)
+    pub decor: Decor,
     /// Background color for shadow effect
-    pub bg_color: &'a str,
+    pub bg_color: &'a BackgroundColor,
     /// Optional wallpaper configuration (image, padding)
     pub wallpaper: Option<(&'a DynamicImage, u32)>,
 }
 
 impl<'a> PostProcessingOptions<'a> {
-    /// Create new post-processing options.
-    pub fn new(decor: &'a str, bg_color: &'a str) -> Self {
+    /// Create new post-processing options with type-safe enums.
+    pub fn new(decor: Decor, bg_color: &'a BackgroundColor) -> Self {
         Self {
             decor,
+            bg_color,
+            wallpaper: None,
+        }
+    }
+
+    /// Create post-processing options from string values.
+    ///
+    /// This is primarily for backward compatibility with CLI/config string values.
+    /// Prefer [`new`](Self::new) for programmatic use.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `decor` is not a valid decoration value.
+    pub fn from_strings(decor: &str, bg_color: &'a BackgroundColor) -> Self {
+        Self {
+            decor: decor.parse().expect(&format!(
+                "Invalid decor '{}'. Valid options: {}",
+                decor,
+                Decor::valid_values().join(", ")
+            )),
             bg_color,
             wallpaper: None,
         }
@@ -85,15 +122,15 @@ pub fn post_process_screenshots(
 ///
 /// Applies the following effects in order:
 /// 1. Corner radius effect (rounded corners)
-/// 2. Shadow effect (if decor == "shadow")
+/// 2. Shadow effect (if decor is Shadow)
 /// 3. Wallpaper compositing (if wallpaper is configured)
 pub fn post_process_file(file: &Path, opts: &PostProcessingOptions) -> Result<()> {
     // Apply corner effect
     apply_corner_to_file(file)?;
 
     // Apply shadow effect if enabled
-    if opts.decor == "shadow" {
-        apply_shadow_to_file(file, opts.bg_color)?;
+    if opts.decor == Decor::Shadow {
+        apply_shadow_to_file(file, opts.bg_color.to_imagemagick_color())?;
     }
 
     // Apply wallpaper effect if configured
@@ -122,15 +159,31 @@ mod tests {
 
     #[test]
     fn test_post_processing_options_new() {
-        let opts = PostProcessingOptions::new("shadow", "#ffffff");
-        assert_eq!(opts.decor, "shadow");
-        assert_eq!(opts.bg_color, "#ffffff");
+        let bg = BackgroundColor::White;
+        let opts = PostProcessingOptions::new(Decor::Shadow, &bg);
+        assert_eq!(opts.decor, Decor::Shadow);
+        assert_eq!(opts.bg_color.to_imagemagick_color(), "white");
         assert!(opts.wallpaper.is_none());
     }
 
     #[test]
-    fn test_post_processing_options_default_decor() {
-        let opts = PostProcessingOptions::new("none", "#000000");
-        assert_eq!(opts.decor, "none");
+    fn test_post_processing_options_none_decor() {
+        let bg = BackgroundColor::Black;
+        let opts = PostProcessingOptions::new(Decor::None, &bg);
+        assert_eq!(opts.decor, Decor::None);
+    }
+
+    #[test]
+    fn test_post_processing_options_from_strings() {
+        let bg = BackgroundColor::Transparent;
+        let opts = PostProcessingOptions::from_strings("shadow", &bg);
+        assert_eq!(opts.decor, Decor::Shadow);
+    }
+
+    #[test]
+    fn test_post_processing_options_custom_color() {
+        let bg = BackgroundColor::custom("#ff5500").unwrap();
+        let opts = PostProcessingOptions::new(Decor::Shadow, &bg);
+        assert_eq!(opts.bg_color.to_imagemagick_color(), "#ff5500");
     }
 }
