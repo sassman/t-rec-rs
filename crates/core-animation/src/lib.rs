@@ -93,7 +93,7 @@ pub use layer_builder::CALayerBuilder;
 pub use shape_layer_builder::CAShapeLayerBuilder;
 
 // Re-export window types
-pub use window::{Screen, Window, WindowBuilder, WindowStyle};
+pub use window::{Screen, Window, WindowBuilder, WindowLevel, WindowStyle};
 
 // Re-export duration extension
 pub use duration_ext::DurationExt;
@@ -122,7 +122,7 @@ pub mod prelude {
         PointBurstBuilder, RenderMode,
     };
     pub use crate::shape_layer_builder::CAShapeLayerBuilder;
-    pub use crate::window::{Screen, Window, WindowBuilder, WindowStyle};
+    pub use crate::window::{Screen, Window, WindowBuilder, WindowLevel, WindowStyle};
 
     // Duration extension for ergonomic timing
     pub use crate::duration_ext::DurationExt;

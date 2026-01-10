@@ -4,12 +4,14 @@
 //! on-screen indicators. The actual rendering is delegated to platform-specific
 //! backends.
 
+use std::time::Duration;
+
 use crate::animation::animated_window::AnimatedWindow;
-use crate::animation::transform::Transform;
+use crate::animation::effects::AnimationSet;
 use crate::canvas::Canvas;
 use crate::color::Color;
 use crate::geometry::Size;
-use crate::icon::{Icon, StyledShape};
+use crate::icon::Icon;
 use crate::layout::{Margin, Padding};
 use crate::{FlashPosition, Rect};
 
@@ -58,6 +60,92 @@ pub trait Drawable {
     fn draw(&self, canvas: &mut dyn Canvas, bounds: &Rect);
 }
 
+/// Configuration for GPU-accelerated animations.
+///
+/// This describes animations that run on the GPU compositor thread,
+/// providing smoother animation than CPU-based keyframe interpolation.
+#[derive(Clone, Debug)]
+pub struct GpuAnimationConfig {
+    /// Animation cycle duration.
+    pub duration: Duration,
+    /// Scale animation: (from_scale, to_scale). None to disable.
+    pub scale: Option<(f64, f64)>,
+    /// Glow animation (shadow-based): (color, radius, min_opacity, max_opacity). None to disable.
+    /// Note: Shadow-based glow may not be visible against semi-transparent backgrounds.
+    pub glow: Option<(Color, f64, f32, f32)>,
+    /// Glow ring animation (shape-based): (color, radius, min_opacity, max_opacity). None to disable.
+    /// This creates an actual circle layer behind the content, which is more visible than shadows.
+    pub glow_ring: Option<(Color, f64, f32, f32)>,
+}
+
+impl GpuAnimationConfig {
+    /// Create a new GPU animation config with the given duration.
+    pub fn new(duration: Duration) -> Self {
+        Self {
+            duration,
+            scale: None,
+            glow: None,
+            glow_ring: None,
+        }
+    }
+
+    /// Add a scale animation.
+    ///
+    /// # Arguments
+    ///
+    /// * `from` - Starting scale (1.0 = normal size)
+    /// * `to` - Ending scale
+    pub fn with_scale(mut self, from: f64, to: f64) -> Self {
+        self.scale = Some((from, to));
+        self
+    }
+
+    /// Add a glow animation (shadow-based).
+    ///
+    /// Note: Shadow-based glow may not be visible against semi-transparent backgrounds.
+    /// Consider using [`with_glow_ring`](Self::with_glow_ring) for better visibility.
+    ///
+    /// # Arguments
+    ///
+    /// * `color` - Glow color
+    /// * `radius` - Blur radius
+    /// * `min_opacity` - Minimum glow opacity (0.0 to 1.0)
+    /// * `max_opacity` - Maximum glow opacity (0.0 to 1.0)
+    pub fn with_glow(
+        mut self,
+        color: Color,
+        radius: f64,
+        min_opacity: f32,
+        max_opacity: f32,
+    ) -> Self {
+        self.glow = Some((color, radius, min_opacity, max_opacity));
+        self
+    }
+
+    /// Add a glow ring animation (shape-based).
+    ///
+    /// Unlike [`with_glow`](Self::with_glow) which uses shadows, this creates an actual
+    /// circle layer that renders behind the content and pulses in opacity.
+    /// This is more visible, especially against semi-transparent backgrounds.
+    ///
+    /// # Arguments
+    ///
+    /// * `color` - Glow ring color
+    /// * `radius` - Radius of the glow ring circle
+    /// * `min_opacity` - Minimum opacity (0.0 to 1.0)
+    /// * `max_opacity` - Maximum opacity (0.0 to 1.0)
+    pub fn with_glow_ring(
+        mut self,
+        color: Color,
+        radius: f64,
+        min_opacity: f32,
+        max_opacity: f32,
+    ) -> Self {
+        self.glow_ring = Some((color, radius, min_opacity, max_opacity));
+        self
+    }
+}
+
 /// Trait for platform-specific OSD windows.
 ///
 /// Backends implement this trait to provide the actual window rendering.
@@ -65,10 +153,12 @@ pub trait Drawable {
 ///
 /// ```ignore
 /// OsdFlashBuilder::new()
-///     .build()?           // → impl OsdWindow
-///     .draw(icon)         // → AnimatedWindow
-///     .animate(...)       // → AnimationBuilder (optional)
-///     .show_for_seconds() // → Result<()>
+///     .build()?           // -> impl OsdWindow
+///     .draw(icon)         // -> AnimatedWindow
+///     .show_for_seconds() // -> Result<()>  (static display)
+///
+/// // Or with animation:
+///     .show_animated(effects, duration) // -> Result<()>  (GPU animation)
 /// ```
 pub trait OsdWindow: Sized {
     /// Draw an icon and return an AnimatedWindow for display or animation.
@@ -83,31 +173,15 @@ pub trait OsdWindow: Sized {
     fn draw(self, content: impl Into<Icon>) -> AnimatedWindow<Self>;
 
     /// Show the window (make it visible).
-    ///
-    /// Used by the animation runner to display the window before starting
-    /// the animation loop.
     fn show_window(&self) -> crate::Result<()>;
 
     /// Hide the window (make it invisible).
-    ///
-    /// Used by the animation runner after the animation completes.
     fn hide_window(&self) -> crate::Result<()>;
 
     /// Draw content and show for a duration (static display).
     ///
     /// This is used for non-animated display.
     fn draw_and_show(&self, content: Icon, seconds: f64) -> crate::Result<()>;
-
-    /// Render a single animation frame.
-    ///
-    /// Called by the animation runner at each frame (typically 60fps).
-    /// The transform and shapes are interpolated values from keyframes.
-    fn render_animation_frame(
-        &self,
-        content: &Icon,
-        transform: &Transform,
-        shapes: &[StyledShape],
-    ) -> crate::Result<()>;
 }
 
 /// Builder for creating OSD flash windows.

@@ -1,0 +1,38 @@
+[package]
+name = "nswindow-poc"
+version = "0.1.0"
+description = "POC: Testing NSWindow as alternative to SkyLight for overlay windows"
+edition = "2021"
+license = "MIT"
+publish = false
+
+[target.'cfg(target_os = "macos")'.dependencies]
+core-animation = { path = "../core-animation" }
+objc2.workspace = true
+objc2-foundation.workspace = true
+objc2-app-kit = { workspace = true, features = [
+    "NSApplication",
+    "NSResponder",
+    "NSRunningApplication",
+    "NSWindow",
+    "NSGraphics",
+    "NSView",
+    "NSScreen",
+    "NSColor",
+] }
+objc2-quartz-core = { workspace = true, features = [
+    "CALayer",
+    "CAShapeLayer",
+    "CAAnimation",
+    "CAMediaTiming",
+    "CAMediaTimingFunction",
+] }
+objc2-core-foundation = { workspace = true, features = [
+    "CFRunLoop",
+    "CFDate",
+] }
+objc2-core-graphics = { workspace = true, features = [
+    "CGColor",
+    "CGColorSpace",
+    "CGPath",
+] }

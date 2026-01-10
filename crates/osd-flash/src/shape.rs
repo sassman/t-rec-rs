@@ -9,28 +9,23 @@ use crate::geometry::{Point, Rect};
 ///
 /// Shapes describe the geometry of visual elements. Styling (color, opacity)
 /// is applied separately via [`Paint`](crate::style::Paint) when drawing.
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Copy)]
 pub enum Shape {
     /// A rectangle with rounded corners.
-    RoundedRect {
-        rect: Rect,
-        corner_radius: f64,
-    },
+    RoundedRect { rect: Rect, corner_radius: f64 },
     /// A filled circle.
-    Circle {
-        center: Point,
-        radius: f64,
-    },
+    Circle { center: Point, radius: f64 },
     /// A filled ellipse.
-    Ellipse {
-        rect: Rect,
-    },
+    Ellipse { rect: Rect },
 }
 
 impl Shape {
     /// Create a rounded rectangle shape.
     pub const fn rounded_rect(rect: Rect, corner_radius: f64) -> Self {
-        Self::RoundedRect { rect, corner_radius }
+        Self::RoundedRect {
+            rect,
+            corner_radius,
+        }
     }
 
     /// Create a rounded rectangle from position and size.
@@ -76,7 +71,9 @@ impl Shape {
     pub fn bounds(&self) -> Rect {
         match self {
             Self::RoundedRect { rect, .. } => *rect,
-            Self::Circle { center, radius } => Rect::centered(*center, crate::geometry::Size::square(*radius * 2.0)),
+            Self::Circle { center, radius } => {
+                Rect::centered(*center, crate::geometry::Size::square(*radius * 2.0))
+            }
             Self::Ellipse { rect } => *rect,
         }
     }
@@ -90,7 +87,10 @@ mod tests {
     fn test_shape_rounded_rect() {
         let shape = Shape::rounded_rect(Rect::from_xywh(0.0, 0.0, 100.0, 50.0), 10.0);
         match shape {
-            Shape::RoundedRect { rect, corner_radius } => {
+            Shape::RoundedRect {
+                rect,
+                corner_radius,
+            } => {
                 assert_eq!(rect.size.width, 100.0);
                 assert_eq!(corner_radius, 10.0);
             }

@@ -119,12 +119,9 @@ impl LayoutBox {
     ///
     /// Returns (horizontal_inset, vertical_inset).
     pub fn total_inset(&self) -> (f64, f64) {
-        let horizontal = self.margin.horizontal()
-            + self.border.horizontal()
-            + self.padding.horizontal();
-        let vertical = self.margin.vertical()
-            + self.border.vertical()
-            + self.padding.vertical();
+        let horizontal =
+            self.margin.horizontal() + self.border.horizontal() + self.padding.horizontal();
+        let vertical = self.margin.vertical() + self.border.vertical() + self.padding.vertical();
         (horizontal, vertical)
     }
 }
@@ -156,8 +153,7 @@ mod tests {
 
     #[test]
     fn test_border_bounds() {
-        let lb = LayoutBox::from_size(100.0, 100.0)
-            .with_margin(10.0);
+        let lb = LayoutBox::from_size(100.0, 100.0).with_margin(10.0);
 
         let bb = lb.border_bounds();
         assert_eq!(bb.origin.x, 10.0);
@@ -173,9 +169,9 @@ mod tests {
             .with_border(Border::solid(2.0, Color::BLACK));
 
         let pb = lb.padding_bounds();
-        assert_eq!(pb.origin.x, 12.0);  // margin + border
+        assert_eq!(pb.origin.x, 12.0); // margin + border
         assert_eq!(pb.origin.y, 12.0);
-        assert_eq!(pb.size.width, 76.0);  // 80 - 2*2
+        assert_eq!(pb.size.width, 76.0); // 80 - 2*2
         assert_eq!(pb.size.height, 76.0);
     }
 
@@ -187,9 +183,9 @@ mod tests {
             .with_padding(5.0);
 
         let cb = lb.content_bounds();
-        assert_eq!(cb.origin.x, 17.0);  // margin + border + padding
+        assert_eq!(cb.origin.x, 17.0); // margin + border + padding
         assert_eq!(cb.origin.y, 17.0);
-        assert_eq!(cb.size.width, 66.0);  // 76 - 2*5
+        assert_eq!(cb.size.width, 66.0); // 76 - 2*5
         assert_eq!(cb.size.height, 66.0);
     }
 

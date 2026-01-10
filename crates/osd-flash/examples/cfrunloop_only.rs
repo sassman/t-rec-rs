@@ -67,7 +67,13 @@ fn show_window(position: FlashPosition, use_recording_icon: bool) -> osd_flash::
 }
 
 fn get_frame_for_position(position: FlashPosition) -> Rect {
-    use core_graphics::display::{CGDisplayBounds, CGMainDisplayID};
+    use core_animation::prelude::CGRect;
+
+    #[link(name = "CoreGraphics", kind = "framework")]
+    extern "C" {
+        fn CGMainDisplayID() -> u32;
+        fn CGDisplayBounds(display: u32) -> CGRect;
+    }
 
     let display_bounds = unsafe {
         let id = CGMainDisplayID();

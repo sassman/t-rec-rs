@@ -88,7 +88,10 @@ impl Padding {
     /// ```
     pub fn around(&self, shape: Shape) -> Shape {
         match shape {
-            Shape::RoundedRect { rect, corner_radius } => {
+            Shape::RoundedRect {
+                rect,
+                corner_radius,
+            } => {
                 let expanded = Rect::from_xywh(
                     rect.origin.x - self.left,
                     rect.origin.y - self.top,

@@ -18,13 +18,8 @@ fn main() -> osd_flash::Result<()> {
     let total_width = (bar_width + bar_gap) * num_bars as f64 - bar_gap;
     let padding = 30.0;
 
-    let mut window = OsdFlashBuilder::new()
-        .dimensions(Size::new(total_width + padding * 2.0, max_height + padding * 2.0))
-        .position(FlashPosition::Center)
-        .background(Color::rgba(0.05, 0.05, 0.1, 0.95))
-        .corner_radius(20.0)
-        .padding(Padding::all(padding))
-        .build()?;
+    // Collect all shapes
+    let mut shapes: Vec<StyledShape> = Vec::new();
 
     // Draw each bar with gradient-like coloring (bottom to top: green -> yellow -> red)
     for (i, &height_ratio) in bar_heights.iter().enumerate() {
@@ -41,16 +36,32 @@ fn main() -> osd_flash::Result<()> {
             Color::rgba(0.2, 1.0, 0.4, 1.0) // Green for low
         };
 
-        window = window.draw(StyledShape::new(
+        shapes.push(StyledShape::new(
             Shape::rounded_rect(Rect::from_xywh(x, y, bar_width, bar_height), 4.0),
             color,
         ));
     }
 
-    // Add title
-    window = window.draw(StyledText::at("AUDIO", total_width / 2.0 - 30.0, max_height + 5.0, 14.0, Color::WHITE));
-
-    window.show_for_seconds(4.0)?;
+    OsdFlashBuilder::new()
+        .dimensions(Size::new(
+            total_width + padding * 2.0,
+            max_height + padding * 2.0,
+        ))
+        .position(FlashPosition::Center)
+        .background(Color::rgba(0.05, 0.05, 0.1, 0.95))
+        .corner_radius(20.0)
+        .padding(Padding::all(padding))
+        .build()?
+        .draw(shapes)
+        // Add title
+        .draw(StyledText::at(
+            "AUDIO",
+            total_width / 2.0 - 30.0,
+            max_height + 5.0,
+            14.0,
+            Color::WHITE,
+        ))
+        .show_for_seconds(4.0)?;
 
     println!("Done!");
     Ok(())

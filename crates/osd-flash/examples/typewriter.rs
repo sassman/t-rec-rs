@@ -170,7 +170,12 @@ fn show_keyboard_key(label: &str) -> osd_flash::Result<()> {
         // Layer 4: Key surface (the top face you press)
         .draw(StyledShape::new(
             Shape::rounded_rect(
-                Rect::from_xywh(inset, inset, key_width - inset * 2.0 - 2.0, key_height - inset * 2.0 - depth),
+                Rect::from_xywh(
+                    inset,
+                    inset,
+                    key_width - inset * 2.0 - 2.0,
+                    key_height - inset * 2.0 - depth,
+                ),
                 corner_radius - 2.0,
             ),
             key_colors::KEY_SURFACE,
@@ -186,13 +191,24 @@ fn show_keyboard_key(label: &str) -> osd_flash::Result<()> {
         // Layer 6: Top highlight (light reflection at the top edge)
         .draw(StyledShape::new(
             Shape::rounded_rect(
-                Rect::from_xywh(inset + 4.0, inset + 1.0, key_width - inset * 2.0 - 10.0, 2.0),
+                Rect::from_xywh(
+                    inset + 4.0,
+                    inset + 1.0,
+                    key_width - inset * 2.0 - 10.0,
+                    2.0,
+                ),
                 1.0,
             ),
             key_colors::TOP_HIGHLIGHT,
         ))
         // Layer 7: Key label
-        .draw(StyledText::at(label, text_x, text_y, font_size, key_colors::TEXT))
+        .draw(StyledText::at(
+            label,
+            text_x,
+            text_y,
+            font_size,
+            key_colors::TEXT,
+        ))
         .show_for_seconds(0.9)?;
 
     Ok(())

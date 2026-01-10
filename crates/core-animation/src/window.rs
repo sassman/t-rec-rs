@@ -7,25 +7,24 @@ use std::path::Path;
 use std::time::Duration;
 
 use crate::color::Color;
+use crate::shape_layer_builder::CAShapeLayerBuilder;
 use objc2::rc::Retained;
 use objc2::{MainThreadMarker, MainThreadOnly};
 use objc2_app_kit::{
-    NSApplication, NSApplicationActivationPolicy, NSBackingStoreType, NSScreen, NSWindow,
+    NSApplication, NSApplicationActivationPolicy, NSBackingStoreType, NSColor, NSScreen, NSWindow,
     NSWindowStyleMask,
 };
 use objc2_core_foundation::{kCFRunLoopDefaultMode, CFRunLoop, CFTimeInterval};
 use objc2_core_graphics::CGColor;
 use objc2_foundation::{NSPoint, NSRect, NSSize, NSString};
-use objc2_quartz_core::CALayer;
+use objc2_quartz_core::{CALayer, CAShapeLayer};
 
 #[cfg(feature = "screenshot")]
 use objc2::AnyThread;
 #[cfg(feature = "screenshot")]
 use objc2_app_kit::NSBitmapImageRep;
 #[cfg(feature = "screenshot")]
-use objc2_core_graphics::{
-    CGWindowImageOption, CGWindowListCreateImage, CGWindowListOption,
-};
+use objc2_core_graphics::{CGWindowImageOption, CGWindowListCreateImage, CGWindowListOption};
 #[cfg(feature = "screenshot")]
 use objc2_foundation::NSDictionary;
 
@@ -37,6 +36,59 @@ pub enum Screen {
     Main,
     /// A specific screen by index (0-based). Index 0 is typically the main screen.
     Index(usize),
+}
+
+/// Window level determining the z-order of the overlay window.
+///
+/// Controls where the window appears in the window stack relative to other windows.
+///
+/// # Common levels
+///
+/// - `Normal` (0): Standard application windows
+/// - `Floating` (3): Floating palettes, tool windows
+/// - `ModalPanel` (8): Modal panels that block interaction
+/// - `ScreenSaver` (1000): Screen saver level
+/// - `AboveAll` (1001): Above all windows including fullscreen apps
+///
+/// # Example
+///
+/// ```ignore
+/// use core_animation::prelude::*;
+///
+/// let window = WindowBuilder::new()
+///     .size(200.0, 200.0)
+///     .level(WindowLevel::AboveAll)
+///     .build();
+/// ```
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub enum WindowLevel {
+    /// Normal window level (0), appears with regular application windows.
+    Normal,
+    /// Floating window level (3), appears above normal windows.
+    Floating,
+    /// Modal panel level (8), appears above floating windows.
+    ModalPanel,
+    /// Screen saver level (1000).
+    ScreenSaver,
+    /// Above all other windows (1001), including fullscreen apps and the Dock.
+    #[default]
+    AboveAll,
+    /// Custom window level value (platform-specific).
+    Custom(isize),
+}
+
+impl WindowLevel {
+    /// Returns the raw window level value for NSWindow.
+    pub fn raw_level(&self) -> isize {
+        match self {
+            WindowLevel::Normal => 0,
+            WindowLevel::Floating => 3,
+            WindowLevel::ModalPanel => 8,
+            WindowLevel::ScreenSaver => 1000,
+            WindowLevel::AboveAll => 1001,
+            WindowLevel::Custom(level) => *level,
+        }
+    }
 }
 
 /// Window style options.
@@ -83,6 +135,11 @@ pub struct WindowBuilder {
     style: WindowStyle,
     background: Option<Color>,
     activation_policy: NSApplicationActivationPolicy,
+    transparent: bool,
+    corner_radius: Option<f64>,
+    level: Option<WindowLevel>,
+    border_color: Option<Color>,
+    layers: Vec<(String, Retained<CAShapeLayer>)>,
 }
 
 impl WindowBuilder {
@@ -97,6 +154,11 @@ impl WindowBuilder {
             style: WindowStyle::default(),
             background: None,
             activation_policy: NSApplicationActivationPolicy::Accessory,
+            transparent: false,
+            corner_radius: None,
+            level: None,
+            border_color: None,
+            layers: Vec::new(),
         }
     }
 
@@ -195,13 +257,193 @@ impl WindowBuilder {
         self
     }
 
+    /// Make the window fully transparent for overlay effects.
+    ///
+    /// When enabled, this sets the NSWindow to be non-opaque with a clear background,
+    /// allowing the content to be drawn on a fully transparent background.
+    /// This is useful for creating floating overlay windows.
+    ///
+    /// # Example
+    ///
+    /// ```ignore
+    /// use core_animation::prelude::*;
+    ///
+    /// let window = WindowBuilder::new()
+    ///     .size(200.0, 200.0)
+    ///     .transparent()
+    ///     .borderless()
+    ///     .build();
+    /// ```
+    pub fn transparent(mut self) -> Self {
+        self.transparent = true;
+        self
+    }
+
+    /// Set the corner radius on the container layer.
+    ///
+    /// This applies rounded corners to the container layer that holds your content.
+    /// Combine with `.background_color()` for a rounded panel effect.
+    ///
+    /// # Arguments
+    ///
+    /// * `radius` - The corner radius in points
+    ///
+    /// # Example
+    ///
+    /// ```ignore
+    /// use core_animation::prelude::*;
+    ///
+    /// let window = WindowBuilder::new()
+    ///     .size(200.0, 200.0)
+    ///     .transparent()
+    ///     .borderless()
+    ///     .corner_radius(20.0)
+    ///     .background_color(Color::gray(0.1).with_alpha(0.85))
+    ///     .build();
+    /// ```
+    pub fn corner_radius(mut self, radius: f64) -> Self {
+        self.corner_radius = Some(radius);
+        self
+    }
+
+    /// Set the window level (z-order).
+    ///
+    /// Controls where the window appears in the window stack relative to other windows.
+    /// Higher levels appear above lower levels.
+    ///
+    /// # Arguments
+    ///
+    /// * `level` - The window level to set
+    ///
+    /// # Example
+    ///
+    /// ```ignore
+    /// use core_animation::prelude::*;
+    ///
+    /// // Create an overlay that floats above all windows
+    /// let window = WindowBuilder::new()
+    ///     .size(200.0, 200.0)
+    ///     .level(WindowLevel::AboveAll)
+    ///     .build();
+    ///
+    /// // Or use a custom level
+    /// let window = WindowBuilder::new()
+    ///     .level(WindowLevel::Custom(500))
+    ///     .build();
+    /// ```
+    pub fn level(mut self, level: WindowLevel) -> Self {
+        self.level = Some(level);
+        self
+    }
+
+    /// Set the border color on the container layer.
+    ///
+    /// When set, this also applies a border width of 1.0 to the container layer.
+    /// This creates a subtle visible border around the window content.
+    ///
+    /// # Arguments
+    ///
+    /// * `color` - The border color
+    ///
+    /// # Example
+    ///
+    /// ```ignore
+    /// use core_animation::prelude::*;
+    ///
+    /// // Create a window with a subtle gray border
+    /// let window = WindowBuilder::new()
+    ///     .size(200.0, 200.0)
+    ///     .transparent()
+    ///     .borderless()
+    ///     .corner_radius(20.0)
+    ///     .background_color(Color::gray(0.1).with_alpha(0.85))
+    ///     .border_color(Color::rgba(0.3, 0.3, 0.35, 0.5))
+    ///     .build();
+    /// ```
+    pub fn border_color(mut self, color: impl Into<Color>) -> Self {
+        self.border_color = Some(color.into());
+        self
+    }
+
+    /// Add a shape layer to the window.
+    ///
+    /// The closure receives a [`CAShapeLayerBuilder`] for configuration.
+    /// The built layer will be added to [`Window::container()`] when [`build()`](Self::build) is called.
+    ///
+    /// This allows configuring shape layers inline in the fluent API,
+    /// creating a fully fluent flow from window to layers to animations.
+    ///
+    /// # Arguments
+    ///
+    /// * `name` - A unique identifier for this layer
+    /// * `configure` - A closure that configures the layer builder
+    ///
+    /// # Examples
+    ///
+    /// ```ignore
+    /// use core_animation::prelude::*;
+    ///
+    /// let window = WindowBuilder::new()
+    ///     .title("Animation Demo")
+    ///     .size(400.0, 400.0)
+    ///     .centered()
+    ///     .transparent()
+    ///     .borderless()
+    ///     .background_color(Color::rgba(0.1, 0.1, 0.15, 0.85))
+    ///     .layer("circle", |s| {
+    ///         s.circle(80.0)
+    ///             .position(CGPoint::new(200.0, 200.0))
+    ///             .fill_color(Color::CYAN)
+    ///             .animate("pulse", KeyPath::TransformScale, |a| {
+    ///                 a.values(0.85, 1.15)
+    ///                     .duration(2.seconds())
+    ///                     .autoreverses()
+    ///                     .repeat(Repeat::Forever)
+    ///             })
+    ///     })
+    ///     .build();
+    ///
+    /// window.show_for(10.seconds());
+    /// ```
+    ///
+    /// Multiple layers can be added:
+    ///
+    /// ```ignore
+    /// WindowBuilder::new()
+    ///     .size(400.0, 400.0)
+    ///     .layer("background_ring", |s| {
+    ///         s.circle(200.0)
+    ///             .position(CGPoint::new(200.0, 200.0))
+    ///             .fill_color(Color::TRANSPARENT)
+    ///             .stroke_color(Color::WHITE.with_alpha(0.3))
+    ///             .line_width(2.0)
+    ///     })
+    ///     .layer("main_circle", |s| {
+    ///         s.circle(80.0)
+    ///             .position(CGPoint::new(200.0, 200.0))
+    ///             .fill_color(Color::CYAN)
+    ///     })
+    ///     .build();
+    /// ```
+    pub fn layer<F>(mut self, name: &str, configure: F) -> Self
+    where
+        F: FnOnce(CAShapeLayerBuilder) -> CAShapeLayerBuilder,
+    {
+        let builder = CAShapeLayerBuilder::new();
+        let configured = configure(builder);
+        let layer = configured.build();
+        self.layers.push((name.to_string(), layer));
+        self
+    }
+
     /// Build the window.
     ///
     /// # Panics
     ///
     /// Panics if not called from the main thread.
     pub fn build(self) -> Window {
-        let mtm = MainThreadMarker::new().expect("WindowBuilder::build() must be called from the main thread");
+        let mtm = MainThreadMarker::new()
+            .expect("WindowBuilder::build() must be called from the main thread");
 
         // Initialize application
         let app = NSApplication::sharedApplication(mtm);
@@ -266,6 +508,18 @@ impl WindowBuilder {
         let title = NSString::from_str(&self.title);
         ns_window.setTitle(&title);
 
+        // Apply transparency settings
+        if self.transparent {
+            ns_window.setOpaque(false);
+            let clear_color = NSColor::clearColor();
+            ns_window.setBackgroundColor(Some(&clear_color));
+        }
+
+        // Apply window level
+        if let Some(level) = self.level {
+            ns_window.setLevel(level.raw_level().into());
+        }
+
         // Enable layer backing
         let content_view = ns_window.contentView().expect("Window has no content view");
         content_view.setWantsLayer(true);
@@ -288,7 +542,24 @@ impl WindowBuilder {
             container.setBackgroundColor(Some(&cgcolor));
         }
 
+        // Apply corner radius to container layer
+        if let Some(radius) = self.corner_radius {
+            container.setCornerRadius(radius);
+        }
+
+        // Apply border color and width to container layer
+        if let Some(color) = self.border_color {
+            let cgcolor: objc2_core_foundation::CFRetained<CGColor> = color.into();
+            container.setBorderColor(Some(&cgcolor));
+            container.setBorderWidth(1.0);
+        }
+
         root_layer.addSublayer(&container);
+
+        // Add all configured layers to the container
+        for (_name, layer) in &self.layers {
+            container.addSublayer(layer);
+        }
 
         Window {
             ns_window,
@@ -419,101 +690,6 @@ impl Window {
         // Run until window is closed
         while self.ns_window.isVisible() {
             self.run_loop_tick();
-        }
-    }
-
-    /// Show the window for a duration and capture a screenshot at the midpoint.
-    ///
-    /// This is useful for generating example screenshots automatically.
-    /// The screenshot is saved as PNG to the specified path.
-    ///
-    /// # Example
-    ///
-    /// ```ignore
-    /// window.show_for_with_screenshot(
-    ///     10.seconds(),
-    ///     Path::new("examples/screenshots/my_example.png"),
-    /// );
-    /// ```
-    #[cfg(feature = "screenshot")]
-    pub fn show_for_with_screenshot(&self, duration: Duration, path: &Path) {
-        self.show();
-
-        let start = std::time::Instant::now();
-        let midpoint = duration / 2;
-        let mut screenshot_taken = false;
-
-        while start.elapsed() < duration {
-            self.run_loop_tick();
-
-            // Capture screenshot at midpoint
-            if !screenshot_taken && start.elapsed() >= midpoint {
-                if let Err(e) = self.capture_screenshot(path) {
-                    eprintln!("Failed to capture screenshot: {}", e);
-                } else {
-                    println!("Screenshot saved to: {}", path.display());
-                }
-                screenshot_taken = true;
-            }
-        }
-    }
-
-    /// Capture a screenshot of the window and save it to the specified path.
-    ///
-    /// The image is saved as PNG format.
-    #[cfg(feature = "screenshot")]
-    #[allow(deprecated)] // CGWindowListCreateImage is deprecated but still works
-    pub fn capture_screenshot(&self, path: &Path) -> Result<(), String> {
-        use objc2_core_foundation::{CGPoint as CFGPoint, CGRect as CFGRect, CGSize as CFGSize};
-
-        // Get the window ID
-        let window_id = self.ns_window.windowNumber() as u32;
-
-        // kCGWindowListOptionIncludingWindow = 1 << 3
-        // kCGWindowImageDefault = 0
-        let list_option = CGWindowListOption(1 << 3);
-        let image_option = CGWindowImageOption(0);
-
-        // Use CGRectNull equivalent (all zeros means capture the minimum rect that contains the window)
-        let null_rect = CFGRect::new(CFGPoint::new(0.0, 0.0), CFGSize::new(0.0, 0.0));
-
-        // Capture the window image
-        let image = CGWindowListCreateImage(null_rect, list_option, window_id, image_option);
-
-        let Some(image) = image else {
-            return Err("Failed to capture window image".to_string());
-        };
-
-        // Create NSBitmapImageRep from CGImage
-        let bitmap_rep = NSBitmapImageRep::initWithCGImage(NSBitmapImageRep::alloc(), &image);
-
-        // Get PNG data
-        // SAFETY: The bitmap_rep is valid and we're passing valid parameters
-        let png_data = unsafe {
-            bitmap_rep.representationUsingType_properties(
-                objc2_app_kit::NSBitmapImageFileType::PNG,
-                &NSDictionary::new(),
-            )
-        };
-
-        let Some(png_data) = png_data else {
-            return Err("Failed to create PNG data".to_string());
-        };
-
-        // Create parent directories if needed
-        if let Some(parent) = path.parent() {
-            std::fs::create_dir_all(parent)
-                .map_err(|e| format!("Failed to create directory: {}", e))?;
-        }
-
-        // Write to file using NSData's writeToFile
-        let ns_path = NSString::from_str(&path.to_string_lossy());
-        let success = png_data.writeToFile_atomically(&ns_path, true);
-
-        if success {
-            Ok(())
-        } else {
-            Err("Failed to write file".to_string())
         }
     }
 }

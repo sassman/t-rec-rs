@@ -3,8 +3,8 @@
 //! This module provides the core types for positioning on-screen indicators.
 
 pub use crate::geometry::{Point, Rect, Size};
-pub use crate::layout::Margin;
 pub use crate::icon::IconBuilder;
+pub use crate::layout::Margin;
 
 /// Position for the flash indicator on screen.
 #[derive(Debug, Clone, Copy, PartialEq, Default)]

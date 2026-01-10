@@ -14,14 +14,6 @@ fn main() -> osd_flash::Result<()> {
     let padding = 30.0;
     let content_size = size - 2.0 * padding;
 
-    let mut window = OsdFlashBuilder::new()
-        .dimensions(size)
-        .position(FlashPosition::Center)
-        .background(Color::rgba(0.02, 0.02, 0.05, 0.98))
-        .corner_radius(24.0)
-        .padding(Padding::all(padding))
-        .build()?;
-
     // Triangle vertices (equilateral, pointing up)
     let margin = 15.0;
     let tri_width = content_size - 2.0 * margin;
@@ -66,36 +58,46 @@ fn main() -> osd_flash::Result<()> {
         points.push((x, y, vertex_idx));
     }
 
+    // Collect all shapes
+    let mut shapes: Vec<StyledShape> = Vec::new();
+
     // Draw all points (skip first few iterations for convergence)
     for (px, py, color_idx) in points.iter().skip(20) {
         let color = colors[*color_idx];
-        window = window.draw(StyledShape::new(Shape::circle_at(*px, *py, 1.5), color));
+        shapes.push(StyledShape::new(Shape::circle_at(*px, *py, 1.5), color));
     }
 
     // Draw vertex markers
     for (i, (vx, vy)) in vertices.iter().enumerate() {
         // Outer glow
-        window = window.draw(StyledShape::new(
+        shapes.push(StyledShape::new(
             Shape::circle_at(*vx, *vy, 8.0),
             colors[i].with_alpha(0.3),
         ));
         // Inner bright
-        window = window.draw(StyledShape::new(
+        shapes.push(StyledShape::new(
             Shape::circle_at(*vx, *vy, 4.0),
             Color::WHITE,
         ));
     }
 
-    // Title
-    window = window.draw(StyledText::at(
-        "SIERPINSKI FRACTAL",
-        content_size / 2.0 - 80.0,
-        content_size - 24.0,
-        14.0,
-        Color::rgba(0.7, 0.7, 0.9, 0.9),
-    ));
-
-    window.show_for_seconds(6.0)?;
+    OsdFlashBuilder::new()
+        .dimensions(size)
+        .position(FlashPosition::Center)
+        .background(Color::rgba(0.02, 0.02, 0.05, 0.98))
+        .corner_radius(24.0)
+        .padding(Padding::all(padding))
+        .build()?
+        .draw(shapes)
+        // Title
+        .draw(StyledText::at(
+            "SIERPINSKI FRACTAL",
+            content_size / 2.0 - 80.0,
+            content_size - 24.0,
+            14.0,
+            Color::rgba(0.7, 0.7, 0.9, 0.9),
+        ))
+        .show_for_seconds(6.0)?;
 
     println!("Done!");
     Ok(())

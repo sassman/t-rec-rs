@@ -105,6 +105,81 @@ impl CAShapeLayerBuilder {
         self
     }
 
+    /// Creates a perfect circle path and sets appropriate bounds.
+    ///
+    /// This is a convenience method that wraps `CGPath::with_ellipse_in_rect`
+    /// and automatically sets the layer's bounds to match the circle size.
+    ///
+    /// # Arguments
+    ///
+    /// * `diameter` - The diameter of the circle
+    ///
+    /// # Examples
+    ///
+    /// ```ignore
+    /// // Create a circle with 80pt diameter
+    /// let circle = CAShapeLayerBuilder::new()
+    ///     .circle(80.0)
+    ///     .position(CGPoint::new(100.0, 100.0))
+    ///     .fill_color(Color::CYAN)
+    ///     .build();
+    /// ```
+    ///
+    /// # Notes
+    ///
+    /// This method sets both the path and bounds. If you call `.bounds()` or
+    /// `.path()` after `.circle()`, those values will override what was set
+    /// by `.circle()`.
+    ///
+    /// # See Also
+    ///
+    /// Use [`ellipse`](Self::ellipse) for non-circular ellipses.
+    pub fn circle(mut self, diameter: CGFloat) -> Self {
+        let rect = CGRect::new(CGPoint::ZERO, CGSize::new(diameter, diameter));
+        let path = unsafe { CGPath::with_ellipse_in_rect(rect, std::ptr::null()) };
+        self.path = Some(path);
+        self.bounds = Some(rect);
+        self
+    }
+
+    /// Creates an ellipse path and sets appropriate bounds.
+    ///
+    /// This is a convenience method that wraps `CGPath::with_ellipse_in_rect`
+    /// and automatically sets the layer's bounds to match the ellipse size.
+    ///
+    /// # Arguments
+    ///
+    /// * `width` - The width of the ellipse bounding box
+    /// * `height` - The height of the ellipse bounding box
+    ///
+    /// # Examples
+    ///
+    /// ```ignore
+    /// // Create an ellipse (oval shape)
+    /// let ellipse = CAShapeLayerBuilder::new()
+    ///     .ellipse(100.0, 60.0)  // wider than tall
+    ///     .position(CGPoint::new(100.0, 100.0))
+    ///     .fill_color(Color::RED)
+    ///     .build();
+    /// ```
+    ///
+    /// # Notes
+    ///
+    /// This method sets both the path and bounds. If you call `.bounds()` or
+    /// `.path()` after `.ellipse()`, those values will override what was set
+    /// by `.ellipse()`.
+    ///
+    /// # See Also
+    ///
+    /// Use [`circle`](Self::circle) for perfect circles (same width and height).
+    pub fn ellipse(mut self, width: CGFloat, height: CGFloat) -> Self {
+        let rect = CGRect::new(CGPoint::ZERO, CGSize::new(width, height));
+        let path = unsafe { CGPath::with_ellipse_in_rect(rect, std::ptr::null()) };
+        self.path = Some(path);
+        self.bounds = Some(rect);
+        self
+    }
+
     /// Sets the fill color.
     ///
     /// Accepts any type that implements `Into<CFRetained<CGColor>>`, including:

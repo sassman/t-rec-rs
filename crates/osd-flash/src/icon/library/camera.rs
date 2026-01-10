@@ -1,6 +1,6 @@
 //! Camera icon for screenshot feedback.
 
-use crate::color::Color;
+use crate::color::{Color, LIGHT_BLUE, VIBRANT_BLUE, WARM_YELLOW};
 use crate::icon::{Icon, IconBuilder};
 
 /// A camera icon for screenshot feedback.
@@ -37,11 +37,11 @@ impl CameraIcon {
             size,
             padding: 12.0,
             corner_radius: 16.0,
-            background_color: Color::VIBRANT_BLUE,
+            background_color: VIBRANT_BLUE,
             body_color: Color::WHITE,
             lens_color: Color::DARK_GRAY,
-            lens_reflection_color: Color::LIGHT_BLUE,
-            flash_color: Color::WARM_YELLOW,
+            lens_reflection_color: LIGHT_BLUE,
+            flash_color: WARM_YELLOW,
         }
     }
 

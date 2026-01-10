@@ -1,0 +1,15 @@
+[package]
+name = "pulsing-poc"
+version = "0.1.0"
+description = "Proof-of-concept: Pulsing recording indicator using Core Animation"
+authors.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[[bin]]
+name = "pulsing-poc"
+path = "src/main.rs"
+
+[dependencies]
+core-animation = { path = "../core-animation" }

@@ -112,11 +112,12 @@ mod tests {
         let icon = RecordingIcon::new(80.0).build();
         // Recording icon has: background + glow + dot + highlight = 4 shapes
         assert_eq!(icon.shapes.len(), 4);
+        // Background is created with size - padding (80 - 10 = 70 by default)
         assert_eq!(
             icon.shapes.first().unwrap().shape.bounds().size.height,
-            80.0
+            70.0
         );
-        assert_eq!(icon.shapes.first().unwrap().shape.bounds().size.width, 80.0);
+        assert_eq!(icon.shapes.first().unwrap().shape.bounds().size.width, 70.0);
     }
 
     #[test]

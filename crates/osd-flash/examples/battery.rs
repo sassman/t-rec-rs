@@ -10,8 +10,20 @@ fn main() -> osd_flash::Result<()> {
     println!("Showing battery indicators...\n");
 
     // Show different battery levels
-    let levels = [(0.85, "85%"), (0.45, "45%"), (0.15, "15%")];
-    let positions = [FlashPosition::TopLeft, FlashPosition::Center, FlashPosition::TopRight];
+    let levels = [
+        (0.85, "85%"),
+        (0.45, "45%"),
+        (0.15, "15%"),
+        (0.95, "95%"),
+        (0.30, "30%"),
+    ];
+    let positions = [
+        FlashPosition::TopLeft,
+        FlashPosition::Center,
+        FlashPosition::TopRight,
+        FlashPosition::BottomRight,
+        FlashPosition::BottomLeft,
+    ];
 
     for ((level, label), position) in levels.iter().zip(positions.iter()) {
         println!("Battery at {}", label);
@@ -54,68 +66,72 @@ fn show_battery(level: f64, label: &str, position: FlashPosition) -> osd_flash::
         Color::rgba(1.0, 0.2, 0.2, 1.0) // Red
     };
 
-    let mut window = OsdFlashBuilder::new()
+    let fill_width = (batt_width - border * 2.0 - 4.0) * level;
+    let text_x = content_width / 2.0 - 12.0;
+
+    OsdFlashBuilder::new()
         .dimensions(Size::new(width, height))
         .position(position)
         .margin(20.0)
         .background(Color::rgba(0.1, 0.1, 0.15, 0.95))
         .corner_radius(16.0)
         .padding(Padding::all(padding))
-        .build()?;
-
-    // Battery outline
-    window = window.draw(StyledShape::new(
-        Shape::rounded_rect(Rect::from_xywh(batt_x, batt_y, batt_width, batt_height), 6.0),
-        Color::WHITE,
-    ));
-
-    // Battery tip (positive terminal)
-    window = window.draw(StyledShape::new(
-        Shape::rounded_rect(
-            Rect::from_xywh(
-                batt_x + batt_width,
-                batt_y + (batt_height - tip_height) / 2.0,
-                tip_width,
-                tip_height,
+        .build()?
+        // Battery outline
+        .draw(StyledShape::new(
+            Shape::rounded_rect(
+                Rect::from_xywh(batt_x, batt_y, batt_width, batt_height),
+                6.0,
             ),
-            2.0,
-        ),
-        Color::WHITE,
-    ));
-
-    // Battery inner (dark)
-    window = window.draw(StyledShape::new(
-        Shape::rounded_rect(
-            Rect::from_xywh(
-                batt_x + border,
-                batt_y + border,
-                batt_width - border * 2.0,
-                batt_height - border * 2.0,
+            Color::WHITE,
+        ))
+        // Battery tip (positive terminal)
+        .draw(StyledShape::new(
+            Shape::rounded_rect(
+                Rect::from_xywh(
+                    batt_x + batt_width,
+                    batt_y + (batt_height - tip_height) / 2.0,
+                    tip_width,
+                    tip_height,
+                ),
+                2.0,
             ),
-            3.0,
-        ),
-        Color::rgba(0.1, 0.1, 0.15, 1.0),
-    ));
-
-    // Battery fill (charge level)
-    let fill_width = (batt_width - border * 2.0 - 4.0) * level;
-    window = window.draw(StyledShape::new(
-        Shape::rounded_rect(
-            Rect::from_xywh(
-                batt_x + border + 2.0,
-                batt_y + border + 2.0,
-                fill_width,
-                batt_height - border * 2.0 - 4.0,
+            Color::WHITE,
+        ))
+        // Battery inner (dark)
+        .draw(StyledShape::new(
+            Shape::rounded_rect(
+                Rect::from_xywh(
+                    batt_x + border,
+                    batt_y + border,
+                    batt_width - border * 2.0,
+                    batt_height - border * 2.0,
+                ),
+                3.0,
             ),
-            2.0,
-        ),
-        fill_color,
-    ));
-
-    // Percentage label (centered below battery)
-    let text_x = content_width / 2.0 - 12.0;
-    window = window.draw(StyledText::at(label, text_x, batt_y + batt_height + 8.0, 14.0, Color::WHITE));
-
-    window.show_for_seconds(2.0)?;
+            Color::rgba(0.1, 0.1, 0.15, 1.0),
+        ))
+        // Battery fill (charge level)
+        .draw(StyledShape::new(
+            Shape::rounded_rect(
+                Rect::from_xywh(
+                    batt_x + border + 2.0,
+                    batt_y + border + 2.0,
+                    fill_width,
+                    batt_height - border * 2.0 - 4.0,
+                ),
+                2.0,
+            ),
+            fill_color,
+        ))
+        // Percentage label (centered below battery)
+        .draw(StyledText::at(
+            label,
+            text_x,
+            batt_y + batt_height + 8.0,
+            14.0,
+            Color::WHITE,
+        ))
+        .show_for_seconds(2.0)?;
     Ok(())
 }

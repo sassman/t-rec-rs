@@ -14,10 +14,11 @@ log.workspace = true
 
 [target.'cfg(target_os = "macos")'.dependencies]
 libloading.workspace = true
-core-graphics.workspace = true
-core-foundation.workspace = true
-core-foundation-sys.workspace = true
-foreign-types-shared = "0.3"
+core-animation.workspace = true
+objc2-foundation.workspace = true
 
 [dev-dependencies]
 crossterm = "0.28"
+
+[target.'cfg(target_os = "macos")'.dev-dependencies]
+objc2.workspace = true

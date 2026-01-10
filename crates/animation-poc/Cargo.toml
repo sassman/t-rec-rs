@@ -1,0 +1,13 @@
+[package]
+name = "animation-poc"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+core-animation = { path = "../core-animation" }
+libloading = "0.8"
+anyhow = "1.0"
+
+[[bin]]
+name = "animation-poc"
+path = "src/main.rs"

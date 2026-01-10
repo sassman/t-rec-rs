@@ -234,8 +234,7 @@ mod tests {
 
     #[test]
     fn test_effective_color() {
-        let ts = TextStyle::new(14.0, Color::rgba(1.0, 0.0, 0.0, 0.5))
-            .opacity(0.5);
+        let ts = TextStyle::new(14.0, Color::rgba(1.0, 0.0, 0.0, 0.5)).opacity(0.5);
 
         let c = ts.effective_color();
         assert!((c.a - 0.25).abs() < f64::EPSILON); // 0.5 * 0.5
