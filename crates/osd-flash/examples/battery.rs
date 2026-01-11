@@ -113,7 +113,6 @@ fn show_battery(level: f64, label: &str, position: Position) -> osd_flash::Resul
         .show_for(2.seconds())
 }
 
-
 #[cfg(not(target_os = "macos"))]
 fn main() {
     eprintln!("This example only runs on macOS");

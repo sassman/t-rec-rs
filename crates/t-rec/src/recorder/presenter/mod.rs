@@ -48,7 +48,7 @@ pub trait Presenter {
 
 #[cfg(all(target_os = "macos", feature = "osd-flash-indicator"))]
 pub fn create_presenter(win_id: WindowId) -> impl Presenter {
-    macos::SkylightPresenter::new(win_id)
+    macos::OsdPresenter::new(win_id)
 }
 
 #[cfg(not(all(target_os = "macos", feature = "osd-flash-indicator")))]

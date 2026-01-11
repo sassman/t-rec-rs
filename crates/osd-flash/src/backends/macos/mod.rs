@@ -47,14 +47,14 @@ impl MacOsWindow {
             .borderless()
             .transparent()
             .non_activating() // OSD windows should never steal focus
-            .level(convert_window_level(config.level));
+            .level(config.level.into());
 
         // Apply position
         builder = apply_position(builder, &config);
 
         // Apply background styling
         if let Some(bg) = config.background {
-            builder = builder.background_color(convert_color(bg));
+            builder = builder.background_color(bg);
         }
 
         if config.corner_radius > 0.0 {
@@ -100,20 +100,58 @@ impl MacOsWindow {
 }
 
 /// Convert osd-flash WindowLevel to core-animation WindowLevel.
-fn convert_window_level(level: OsdWindowLevel) -> WindowLevel {
-    match level {
-        OsdWindowLevel::Normal => WindowLevel::Normal,
-        OsdWindowLevel::Floating => WindowLevel::Floating,
-        OsdWindowLevel::ModalPanel => WindowLevel::ModalPanel,
-        OsdWindowLevel::ScreenSaver => WindowLevel::ScreenSaver,
-        OsdWindowLevel::AboveAll => WindowLevel::AboveAll,
-        OsdWindowLevel::Custom(n) => WindowLevel::Custom(n),
+impl From<OsdWindowLevel> for WindowLevel {
+    fn from(level: OsdWindowLevel) -> Self {
+        match level {
+            OsdWindowLevel::Normal => WindowLevel::Normal,
+            OsdWindowLevel::Floating => WindowLevel::Floating,
+            OsdWindowLevel::ModalPanel => WindowLevel::ModalPanel,
+            OsdWindowLevel::ScreenSaver => WindowLevel::ScreenSaver,
+            OsdWindowLevel::AboveAll => WindowLevel::AboveAll,
+            OsdWindowLevel::Custom(n) => WindowLevel::Custom(n),
+        }
     }
 }
 
 /// Convert osd-flash Color to core-animation Color.
-fn convert_color(color: Color) -> core_animation::Color {
-    core_animation::Color::rgba(color.r, color.g, color.b, color.a)
+impl From<Color> for core_animation::Color {
+    fn from(color: Color) -> Self {
+        core_animation::Color::rgba(color.r, color.g, color.b, color.a)
+    }
+}
+
+/// Convert osd-flash Easing to core-animation Easing.
+impl From<OsdEasing> for Easing {
+    fn from(easing: OsdEasing) -> Self {
+        match easing {
+            OsdEasing::Linear => Easing::Linear,
+            OsdEasing::In => Easing::In,
+            OsdEasing::Out => Easing::Out,
+            OsdEasing::InOut => Easing::InOut,
+        }
+    }
+}
+
+/// Convert osd-flash Repeat to core-animation Repeat.
+impl From<OsdRepeat> for Repeat {
+    fn from(repeat: OsdRepeat) -> Self {
+        match repeat {
+            OsdRepeat::Once => Repeat::Once,
+            OsdRepeat::Times(n) => Repeat::Times(n),
+            OsdRepeat::Forever => Repeat::Forever,
+        }
+    }
+}
+
+/// Convert osd-flash TextAlign to core-animation TextAlign.
+impl From<TextAlign> for core_animation::TextAlign {
+    fn from(align: TextAlign) -> Self {
+        match align {
+            TextAlign::Left => core_animation::TextAlign::Left,
+            TextAlign::Center => core_animation::TextAlign::Center,
+            TextAlign::Right => core_animation::TextAlign::Right,
+        }
+    }
 }
 
 /// Apply position configuration to the window builder.
@@ -191,12 +229,14 @@ fn convert_shape_layer(
 
     // Apply fill color
     if let Some(fill) = config.fill {
-        builder = builder.fill_color(convert_color(fill));
+        builder = builder.fill_color(core_animation::Color::from(fill));
     }
 
     // Apply stroke
     if let Some((color, width)) = config.stroke {
-        builder = builder.stroke_color(convert_color(color)).line_width(width);
+        builder = builder
+            .stroke_color(core_animation::Color::from(color))
+            .line_width(width);
     }
 
     // Apply opacity
@@ -207,7 +247,7 @@ fn convert_shape_layer(
     // Apply shadow/glow
     if let Some(ref shadow) = config.shadow {
         builder = builder
-            .shadow_color(convert_color(shadow.color))
+            .shadow_color(core_animation::Color::from(shadow.color))
             .shadow_radius(shadow.radius)
             .shadow_offset(shadow.offset.0, shadow.offset.1)
             .shadow_opacity(shadow.opacity);
@@ -242,13 +282,13 @@ fn convert_text_layer(
 
     // Apply text color (use text_color, then fall back to fill)
     if let Some(color) = config.text_color {
-        builder = builder.foreground_color(convert_color(color));
+        builder = builder.foreground_color(core_animation::Color::from(color));
     } else if let Some(fill) = config.fill {
-        builder = builder.foreground_color(convert_color(fill));
+        builder = builder.foreground_color(core_animation::Color::from(fill));
     }
 
     // Apply text alignment
-    builder = builder.alignment(convert_text_align(config.text_align));
+    builder = builder.alignment(config.text_align.into());
 
     // Calculate and apply position
     let position = calculate_text_position(config, parent_width, parent_height);
@@ -281,7 +321,7 @@ fn convert_text_layer(
     // Apply shadow/glow
     if let Some(ref shadow) = config.shadow {
         builder = builder
-            .shadow_color(convert_color(shadow.color))
+            .shadow_color(core_animation::Color::from(shadow.color))
             .shadow_radius(shadow.radius)
             .shadow_offset(shadow.offset.0, shadow.offset.1)
             .shadow_opacity(shadow.opacity);
@@ -309,15 +349,6 @@ fn calculate_text_position(config: &LayerConfig, parent_width: f64, parent_heigh
     }
 }
 
-/// Convert osd-flash TextAlign to core-animation TextAlign.
-fn convert_text_align(align: TextAlign) -> core_animation::TextAlign {
-    match align {
-        TextAlign::Left => core_animation::TextAlign::Left,
-        TextAlign::Center => core_animation::TextAlign::Center,
-        TextAlign::Right => core_animation::TextAlign::Right,
-    }
-}
-
 /// Add an animation to a text layer builder.
 fn add_text_animation(
     builder: CATextLayerBuilder,
@@ -335,7 +366,7 @@ fn add_text_animation(
             builder.animate(&name, KeyPath::TransformScale, |a| {
                 a.values(*min_scale, *max_scale)
                     .duration(*duration)
-                    .easing(convert_easing(*easing))
+                    .easing((*easing).into())
                     .autoreverses()
                     .repeat(Repeat::Forever)
             })
@@ -353,8 +384,8 @@ fn add_text_animation(
                 let mut anim = a
                     .values(*from as f64, *to as f64)
                     .duration(*duration)
-                    .easing(convert_easing(*easing))
-                    .repeat(convert_repeat(*repeat));
+                    .easing((*easing).into())
+                    .repeat((*repeat).into());
                 if *autoreverses {
                     anim = anim.autoreverses();
                 }
@@ -371,7 +402,7 @@ fn add_text_animation(
             builder.animate(&name, KeyPath::ShadowRadius, |a| {
                 a.values(*min_radius, *max_radius)
                     .duration(*duration)
-                    .easing(convert_easing(*easing))
+                    .easing((*easing).into())
                     .autoreverses()
                     .repeat(Repeat::Forever)
             })
@@ -387,8 +418,8 @@ fn add_text_animation(
             builder.animate(&name, KeyPath::TransformRotation, |a| {
                 a.values(*from, *to)
                     .duration(*duration)
-                    .easing(convert_easing(*easing))
-                    .repeat(convert_repeat(*repeat))
+                    .easing((*easing).into())
+                    .repeat((*repeat).into())
             })
         }
         Animation::Group(animations) => {
@@ -466,7 +497,7 @@ fn add_animation(
             builder.animate(&name, KeyPath::TransformScale, |a| {
                 a.values(*min_scale, *max_scale)
                     .duration(*duration)
-                    .easing(convert_easing(*easing))
+                    .easing((*easing).into())
                     .autoreverses()
                     .repeat(Repeat::Forever)
             })
@@ -484,8 +515,8 @@ fn add_animation(
                 let mut anim = a
                     .values(*from as f64, *to as f64)
                     .duration(*duration)
-                    .easing(convert_easing(*easing))
-                    .repeat(convert_repeat(*repeat));
+                    .easing((*easing).into())
+                    .repeat((*repeat).into());
                 if *autoreverses {
                     anim = anim.autoreverses();
                 }
@@ -502,7 +533,7 @@ fn add_animation(
             builder.animate(&name, KeyPath::ShadowRadius, |a| {
                 a.values(*min_radius, *max_radius)
                     .duration(*duration)
-                    .easing(convert_easing(*easing))
+                    .easing((*easing).into())
                     .autoreverses()
                     .repeat(Repeat::Forever)
             })
@@ -518,8 +549,8 @@ fn add_animation(
             builder.animate(&name, KeyPath::TransformRotation, |a| {
                 a.values(*from, *to)
                     .duration(*duration)
-                    .easing(convert_easing(*easing))
-                    .repeat(convert_repeat(*repeat))
+                    .easing((*easing).into())
+                    .repeat((*repeat).into())
             })
         }
         Animation::Group(animations) => {
@@ -533,25 +564,6 @@ fn add_animation(
     }
 }
 
-/// Convert osd-flash Easing to core-animation Easing.
-fn convert_easing(easing: OsdEasing) -> Easing {
-    match easing {
-        OsdEasing::Linear => Easing::Linear,
-        OsdEasing::In => Easing::In,
-        OsdEasing::Out => Easing::Out,
-        OsdEasing::InOut => Easing::InOut,
-    }
-}
-
-/// Convert osd-flash Repeat to core-animation Repeat.
-fn convert_repeat(repeat: OsdRepeat) -> Repeat {
-    match repeat {
-        OsdRepeat::Once => Repeat::Once,
-        OsdRepeat::Times(n) => Repeat::Times(n),
-        OsdRepeat::Forever => Repeat::Forever,
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -560,24 +572,20 @@ mod tests {
 
     #[test]
     fn test_convert_window_level() {
-        assert!(matches!(
-            convert_window_level(OsdWindowLevel::AboveAll),
-            WindowLevel::AboveAll
-        ));
-        assert!(matches!(
-            convert_window_level(OsdWindowLevel::Normal),
-            WindowLevel::Normal
-        ));
-        assert!(matches!(
-            convert_window_level(OsdWindowLevel::Custom(500)),
-            WindowLevel::Custom(500)
-        ));
+        let level: WindowLevel = OsdWindowLevel::AboveAll.into();
+        assert!(matches!(level, WindowLevel::AboveAll));
+
+        let level: WindowLevel = OsdWindowLevel::Normal.into();
+        assert!(matches!(level, WindowLevel::Normal));
+
+        let level: WindowLevel = OsdWindowLevel::Custom(500).into();
+        assert!(matches!(level, WindowLevel::Custom(500)));
     }
 
     #[test]
     fn test_convert_color() {
         let osd_color = Color::rgba(1.0, 0.5, 0.25, 0.8);
-        let ca_color = convert_color(osd_color);
+        let ca_color: core_animation::Color = osd_color.into();
         // Color conversion should preserve values
         assert_eq!(ca_color.r, 1.0);
         assert_eq!(ca_color.g, 0.5);
@@ -587,23 +595,41 @@ mod tests {
 
     #[test]
     fn test_convert_easing() {
-        assert!(matches!(convert_easing(OsdEasing::Linear), Easing::Linear));
-        assert!(matches!(convert_easing(OsdEasing::InOut), Easing::InOut));
-        assert!(matches!(convert_easing(OsdEasing::In), Easing::In));
-        assert!(matches!(convert_easing(OsdEasing::Out), Easing::Out));
+        let easing: Easing = OsdEasing::Linear.into();
+        assert!(matches!(easing, Easing::Linear));
+
+        let easing: Easing = OsdEasing::InOut.into();
+        assert!(matches!(easing, Easing::InOut));
+
+        let easing: Easing = OsdEasing::In.into();
+        assert!(matches!(easing, Easing::In));
+
+        let easing: Easing = OsdEasing::Out.into();
+        assert!(matches!(easing, Easing::Out));
     }
 
     #[test]
     fn test_convert_repeat() {
-        assert!(matches!(convert_repeat(OsdRepeat::Once), Repeat::Once));
-        assert!(matches!(
-            convert_repeat(OsdRepeat::Forever),
-            Repeat::Forever
-        ));
-        assert!(matches!(
-            convert_repeat(OsdRepeat::Times(5)),
-            Repeat::Times(5)
-        ));
+        let repeat: Repeat = OsdRepeat::Once.into();
+        assert!(matches!(repeat, Repeat::Once));
+
+        let repeat: Repeat = OsdRepeat::Forever.into();
+        assert!(matches!(repeat, Repeat::Forever));
+
+        let repeat: Repeat = OsdRepeat::Times(5).into();
+        assert!(matches!(repeat, Repeat::Times(5)));
+    }
+
+    #[test]
+    fn test_convert_text_align() {
+        let align: core_animation::TextAlign = TextAlign::Left.into();
+        assert!(matches!(align, core_animation::TextAlign::Left));
+
+        let align: core_animation::TextAlign = TextAlign::Center.into();
+        assert!(matches!(align, core_animation::TextAlign::Center));
+
+        let align: core_animation::TextAlign = TextAlign::Right.into();
+        assert!(matches!(align, core_animation::TextAlign::Right));
     }
 
     #[test]

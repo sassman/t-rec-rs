@@ -63,7 +63,6 @@ fn main() -> osd_flash::Result<()> {
     Ok(())
 }
 
-
 #[cfg(not(target_os = "macos"))]
 fn main() {
     eprintln!("This example only runs on macOS");

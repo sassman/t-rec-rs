@@ -18,6 +18,7 @@ pub enum FlashEvent {
     KeyPressed {
         key: String,
     },
+    RecordingStarted,
 }
 
 /// Lifecycle events for actor coordination.

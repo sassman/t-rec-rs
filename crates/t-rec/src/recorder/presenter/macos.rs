@@ -10,12 +10,12 @@ use crate::Result;
 use crate::WindowId;
 use osd_flash::prelude::*;
 
-pub struct SkylightPresenter {
+pub struct OsdPresenter {
     #[allow(dead_code)]
     win_id: WindowId,
 }
 
-impl SkylightPresenter {
+impl OsdPresenter {
     pub fn new(win_id: WindowId) -> Self {
         Self { win_id }
     }
@@ -26,6 +26,7 @@ fn show_camera_flash() -> osd_flash::Result<()> {
     let camera = CameraFlash::new();
     OsdBuilder::new()
         .position(Position::TopRight)
+        // todo: attach it to the window id `win_id`
         .margin(20.0)
         .level(WindowLevel::AboveAll)
         .background(camera.get_background_color())
@@ -34,9 +35,33 @@ fn show_camera_flash() -> osd_flash::Result<()> {
         .show_for(1500.millis())
 }
 
-impl Presenter for SkylightPresenter {
+/// Show a recording indicator using the library composition.
+fn show_recording_indicator() -> osd_flash::Result<()> {
+    let recording = RecordingIndicator::new();
+    OsdBuilder::new()
+        .position(Position::TopRight)
+        // todo: attach it to the window id `win_id`
+        .margin(20.0)
+        .level(WindowLevel::AboveAll)
+        .background(Color::rgba(0.08, 0.08, 0.08, 0.92))
+        .corner_radius(20.0)
+        .composition(recording)
+        .show_for(1800.millis())
+}
+
+impl Presenter for OsdPresenter {
     fn handle_event(&mut self, event: FlashEvent) -> Result<()> {
         match event {
+            FlashEvent::RecordingStarted => {
+                log::debug!(
+                    "Recording started - no indicator for window {}",
+                    self.win_id
+                );
+                if let Err(e) = show_recording_indicator() {
+                    log::error!("Cannot show the recording started indicator: {}", e);
+                }
+                show_recording_indicator()?;
+            }
             FlashEvent::ScreenshotTaken => {
                 log::debug!(
                     "Screenshot taken - showing indicator for window {}",

@@ -133,7 +133,6 @@ fn show_key(label: &str) -> osd_flash::Result<()> {
         .show_for(800.millis())
 }
 
-
 #[cfg(not(target_os = "macos"))]
 fn main() {
     eprintln!("This example only runs on macOS");

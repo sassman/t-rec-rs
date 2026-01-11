@@ -24,7 +24,9 @@ use std::sync::{Arc, Mutex};
 use std::thread;
 use std::time::{Duration, Instant};
 use tempfile::TempDir;
+use tokio::sync::broadcast::Receiver;
 
+use super::presenter::{create_presenter, Presenter};
 use super::runtime::{Actor, Runtime};
 use crate::{Result, WindowId};
 
@@ -280,6 +282,9 @@ impl RecordingSession {
             }
         }
 
+        let presenter = create_presenter(config.win_id);
+        let presenter_subscriber = router.subscribe();
+
         // Print startup messages and countdown
         if !config.quiet {
             println!("[t-rec]: Press Ctrl+D to end recording");
@@ -289,6 +294,7 @@ impl RecordingSession {
             for i in (1..=3).rev() {
                 print!("\r[t-rec]: Recording starts in {}...", i);
                 io::stdout().flush().ok();
+                router.send(Event::Flash(FlashEvent::RecordingStarted));
                 thread::sleep(Duration::from_secs(1));
             }
             print!("\r[t-rec]: Recording!                         \n");
@@ -305,6 +311,8 @@ impl RecordingSession {
             input_state,
             idle_duration,
             recording_start,
+            presenter_subscriber,
+            presenter,
         )?;
 
         // restore the terminal state
@@ -331,6 +339,8 @@ impl RecordingSession {
         input_state: Arc<InputState>,
         idle_duration: Arc<Mutex<Duration>>,
         recording_start: Instant,
+        presenter_subscriber: Receiver<Event>,
+        mut presenter: impl Presenter + 'static,
     ) -> Result<()> {
         let mut pty_shell = PtyShell::spawn(&config.program)?;
         let shell_stdin = pty_shell.get_writer()?;
@@ -360,16 +370,6 @@ impl RecordingSession {
             }
         });
 
-        use super::presenter::{create_presenter, Presenter};
-
-        #[cfg(all(target_os = "macos", feature = "osd-flash-indicator"))]
-        log::debug!("OSD flash indicator: enabled (Skylight)");
-
-        #[cfg(not(all(target_os = "macos", feature = "osd-flash-indicator")))]
-        log::debug!("OSD flash indicator: disabled (no-op)");
-
-        let mut presenter = create_presenter(config.win_id);
-
         // Shell bootstrap delay
         thread::sleep(Duration::from_millis(350));
 
@@ -378,8 +378,8 @@ impl RecordingSession {
             .try_send(Event::Capture(CaptureEvent::Start))
             .context("Cannot start capture thread")?;
 
-        // blocking the main thread here (macOS Skylight requirement)
-        presenter.run(router.subscribe())?;
+        // blocking the main thread here
+        presenter.run(presenter_subscriber)?;
 
         // Signal all actors to stop
         router.shutdown();
