@@ -1,129 +1,110 @@
-//! POC: Testing CABasicAnimation with SkyLight windows.
+//! Animation POC - Testing GPU-accelerated animations.
 //!
-//! This POC tests whether CABasicAnimation works with SkyLight windows.
-//! The hypothesis is that renderInContext() only captures static snapshots,
-//! but let's verify this experimentally.
-//!
-//! The test:
-//! 1. Create a CAShapeLayer with a CABasicAnimation attached
-//! 2. Render it to a SkyLight window via renderInContext()
-//! 3. Observe if the animation plays (GPU-driven) or if we only see static frames
+//! Demonstrates GPU-accelerated Core Animation features:
+//! - Scale pulsing with different ranges
+//! - Multiple animated layers
+//! - Easing functions for natural motion
 //!
 //! Run with: cargo run -p osd-flash --example animation_poc
 
-use std::time::{Duration, Instant};
-
-use core_animation::prelude::*;
+use osd_flash::prelude::*;
 
 fn main() -> osd_flash::Result<()> {
-    use osd_flash::backends::skylight::{SkylightWindowBuilder, SkylightWindowLevel};
-
-    println!("POC: Testing CABasicAnimation with SkyLight windows");
-    println!("====================================================");
+    println!("POC: GPU-accelerated Core Animation");
+    println!("===================================");
     println!();
-    println!("Hypothesis: CABasicAnimation does NOT work with SkyLight because");
-    println!("renderInContext() only captures static snapshots.");
-    println!();
-    println!("Test: Attach a scale animation to a CAShapeLayer and render it.");
-    println!("If the animation works, the circle should pulse smoothly.");
-    println!("If not, it will remain static or jump between frames.");
-    println!();
-    println!("Watch for 10 seconds...");
+    println!("Testing smooth 60 FPS animations via CABasicAnimation.");
+    println!("Watch for smooth pulsing without flickering.");
     println!();
 
     let size = 200.0;
-    let center = size / 2.0;
 
-    // Create SkyLight window
-    let frame = osd_flash::geometry::Rect::from_xywh(30.0, 55.0, size, size);
-    let window = SkylightWindowBuilder::new()
-        .frame(frame)
-        .level(SkylightWindowLevel::AboveAll)
-        .build()?;
-
-    // Create root layer
-    let root_bounds = CGRect::new(CGPoint::ZERO, CGSize::new(size, size));
-    let root = CALayerBuilder::new()
-        .bounds(root_bounds)
-        .position(CGPoint::new(center, center))
-        .background_color(Color::rgba(0.1, 0.1, 0.1, 0.9))
-        .corner_radius(12.0)
-        .build();
-
-    // Create a circle with CABasicAnimation attached
-    let circle_size = 60.0;
-    let circle_bounds = CGRect::new(CGPoint::ZERO, CGSize::new(circle_size, circle_size));
-    let circle_path = unsafe {
-        CGPath::with_ellipse_in_rect(
-            CGRect::new(CGPoint::ZERO, CGSize::new(circle_size, circle_size)),
-            std::ptr::null(),
-        )
-    };
-
-    // Use the builder with .animate() to attach CABasicAnimation
-    let animated_circle = CAShapeLayerBuilder::new()
-        .bounds(circle_bounds)
-        .position(CGPoint::new(center, center))
-        .path(circle_path)
-        .fill_color(Color::rgba(0.95, 0.2, 0.2, 1.0))
-        // Attach a CABasicAnimation for scale pulsing
-        .animate("scale_pulse", KeyPath::TransformScale, |a| {
-            a.values(0.85, 1.15)
-                .duration(1.seconds())
-                .easing(Easing::InOut)
-                .autoreverses()
-                .repeat(Repeat::Forever)
+    println!("Test 1: Basic pulse animation...");
+    OsdBuilder::new()
+        .size(size)
+        .position(Position::Center)
+        .background(Color::rgba(0.1, 0.1, 0.1, 0.9))
+        .corner_radius(20.0)
+        // Outer glow (larger pulse range)
+        .layer("outer_glow", |l| {
+            l.circle(140.0)
+                .center()
+                .fill(Color::rgba(0.2, 0.6, 1.0, 0.2))
+                .animate(Animation::pulse_range(0.8, 1.2))
         })
-        .build();
+        // Inner glow (medium pulse)
+        .layer("inner_glow", |l| {
+            l.circle(100.0)
+                .center()
+                .fill(Color::rgba(0.3, 0.7, 1.0, 0.3))
+                .animate(Animation::pulse_range(0.85, 1.15))
+        })
+        // Main circle (subtle pulse)
+        .layer("main", |l| {
+            l.circle(60.0)
+                .center()
+                .fill(Color::rgba(0.4, 0.8, 1.0, 1.0))
+                .animate(Animation::pulse())
+        })
+        // Highlight (no animation - static reference point)
+        .layer("highlight", |l| {
+            l.circle(15.0)
+                .center_offset(-10.0, -10.0)
+                .fill(Color::rgba(1.0, 1.0, 1.0, 0.5))
+        })
+        .show_for(5.seconds())?;
 
-    root.addSublayer(&animated_circle);
+    std::thread::sleep(std::time::Duration::from_millis(500));
 
-    // Show window
-    window.show_visible()?;
-
-    // Render loop - just calling renderInContext repeatedly
-    let start = Instant::now();
-    let total_duration = Duration::from_secs(10);
-    let frame_duration = Duration::from_secs_f64(1.0 / 60.0); // 60 FPS
-
-    while start.elapsed() < total_duration {
-        let frame_start = Instant::now();
-
-        // Get context
-        let ctx_ptr = window.context_ptr();
-        let ctx = unsafe {
-            std::ptr::NonNull::new(ctx_ptr.cast::<CGContext>())
-                .expect("CGContext pointer must not be null")
-                .as_ref()
-        };
-
-        // Clear and render
-        let clear_rect = CGRect::new(CGPoint::ZERO, CGSize::new(size, size));
-        CGContext::clear_rect(Some(ctx), clear_rect);
-        root.renderInContext(ctx);
-        CGContext::flush(Some(ctx));
-
-        // Frame timing
-        let render_time = frame_start.elapsed();
-        if render_time < frame_duration {
-            unsafe {
-                CFRunLoop::run_in_mode(
-                    kCFRunLoopDefaultMode,
-                    (frame_duration - render_time).as_secs_f64(),
-                    false,
-                );
-            }
-        }
-    }
-
-    window.hide()?;
+    println!("Test 2: Concentric rings animation...");
+    OsdBuilder::new()
+        .size(size)
+        .position(Position::Center)
+        .background(Color::rgba(0.05, 0.05, 0.1, 0.95))
+        .corner_radius(size / 2.0)
+        // Ring 1 (outermost)
+        .layer("ring1", |l| {
+            l.circle(180.0)
+                .center()
+                .fill(Color::rgba(1.0, 0.3, 0.5, 0.15))
+                .animate(Animation::pulse_range(0.9, 1.1))
+        })
+        // Ring 2
+        .layer("ring2", |l| {
+            l.circle(140.0)
+                .center()
+                .fill(Color::rgba(1.0, 0.4, 0.6, 0.2))
+                .animate(Animation::pulse_range(0.92, 1.08))
+        })
+        // Ring 3
+        .layer("ring3", |l| {
+            l.circle(100.0)
+                .center()
+                .fill(Color::rgba(1.0, 0.5, 0.7, 0.25))
+                .animate(Animation::pulse_range(0.94, 1.06))
+        })
+        // Ring 4 (innermost)
+        .layer("ring4", |l| {
+            l.circle(60.0)
+                .center()
+                .fill(Color::rgba(1.0, 0.6, 0.8, 0.3))
+                .animate(Animation::pulse_range(0.96, 1.04))
+        })
+        // Center dot
+        .layer("center", |l| {
+            l.circle(30.0)
+                .center()
+                .fill(Color::rgba(1.0, 0.8, 0.9, 1.0))
+        })
+        .show_for(5.seconds())?;
 
     println!();
     println!("Test complete!");
     println!();
     println!("Results:");
-    println!("  - If the circle pulsed smoothly: CABasicAnimation WORKS with SkyLight");
-    println!("  - If the circle was static: CABasicAnimation does NOT work");
+    println!("  - Animations should have been smooth (60 FPS)");
+    println!("  - No flickering or tearing visible");
+    println!("  - GPU-accelerated via Core Animation");
     println!();
 
     Ok(())

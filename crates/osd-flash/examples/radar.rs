@@ -9,101 +9,99 @@ use osd_flash::prelude::*;
 fn main() -> osd_flash::Result<()> {
     println!("Showing radar display...\n");
 
-    let size = 300.0;
-    let padding = 20.0;
-    let content_center = (size - 2.0 * padding) / 2.0;
+    let size = 250.0;
 
-    // Collect all shapes
-    let mut shapes: Vec<StyledShape> = Vec::new();
-
-    // Draw concentric radar rings (from outside in)
-    let ring_radii = [120.0, 90.0, 60.0, 30.0];
-    for radius in ring_radii {
-        // Draw ring as a circle outline (filled circle with smaller dark circle on top)
-        shapes.push(StyledShape::new(
-            Shape::circle_at(content_center, content_center, radius),
-            Color::rgba(0.0, 0.4, 0.0, 0.6),
-        ));
-        shapes.push(StyledShape::new(
-            Shape::circle_at(content_center, content_center, radius - 2.0),
-            Color::rgba(0.0, 0.05, 0.0, 1.0),
-        ));
-    }
-
-    // Draw crosshairs
-    let cross_len = 115.0;
-    let cross_width = 2.0;
-    // Horizontal line
-    shapes.push(StyledShape::new(
-        Shape::rounded_rect(
-            Rect::from_xywh(
-                content_center - cross_len,
-                content_center - cross_width / 2.0,
-                cross_len * 2.0,
-                cross_width,
-            ),
-            1.0,
-        ),
-        Color::rgba(0.0, 0.5, 0.0, 0.5),
-    ));
-    // Vertical line
-    shapes.push(StyledShape::new(
-        Shape::rounded_rect(
-            Rect::from_xywh(
-                content_center - cross_width / 2.0,
-                content_center - cross_len,
-                cross_width,
-                cross_len * 2.0,
-            ),
-            1.0,
-        ),
-        Color::rgba(0.0, 0.5, 0.0, 0.5),
-    ));
-
-    // Draw radar blips (detected objects)
-    let blips = [
-        (content_center + 50.0, content_center - 40.0, 8.0), // Blip 1
-        (content_center - 70.0, content_center + 30.0, 6.0), // Blip 2
-        (content_center + 20.0, content_center + 80.0, 10.0), // Blip 3
-        (content_center - 30.0, content_center - 60.0, 5.0), // Blip 4
-    ];
-
-    for (x, y, blip_size) in blips {
-        // Glow effect
-        shapes.push(StyledShape::new(
-            Shape::circle_at(x, y, blip_size + 4.0),
-            Color::rgba(0.0, 1.0, 0.0, 0.3),
-        ));
-        // Bright center
-        shapes.push(StyledShape::new(
-            Shape::circle_at(x, y, blip_size),
-            Color::rgba(0.3, 1.0, 0.3, 1.0),
-        ));
-    }
-
-    // Center dot
-    shapes.push(StyledShape::new(
-        Shape::circle_at(content_center, content_center, 5.0),
-        Color::rgba(0.0, 1.0, 0.0, 1.0),
-    ));
-
-    OsdFlashBuilder::new()
-        .dimensions(size)
-        .position(FlashPosition::Center)
+    OsdBuilder::new()
+        .size(size)
+        .position(Position::Center)
         .background(Color::rgba(0.0, 0.05, 0.0, 0.95))
-        .corner_radius(size / 2.0) // Make it circular!
-        .padding(Padding::all(padding))
-        .build()?
-        .draw(shapes)
+        .corner_radius(size / 2.0) // Circular window
+        // Outer ring
+        .layer("ring4", |l| {
+            l.circle(220.0)
+                .center()
+                .fill(Color::rgba(0.0, 0.4, 0.0, 0.3))
+        })
+        // Ring 3
+        .layer("ring3", |l| {
+            l.circle(170.0)
+                .center()
+                .fill(Color::rgba(0.0, 0.05, 0.0, 1.0))
+        })
+        // Ring 2
+        .layer("ring2", |l| {
+            l.circle(160.0)
+                .center()
+                .fill(Color::rgba(0.0, 0.4, 0.0, 0.3))
+        })
+        // Ring 1
+        .layer("ring1", |l| {
+            l.circle(110.0)
+                .center()
+                .fill(Color::rgba(0.0, 0.05, 0.0, 1.0))
+        })
+        // Inner ring
+        .layer("ring0", |l| {
+            l.circle(100.0)
+                .center()
+                .fill(Color::rgba(0.0, 0.4, 0.0, 0.3))
+        })
+        // Center background
+        .layer("center_bg", |l| {
+            l.circle(50.0)
+                .center()
+                .fill(Color::rgba(0.0, 0.05, 0.0, 1.0))
+        })
+        // Center dot
+        .layer("center", |l| {
+            l.circle(10.0)
+                .center()
+                .fill(Color::rgba(0.0, 1.0, 0.0, 1.0))
+        })
+        // Blip 1 (pulsing)
+        .layer("blip1_glow", |l| {
+            l.circle(18.0)
+                .center_offset(50.0, -40.0)
+                .fill(Color::rgba(0.0, 1.0, 0.0, 0.3))
+                .animate(Animation::pulse_range(0.8, 1.3))
+        })
+        .layer("blip1", |l| {
+            l.circle(10.0)
+                .center_offset(50.0, -40.0)
+                .fill(Color::rgba(0.3, 1.0, 0.3, 1.0))
+        })
+        // Blip 2
+        .layer("blip2_glow", |l| {
+            l.circle(14.0)
+                .center_offset(-60.0, 30.0)
+                .fill(Color::rgba(0.0, 1.0, 0.0, 0.3))
+                .animate(Animation::pulse_range(0.85, 1.25))
+        })
+        .layer("blip2", |l| {
+            l.circle(8.0)
+                .center_offset(-60.0, 30.0)
+                .fill(Color::rgba(0.3, 1.0, 0.3, 1.0))
+        })
+        // Blip 3
+        .layer("blip3_glow", |l| {
+            l.circle(20.0)
+                .center_offset(20.0, 70.0)
+                .fill(Color::rgba(0.0, 1.0, 0.0, 0.3))
+                .animate(Animation::pulse_range(0.9, 1.2))
+        })
+        .layer("blip3", |l| {
+            l.circle(12.0)
+                .center_offset(20.0, 70.0)
+                .fill(Color::rgba(0.3, 1.0, 0.3, 1.0))
+        })
         // Title
-        .draw(StyledText::at(
-            "RADAR",
-            content_center - 25.0,
-            10.0,
-            14.0,
-            Color::rgba(0.0, 0.8, 0.0, 1.0),
-        ))
-        .show_for_seconds(4.0)?;
+        .layer("title", |l| {
+            l.text("RADAR")
+                .center_offset(0.0, -100.0)
+                .font_size(14.0)
+                .text_color(Color::rgba(0.0, 0.8, 0.0, 1.0))
+        })
+        .show_for(5.seconds())?;
 
     println!("Done!");
     Ok(())

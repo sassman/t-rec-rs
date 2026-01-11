@@ -1,103 +1,127 @@
-//! Sierpiński Triangle Fractal.
+//! Sierpiński Triangle Fractal (simplified).
 //!
-//! A beautiful recursive fractal rendered with circles using the chaos game.
-//! This creates a stunning point-cloud visualization of the classic fractal.
+//! A representation of the classic fractal using layered circles.
+//! Demonstrates the triangular pattern with color-coded vertices.
 //!
 //! Run with: cargo run -p osd-flash --example sierpinski
 
 use osd_flash::prelude::*;
 
 fn main() -> osd_flash::Result<()> {
-    println!("Generating Sierpinski triangle fractal (chaos game)...\n");
+    println!("Showing Sierpinski triangle pattern...\n");
 
-    let size = 520.0;
-    let padding = 30.0;
-    let content_size = size - 2.0 * padding;
-
-    // Triangle vertices (equilateral, pointing up)
-    let margin = 15.0;
-    let tri_width = content_size - 2.0 * margin;
-    let tri_height = tri_width * 0.866; // sqrt(3)/2 for equilateral
-
-    let vertices = [
-        (content_size / 2.0, margin),                 // Top
-        (margin, margin + tri_height),                // Bottom left
-        (content_size - margin, margin + tri_height), // Bottom right
-    ];
+    let size = 300.0;
 
     // Colors for each vertex region
-    let colors = [
-        Color::rgba(1.0, 0.3, 0.5, 0.9), // Pink/red for top
-        Color::rgba(0.3, 0.8, 1.0, 0.9), // Cyan for bottom left
-        Color::rgba(0.5, 1.0, 0.4, 0.9), // Green for bottom right
-    ];
+    let pink = Color::rgba(1.0, 0.3, 0.5, 0.9);
+    let cyan = Color::rgba(0.3, 0.8, 1.0, 0.9);
+    let green = Color::rgba(0.5, 1.0, 0.4, 0.9);
 
-    // Chaos game: start at random point, repeatedly jump halfway to a random vertex
-    let mut x = content_size / 2.0;
-    let mut y = content_size / 2.0;
-
-    // Simple pseudo-random using linear congruential generator
-    let mut seed: u64 = 12345;
-    let lcg_next = |s: &mut u64| -> usize {
-        *s = s.wrapping_mul(1103515245).wrapping_add(12345);
-        ((*s >> 16) % 3) as usize
-    };
-
-    // Generate points
-    let num_points = 3000;
-    let mut points: Vec<(f64, f64, usize)> = Vec::with_capacity(num_points);
-
-    for _ in 0..num_points {
-        let vertex_idx = lcg_next(&mut seed);
-        let (vx, vy) = vertices[vertex_idx];
-
-        // Move halfway toward the chosen vertex
-        x = (x + vx) / 2.0;
-        y = (y + vy) / 2.0;
-
-        points.push((x, y, vertex_idx));
-    }
-
-    // Collect all shapes
-    let mut shapes: Vec<StyledShape> = Vec::new();
-
-    // Draw all points (skip first few iterations for convergence)
-    for (px, py, color_idx) in points.iter().skip(20) {
-        let color = colors[*color_idx];
-        shapes.push(StyledShape::new(Shape::circle_at(*px, *py, 1.5), color));
-    }
-
-    // Draw vertex markers
-    for (i, (vx, vy)) in vertices.iter().enumerate() {
-        // Outer glow
-        shapes.push(StyledShape::new(
-            Shape::circle_at(*vx, *vy, 8.0),
-            colors[i].with_alpha(0.3),
-        ));
-        // Inner bright
-        shapes.push(StyledShape::new(
-            Shape::circle_at(*vx, *vy, 4.0),
-            Color::WHITE,
-        ));
-    }
-
-    OsdFlashBuilder::new()
-        .dimensions(size)
-        .position(FlashPosition::Center)
+    OsdBuilder::new()
+        .size(size)
+        .position(Position::Center)
         .background(Color::rgba(0.02, 0.02, 0.05, 0.98))
         .corner_radius(24.0)
-        .padding(Padding::all(padding))
-        .build()?
-        .draw(shapes)
+        // Top vertex marker
+        .layer("top_glow", |l| {
+            l.circle(30.0)
+                .center_offset(0.0, -80.0)
+                .fill(pink.with_alpha(0.3))
+                .animate(Animation::pulse_range(0.9, 1.1))
+        })
+        .layer("top", |l| {
+            l.circle(16.0)
+                .center_offset(0.0, -80.0)
+                .fill(Color::WHITE)
+        })
+        // Bottom-left vertex marker
+        .layer("bl_glow", |l| {
+            l.circle(30.0)
+                .center_offset(-90.0, 70.0)
+                .fill(cyan.with_alpha(0.3))
+                .animate(Animation::pulse_range(0.9, 1.1))
+        })
+        .layer("bl", |l| {
+            l.circle(16.0)
+                .center_offset(-90.0, 70.0)
+                .fill(Color::WHITE)
+        })
+        // Bottom-right vertex marker
+        .layer("br_glow", |l| {
+            l.circle(30.0)
+                .center_offset(90.0, 70.0)
+                .fill(green.with_alpha(0.3))
+                .animate(Animation::pulse_range(0.9, 1.1))
+        })
+        .layer("br", |l| {
+            l.circle(16.0)
+                .center_offset(90.0, 70.0)
+                .fill(Color::WHITE)
+        })
+        // Inner triangular pattern (represented with circles at midpoints)
+        // Top-left midpoint
+        .layer("mid_tl", |l| {
+            l.circle(12.0)
+                .center_offset(-45.0, -5.0)
+                .fill(pink.with_alpha(0.7))
+        })
+        // Top-right midpoint
+        .layer("mid_tr", |l| {
+            l.circle(12.0)
+                .center_offset(45.0, -5.0)
+                .fill(green.with_alpha(0.7))
+        })
+        // Bottom midpoint
+        .layer("mid_b", |l| {
+            l.circle(12.0)
+                .center_offset(0.0, 70.0)
+                .fill(cyan.with_alpha(0.7))
+        })
+        // Central void (dark)
+        .layer("center_void", |l| {
+            l.circle(40.0)
+                .center_offset(0.0, 20.0)
+                .fill(Color::rgba(0.02, 0.02, 0.05, 0.9))
+        })
+        // Smaller fractal points
+        .layer("p1", |l| {
+            l.circle(6.0)
+                .center_offset(-22.0, -42.0)
+                .fill(pink.with_alpha(0.6))
+        })
+        .layer("p2", |l| {
+            l.circle(6.0)
+                .center_offset(22.0, -42.0)
+                .fill(green.with_alpha(0.6))
+        })
+        .layer("p3", |l| {
+            l.circle(6.0)
+                .center_offset(-67.0, 33.0)
+                .fill(cyan.with_alpha(0.6))
+        })
+        .layer("p4", |l| {
+            l.circle(6.0)
+                .center_offset(67.0, 33.0)
+                .fill(green.with_alpha(0.6))
+        })
+        .layer("p5", |l| {
+            l.circle(6.0)
+                .center_offset(-22.0, 70.0)
+                .fill(cyan.with_alpha(0.6))
+        })
+        .layer("p6", |l| {
+            l.circle(6.0)
+                .center_offset(22.0, 70.0)
+                .fill(green.with_alpha(0.6))
+        })
         // Title
-        .draw(StyledText::at(
-            "SIERPINSKI FRACTAL",
-            content_size / 2.0 - 80.0,
-            content_size - 24.0,
-            14.0,
-            Color::rgba(0.7, 0.7, 0.9, 0.9),
-        ))
-        .show_for_seconds(6.0)?;
+        .layer("title", |l| {
+            l.text("SIERPINSKI")
+                .center_offset(0.0, 115.0)
+                .font_size(14.0)
+                .text_color(Color::rgba(0.7, 0.7, 0.9, 0.9))
+        })
+        .show_for(6.seconds())?;
 
     println!("Done!");
     Ok(())

@@ -1,104 +1,111 @@
 //! On-screen display (OSD) flash indicators.
 //!
-//! This crate provides platform-specific backends for displaying brief
-//! on-screen indicators, such as camera flash effects or status icons.
+//! This crate provides a platform-agnostic API for displaying brief
+//! on-screen indicators with GPU-accelerated animations.
+//!
+//! # Quick Start
+//!
+//! ```ignore
+//! use osd_flash::prelude::*;
+//!
+//! // Simple recording indicator with pulsing animation
+//! OsdBuilder::new()
+//!     .size(80.0)
+//!     .position(Position::TopRight)
+//!     .margin(20.0)
+//!     .composition(RecordingIndicator::new())
+//!     .show_for(10.seconds())?;
+//! ```
 //!
 //! # Architecture
 //!
-//! The crate is organized into:
-//! - **Common types** (`Color`, `Shape`, `Icon`, `Canvas` trait) - platform-agnostic
-//! - **Animation** - Simple from/to transition API (no keyframes)
-//! - **Backends** - platform-specific implementations (`skylight` for macOS)
+//! The crate provides:
+//! - **`OsdBuilder`** - Main entry point for creating OSD windows
+//! - **`LayerComposition`** - Declarative layer configuration with animations
+//! - **`Animation`** - GPU-accelerated animation presets (pulse, fade, glow, etc.)
+//! - **Geometry types** - Platform-agnostic `Point`, `Size`, `Rect`
 //!
-//! # Example
+//! # Inline Layer Definition
 //!
 //! ```ignore
 //! use osd_flash::prelude::*;
 //!
-//! // Use a pre-built icon from the library
-//! let icon = CameraIcon::new(120.0).build();
-//!
-//! // Or build a custom icon
-//! let custom = IconBuilder::new(120.0)
-//!     .background(Color::VIBRANT_BLUE, 16.0)
-//!     .circle(60.0, 60.0, 30.0, Color::WHITE)
-//!     .build();
+//! OsdBuilder::new()
+//!     .size(100.0)
+//!     .position(Position::Center)
+//!     .background(Color::rgba(0.1, 0.1, 0.1, 0.9))
+//!     .corner_radius(16.0)
+//!     .layer("dot", |l| {
+//!         l.circle(32.0)
+//!             .center()
+//!             .fill(Color::RED)
+//!             .animate(Animation::pulse())
+//!     })
+//!     .show_for(5.seconds())?;
 //! ```
 //!
-//! # Animation
+//! # Pre-built Compositions
 //!
-//! The animation API uses simple from/to transitions with autoreverses for
-//! smooth looping. On macOS, animations run on the GPU compositor thread
-//! via Core Animation.
+//! The library provides ready-to-use compositions:
 //!
 //! ```ignore
 //! use osd_flash::prelude::*;
-//! use osd_flash::animation::{AnimationEffect, AnimationSet};
 //!
-//! let animations = AnimationSet::new()
-//!     .with(AnimationEffect::scale(0.9, 1.1).duration(1.5.seconds()))
-//!     .with(AnimationEffect::glow(Color::RED, 15.0));
+//! // Recording indicator with pulsing dot
+//! OsdBuilder::new()
+//!     .composition(RecordingIndicator::new())
+//!     .show_for(10.seconds())?;
 //!
-//! window.draw(icon)
-//!     .show_animated(animations, 10.seconds())?;
+//! // Camera flash icon
+//! OsdBuilder::new()
+//!     .composition(CameraIcon::new())
+//!     .show_for(3.seconds())?;
 //! ```
 
-// Common modules (platform-agnostic)
-mod canvas;
+// New modules (platform-agnostic)
+mod builder;
 mod color;
 mod duration_ext;
-mod flash;
-mod shape;
+mod level;
+mod position;
 
-/// Animation system for OSD flash indicators.
-pub mod animation;
-
-// Window module depends on animation, so it's declared after
-mod window;
+/// Composition types for declarative OSD content.
+pub mod composition;
 
 /// Geometry types for positioning and sizing.
 pub mod geometry;
 
-/// Layout types for spacing (padding, border, box model).
+/// Layout types for spacing (margin, padding).
 pub mod layout;
-
-/// Styling types for rendering (paint, text style).
-pub mod style;
-
-/// Icon building API for creating custom on-screen indicators.
-pub mod icon;
 
 /// Platform-specific backend implementations.
 pub mod backends;
 
-// TODO: once stable migrate to `thiserror` and own error types
+// Public re-exports (new API)
 pub use anyhow::Result;
-pub use canvas::Canvas;
+pub use builder::{OsdBuilder, OsdConfig};
 pub use color::Color;
+pub use composition::{Animation, CompositionBuilder, Easing, LayerBuilder, LayerComposition, Repeat};
 pub use duration_ext::DurationExt;
-pub use flash::*;
-pub use shape::Shape;
-pub use window::{DisplayTarget, Drawable, GpuAnimationConfig, OsdFlashBuilder, OsdWindow, WindowLevel};
+pub use geometry::{Point, Rect, Size};
+pub use layout::Margin;
+pub use level::WindowLevel;
+pub use position::Position;
 
 /// Prelude for convenient imports.
 ///
 /// This module exports the platform-agnostic public API. For advanced usage
 /// requiring direct backend access, import from `osd_flash::backends` directly.
 pub mod prelude {
-    // Animation
-    pub use crate::animation::{AnimatedWindow, AnimationEffect, AnimationSet, Easing, Transform};
-    pub use crate::duration_ext::DurationExt;
-
-    // Core types
-    pub use crate::canvas::Canvas;
+    pub use crate::builder::{OsdBuilder, OsdConfig};
     pub use crate::color::Color;
-    pub use crate::geometry::{Point, Rect, Size};
-    pub use crate::icon::{
-        CameraIcon, Icon, IconBuilder, PulsingRecordingIcon, RecordingIcon, StyledShape, StyledText,
+    pub use crate::composition::{
+        Animation, CompositionBuilder, Easing, FontWeight, LayerBuilder, LayerComposition,
+        LayerConfig, LayerPosition, Repeat, ShadowConfig, ShapeKind, TextAlign,
     };
-    pub use crate::layout::{Border, LayoutBox, Margin, Padding};
-    pub use crate::shape::Shape;
-    pub use crate::style::{FontWeight, Paint, TextAlignment, TextStyle};
-    pub use crate::window::{DisplayTarget, Drawable, GpuAnimationConfig, OsdFlashBuilder, OsdWindow, WindowLevel};
-    pub use crate::FlashPosition;
+    pub use crate::duration_ext::DurationExt;
+    pub use crate::geometry::{Point, Rect, Size};
+    pub use crate::layout::Margin;
+    pub use crate::level::WindowLevel;
+    pub use crate::position::Position;
 }

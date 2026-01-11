@@ -30,6 +30,7 @@ objc2.workspace = true
 objc2-quartz-core = { workspace = true, features = [
     "CALayer",
     "CAShapeLayer",
+    "CATextLayer",
     "CATransform3D",
     "CAMediaTiming",
     "CAMediaTimingFunction",

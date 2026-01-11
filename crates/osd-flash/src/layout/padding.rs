@@ -1,8 +1,5 @@
 //! Padding type for internal spacing.
 
-use crate::geometry::Rect;
-use crate::shape::Shape;
-
 /// Padding for internal element spacing, similar to CSS padding.
 ///
 /// Supports multiple construction patterns:
@@ -71,70 +68,6 @@ impl Padding {
     /// Get the total vertical padding (top + bottom).
     pub fn vertical(&self) -> f64 {
         self.top + self.bottom
-    }
-
-    /// Expand a shape by this padding amount.
-    ///
-    /// The shape's bounds are extended outward by the padding on each side.
-    /// The shape's background/fill will cover the entire padded area.
-    ///
-    /// # Example
-    ///
-    /// ```ignore
-    /// // A 120x120 rect expanded by 40px horizontal padding becomes 200x120
-    /// let padded = Padding::symmetric(0.0, 40.0).around(
-    ///     Shape::rounded_rect(Rect::from_xywh(0.0, 0.0, 120.0, 120.0), 16.0)
-    /// );
-    /// ```
-    pub fn around(&self, shape: Shape) -> Shape {
-        match shape {
-            Shape::RoundedRect {
-                rect,
-                corner_radius,
-            } => {
-                let expanded = Rect::from_xywh(
-                    rect.origin.x - self.left,
-                    rect.origin.y - self.top,
-                    rect.size.width + self.horizontal(),
-                    rect.size.height + self.vertical(),
-                );
-                Shape::RoundedRect {
-                    rect: expanded,
-                    corner_radius,
-                }
-            }
-            Shape::Circle { center, radius } => {
-                // For circles with symmetric padding, expand the radius
-                // For asymmetric, convert to ellipse
-                if (self.left - self.right).abs() < f64::EPSILON
-                    && (self.top - self.bottom).abs() < f64::EPSILON
-                {
-                    // Symmetric - expand radius
-                    Shape::Circle {
-                        center,
-                        radius: radius + self.left, // left == right in symmetric case
-                    }
-                } else {
-                    // Asymmetric - convert to ellipse
-                    let bounds = Rect::from_xywh(
-                        center.x - radius - self.left,
-                        center.y - radius - self.top,
-                        radius * 2.0 + self.horizontal(),
-                        radius * 2.0 + self.vertical(),
-                    );
-                    Shape::Ellipse { rect: bounds }
-                }
-            }
-            Shape::Ellipse { rect } => {
-                let expanded = Rect::from_xywh(
-                    rect.origin.x - self.left,
-                    rect.origin.y - self.top,
-                    rect.size.width + self.horizontal(),
-                    rect.size.height + self.vertical(),
-                );
-                Shape::Ellipse { rect: expanded }
-            }
-        }
     }
 }
 

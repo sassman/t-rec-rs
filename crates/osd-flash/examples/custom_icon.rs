@@ -1,6 +1,6 @@
 //! Custom icon example.
 //!
-//! Shows how to build a custom icon using the IconBuilder API.
+//! Shows how to build a custom icon using layered composition.
 //!
 //! Run with: cargo run -p osd-flash --example custom_icon
 
@@ -9,31 +9,27 @@ use osd_flash::prelude::*;
 fn main() -> osd_flash::Result<()> {
     let size = 120.0;
 
+    println!("Showing custom success icon in center for 3 seconds...");
+
     // Build a custom "check" icon (green background with white checkmark circle)
-    let icon = IconBuilder::new(size)
-        .padding(12.0)
-        // Green background
-        .background(Color::rgba(0.2, 0.8, 0.3, 0.92), 16.0)
-        // White circle in center
-        .circle(size / 2.0, size / 2.0, size * 0.25, Color::WHITE)
+    OsdBuilder::new()
+        .size(size)
+        .position(Position::Center)
+        .background(Color::rgba(0.2, 0.8, 0.3, 0.92))
+        .corner_radius(16.0)
+        // White circle ring (outer)
+        .layer("ring_outer", |l| {
+            l.circle(size * 0.5)
+                .center()
+                .fill(Color::WHITE)
+        })
         // Inner green circle (creates ring effect)
-        .circle(
-            size / 2.0,
-            size / 2.0,
-            size * 0.15,
-            Color::rgba(0.2, 0.8, 0.3, 1.0),
-        )
-        .build();
-
-    println!("Showing custom success icon in center...");
-
-    OsdFlashBuilder::new()
-        .dimensions(size)
-        .position(FlashPosition::Center)
-        .level(WindowLevel::AboveAll)
-        .build()?
-        .draw(icon)
-        .show_for_seconds(2.0)?;
+        .layer("ring_inner", |l| {
+            l.circle(size * 0.3)
+                .center()
+                .fill(Color::rgba(0.2, 0.8, 0.3, 1.0))
+        })
+        .show_for(3.seconds())?;
 
     println!("Done!");
     Ok(())

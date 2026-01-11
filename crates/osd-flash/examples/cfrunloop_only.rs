@@ -1,113 +1,113 @@
 //! CFRunLoop sequential window test.
 //!
-//! This example tests sequential window rendering using CFRunLoop.
-//! It displays multiple windows one after another to verify the run loop works correctly.
+//! This example tests sequential window rendering.
+//! It displays multiple windows one after another at different positions.
 //!
 //! Run with: cargo run -p osd-flash --example cfrunloop_only
 
-use osd_flash::backends::skylight::{SkylightCanvas, SkylightWindowBuilder, SkylightWindowLevel};
 use osd_flash::prelude::*;
 
 fn main() -> osd_flash::Result<()> {
-    println!("=== CFRunLoop Sequential Window Test ===\n");
+    println!("=== Sequential Window Test ===\n");
     println!("This test displays multiple windows sequentially.\n");
 
-    // Window 1
-    println!("Window 1: Recording icon (top-right)");
-    show_window(FlashPosition::TopRight, true)?;
+    let size = 80.0;
+
+    // Window 1: Top-right (recording style)
+    println!("Window 1: Recording indicator (top-right)");
+    OsdBuilder::new()
+        .size(size)
+        .position(Position::TopRight)
+        .margin(30.0)
+        .level(WindowLevel::AboveAll)
+        .background(Color::rgba(0.1, 0.1, 0.1, 0.9))
+        .corner_radius(14.0)
+        .layer("glow", |l| {
+            l.circle(50.0)
+                .center()
+                .fill(Color::rgba(1.0, 0.2, 0.2, 0.3))
+                .animate(Animation::pulse_range(0.9, 1.1))
+        })
+        .layer("dot", |l| {
+            l.circle(30.0)
+                .center()
+                .fill(Color::RED)
+                .animate(Animation::pulse())
+        })
+        .show_for(1500.millis())?;
 
     std::thread::sleep(std::time::Duration::from_millis(500));
 
-    // Window 2
-    println!("Window 2: Camera icon (top-left)");
-    show_window(FlashPosition::TopLeft, false)?;
+    // Window 2: Top-left (camera style)
+    println!("Window 2: Camera indicator (top-left)");
+    OsdBuilder::new()
+        .size(size)
+        .position(Position::TopLeft)
+        .margin(30.0)
+        .level(WindowLevel::AboveAll)
+        .background(Color::rgba(0.15, 0.45, 0.9, 0.92))
+        .corner_radius(14.0)
+        .layer("body", |l| {
+            l.ellipse(50.0, 35.0)
+                .center()
+                .fill(Color::WHITE)
+        })
+        .layer("lens", |l| {
+            l.circle(22.0)
+                .center()
+                .fill(Color::rgba(0.3, 0.5, 0.8, 1.0))
+        })
+        .show_for(1500.millis())?;
 
     std::thread::sleep(std::time::Duration::from_millis(500));
 
-    // Window 3
-    println!("Window 3: Recording icon (bottom-right)");
-    show_window(FlashPosition::BottomRight, true)?;
+    // Window 3: Bottom-right (recording style)
+    println!("Window 3: Recording indicator (bottom-right)");
+    OsdBuilder::new()
+        .size(size)
+        .position(Position::BottomRight)
+        .margin(30.0)
+        .level(WindowLevel::AboveAll)
+        .background(Color::rgba(0.1, 0.1, 0.1, 0.9))
+        .corner_radius(14.0)
+        .layer("glow", |l| {
+            l.circle(50.0)
+                .center()
+                .fill(Color::rgba(1.0, 0.2, 0.2, 0.3))
+                .animate(Animation::pulse_range(0.9, 1.1))
+        })
+        .layer("dot", |l| {
+            l.circle(30.0)
+                .center()
+                .fill(Color::RED)
+                .animate(Animation::pulse())
+        })
+        .show_for(1500.millis())?;
 
     std::thread::sleep(std::time::Duration::from_millis(500));
 
-    // Window 4
-    println!("Window 4: Camera icon (center)");
-    show_window(FlashPosition::Center, false)?;
+    // Window 4: Center (camera style)
+    println!("Window 4: Camera indicator (center)");
+    OsdBuilder::new()
+        .size(size)
+        .position(Position::Center)
+        .level(WindowLevel::AboveAll)
+        .background(Color::rgba(0.15, 0.45, 0.9, 0.92))
+        .corner_radius(14.0)
+        .layer("body", |l| {
+            l.ellipse(50.0, 35.0)
+                .center()
+                .fill(Color::WHITE)
+        })
+        .layer("lens", |l| {
+            l.circle(22.0)
+                .center()
+                .fill(Color::rgba(0.3, 0.5, 0.8, 1.0))
+        })
+        .show_for(1500.millis())?;
 
     println!("\n=== Test Complete ===");
     println!("All 4 windows should have appeared sequentially.");
 
     Ok(())
-}
-
-fn show_window(position: FlashPosition, use_recording_icon: bool) -> osd_flash::Result<()> {
-    let bounds = get_frame_for_position(position);
-    let size = 80.0;
-
-    // Create window using the builder
-    let mut window = SkylightWindowBuilder::new()
-        .frame(bounds)
-        .level(SkylightWindowLevel::AboveAll)
-        .build()?;
-
-    // Draw the icon
-    let mut canvas = unsafe { SkylightCanvas::new(window.context_ptr(), window.size()) };
-
-    if use_recording_icon {
-        RecordingIcon::new(size).build().draw(&mut canvas, &bounds);
-    } else {
-        CameraIcon::new(size).build().draw(&mut canvas, &bounds);
-    }
-
-    // Show for 1.5 seconds
-    window.show(1.5)?;
-
-    println!("  Done!");
-    Ok(())
-}
-
-fn get_frame_for_position(position: FlashPosition) -> Rect {
-    use core_animation::prelude::CGRect;
-
-    #[link(name = "CoreGraphics", kind = "framework")]
-    extern "C" {
-        fn CGMainDisplayID() -> u32;
-        fn CGDisplayBounds(display: u32) -> CGRect;
-    }
-
-    let display_bounds = unsafe {
-        let id = CGMainDisplayID();
-        let b = CGDisplayBounds(id);
-        Rect::from_xywh(b.origin.x, b.origin.y, b.size.width, b.size.height)
-    };
-
-    let size = 80.0;
-    let margin = 30.0;
-
-    let (x, y) = match position {
-        FlashPosition::TopRight => (
-            display_bounds.origin.x + display_bounds.size.width - size - margin,
-            display_bounds.origin.y + margin + 25.0,
-        ),
-        FlashPosition::TopLeft => (
-            display_bounds.origin.x + margin,
-            display_bounds.origin.y + margin + 25.0,
-        ),
-        FlashPosition::BottomRight => (
-            display_bounds.origin.x + display_bounds.size.width - size - margin,
-            display_bounds.origin.y + display_bounds.size.height - size - margin,
-        ),
-        FlashPosition::BottomLeft => (
-            display_bounds.origin.x + margin,
-            display_bounds.origin.y + display_bounds.size.height - size - margin,
-        ),
-        FlashPosition::Center => (
-            display_bounds.origin.x + (display_bounds.size.width - size) / 2.0,
-            display_bounds.origin.y + (display_bounds.size.height - size) / 2.0,
-        ),
-        FlashPosition::Custom { x, y } => (x, y),
-    };
-
-    // Scale for Retina displays
-    Rect::from_xywh(x / 2.0, y / 2.0, size, size).rounded()
 }

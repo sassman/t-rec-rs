@@ -10,17 +10,36 @@ fn main() -> osd_flash::Result<()> {
     let size = 80.0;
     let margin = 30.0;
 
-    println!("Showing recording indicator (top-left)...");
+    println!("Showing recording indicator (top-left) for 5 seconds...");
     println!("This simulates a 'recording in progress' indicator.");
 
-    OsdFlashBuilder::new()
-        .dimensions(size)
-        .position(FlashPosition::TopLeft)
+    OsdBuilder::new()
+        .size(size)
+        .position(Position::TopLeft)
         .margin(margin)
-        .level(WindowLevel::AboveAll)
-        .build()?
-        .draw(RecordingIcon::new(size).build())
-        .show_for_seconds(3.0)?;
+        .background(Color::rgba(0.1, 0.1, 0.1, 0.88))
+        .corner_radius(14.0)
+        // Glow layer (pulses larger)
+        .layer("glow", |l| {
+            l.circle(44.0)
+                .center()
+                .fill(Color::rgba(1.0, 0.2, 0.2, 0.35))
+                .animate(Animation::pulse_range(0.9, 1.15))
+        })
+        // Main recording dot
+        .layer("dot", |l| {
+            l.circle(28.0)
+                .center()
+                .fill(Color::RED)
+                .animate(Animation::pulse())
+        })
+        // Highlight
+        .layer("highlight", |l| {
+            l.circle(8.0)
+                .center_offset(-5.0, -5.0)
+                .fill(Color::rgba(1.0, 0.5, 0.5, 0.5))
+        })
+        .show_for(5.seconds())?;
 
     println!("Recording stopped!");
     Ok(())

@@ -8,6 +8,7 @@ use std::time::Duration;
 
 use crate::color::Color;
 use crate::shape_layer_builder::CAShapeLayerBuilder;
+use crate::text_layer_builder::CATextLayerBuilder;
 use objc2::rc::Retained;
 use objc2::{MainThreadMarker, MainThreadOnly};
 use objc2_app_kit::{
@@ -17,7 +18,7 @@ use objc2_app_kit::{
 use objc2_core_foundation::{kCFRunLoopDefaultMode, CFRunLoop, CFTimeInterval};
 use objc2_core_graphics::CGColor;
 use objc2_foundation::{NSPoint, NSRect, NSSize, NSString};
-use objc2_quartz_core::{CALayer, CAShapeLayer};
+use objc2_quartz_core::{CALayer, CAShapeLayer, CATextLayer};
 
 #[cfg(feature = "screenshot")]
 use objc2::AnyThread;
@@ -140,6 +141,9 @@ pub struct WindowBuilder {
     level: Option<WindowLevel>,
     border_color: Option<Color>,
     layers: Vec<(String, Retained<CAShapeLayer>)>,
+    text_layers: Vec<(String, Retained<CATextLayer>)>,
+    non_activating: bool,
+    ignores_mouse: bool,
 }
 
 impl WindowBuilder {
@@ -159,6 +163,9 @@ impl WindowBuilder {
             level: None,
             border_color: None,
             layers: Vec::new(),
+            text_layers: Vec::new(),
+            non_activating: false,
+            ignores_mouse: false,
         }
     }
 
@@ -365,6 +372,59 @@ impl WindowBuilder {
         self
     }
 
+    /// Make the window non-activating (won't steal focus from other apps).
+    ///
+    /// When enabled, showing the window will not make it the key window or
+    /// activate the application. The previously focused app remains focused.
+    ///
+    /// This is ideal for OSD-style overlays that should appear above other
+    /// windows without interrupting the user's workflow.
+    ///
+    /// # Example
+    ///
+    /// ```ignore
+    /// use core_animation::prelude::*;
+    ///
+    /// // Create an OSD that doesn't steal focus
+    /// let osd = WindowBuilder::new()
+    ///     .size(200.0, 80.0)
+    ///     .transparent()
+    ///     .borderless()
+    ///     .level(WindowLevel::ScreenSaver)
+    ///     .non_activating()
+    ///     .build();
+    ///
+    /// osd.show_for(2.seconds()); // Shows without stealing focus
+    /// ```
+    pub fn non_activating(mut self) -> Self {
+        self.non_activating = true;
+        self
+    }
+
+    /// Make the window ignore mouse events (click-through).
+    ///
+    /// When enabled, mouse clicks pass through the window to whatever is
+    /// behind it. Useful for pure display overlays.
+    ///
+    /// # Example
+    ///
+    /// ```ignore
+    /// use core_animation::prelude::*;
+    ///
+    /// // Create a click-through overlay
+    /// let overlay = WindowBuilder::new()
+    ///     .size(200.0, 80.0)
+    ///     .transparent()
+    ///     .borderless()
+    ///     .non_activating()
+    ///     .ignores_mouse_events()
+    ///     .build();
+    /// ```
+    pub fn ignores_mouse_events(mut self) -> Self {
+        self.ignores_mouse = true;
+        self
+    }
+
     /// Add a shape layer to the window.
     ///
     /// The closure receives a [`CAShapeLayerBuilder`] for configuration.
@@ -433,6 +493,69 @@ impl WindowBuilder {
         let configured = configure(builder);
         let layer = configured.build();
         self.layers.push((name.to_string(), layer));
+        self
+    }
+
+    /// Add a text layer to the window.
+    ///
+    /// The closure receives a [`CATextLayerBuilder`] for configuration.
+    /// The built layer will be added to [`Window::container()`] when [`build()`](Self::build) is called.
+    ///
+    /// # Arguments
+    ///
+    /// * `name` - A unique identifier for this layer
+    /// * `configure` - A closure that configures the text layer builder
+    ///
+    /// # Examples
+    ///
+    /// ```ignore
+    /// use core_animation::prelude::*;
+    ///
+    /// let window = WindowBuilder::new()
+    ///     .title("Text Demo")
+    ///     .size(400.0, 200.0)
+    ///     .centered()
+    ///     .transparent()
+    ///     .borderless()
+    ///     .background_color(Color::rgba(0.1, 0.1, 0.15, 0.85))
+    ///     .text_layer("label", |t| {
+    ///         t.text("Hello, World!")
+    ///             .font_size(24.0)
+    ///             .foreground_color(Color::WHITE)
+    ///             .alignment(TextAlign::Center)
+    ///             .position(CGPoint::new(200.0, 100.0))
+    ///     })
+    ///     .build();
+    ///
+    /// window.show_for(5.seconds());
+    /// ```
+    ///
+    /// Combining text with shape layers:
+    ///
+    /// ```ignore
+    /// WindowBuilder::new()
+    ///     .size(200.0, 100.0)
+    ///     .layer("background", |s| {
+    ///         s.circle(80.0)
+    ///             .position(CGPoint::new(50.0, 50.0))
+    ///             .fill_color(Color::BLUE)
+    ///     })
+    ///     .text_layer("label", |t| {
+    ///         t.text("85%")
+    ///             .font_size(16.0)
+    ///             .foreground_color(Color::WHITE)
+    ///             .position(CGPoint::new(150.0, 50.0))
+    ///     })
+    ///     .build();
+    /// ```
+    pub fn text_layer<F>(mut self, name: &str, configure: F) -> Self
+    where
+        F: FnOnce(CATextLayerBuilder) -> CATextLayerBuilder,
+    {
+        let builder = CATextLayerBuilder::new();
+        let configured = configure(builder);
+        let layer = configured.build();
+        self.text_layers.push((name.to_string(), layer));
         self
     }
 
@@ -556,9 +679,19 @@ impl WindowBuilder {
 
         root_layer.addSublayer(&container);
 
-        // Add all configured layers to the container
+        // Add all configured shape layers to the container
         for (_name, layer) in &self.layers {
             container.addSublayer(layer);
+        }
+
+        // Add all configured text layers to the container
+        for (_name, layer) in &self.text_layers {
+            container.addSublayer(layer);
+        }
+
+        // Apply mouse event handling
+        if self.ignores_mouse {
+            ns_window.setIgnoresMouseEvents(true);
         }
 
         Window {
@@ -566,6 +699,7 @@ impl WindowBuilder {
             container,
             size: self.size,
             mtm,
+            non_activating: self.non_activating,
         }
     }
 
@@ -598,6 +732,7 @@ pub struct Window {
     container: Retained<CALayer>,
     size: (f64, f64),
     mtm: MainThreadMarker,
+    non_activating: bool,
 }
 
 impl Window {
@@ -646,10 +781,19 @@ impl Window {
     }
 
     /// Show the window and bring it to the front.
+    ///
+    /// If the window was created with `.non_activating()`, it will appear
+    /// without stealing focus from the currently active application.
     pub fn show(&self) {
-        self.ns_window.makeKeyAndOrderFront(None);
-        #[allow(deprecated)]
-        NSApplication::sharedApplication(self.mtm).activateIgnoringOtherApps(true);
+        if self.non_activating {
+            // Show without stealing focus
+            self.ns_window.orderFrontRegardless();
+        } else {
+            // Traditional behavior: make key and activate
+            self.ns_window.makeKeyAndOrderFront(None);
+            #[allow(deprecated)]
+            NSApplication::sharedApplication(self.mtm).activateIgnoringOtherApps(true);
+        }
     }
 
     /// Show the window for a specified duration.

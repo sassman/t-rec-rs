@@ -13,8 +13,10 @@ anyhow.workspace = true
 log.workspace = true
 
 [target.'cfg(target_os = "macos")'.dependencies]
-libloading.workspace = true
+# Modern objc2-based backend (GPU-accelerated)
 core-animation.workspace = true
+objc2.workspace = true
+objc2-app-kit.workspace = true
 objc2-foundation.workspace = true
 
 [dev-dependencies]

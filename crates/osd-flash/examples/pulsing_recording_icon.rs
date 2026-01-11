@@ -1,10 +1,9 @@
 //! Pulsing recording icon example.
 //!
-//! Demonstrates a smooth pulsing recording indicator using the high-level
-//! `PulsingRecordingIcon` API. The animation uses a software animation loop
-//! with CALayer-based rendering for smooth visual effects including:
+//! Demonstrates a smooth pulsing recording indicator using GPU-accelerated
+//! animations via Core Animation. The animation features:
 //! - Scale pulsing (breathing effect)
-//! - Red glow/shadow pulsing (dramatic visibility)
+//! - Red glow layer (dramatic visibility)
 //!
 //! Run with: cargo run -p osd-flash --example pulsing_recording_icon
 
@@ -14,33 +13,50 @@ fn main() -> osd_flash::Result<()> {
     let size = 80.0;
     let margin = 30.0;
 
-    println!("Showing pulsing recording indicator...");
-    println!("This uses a software animation loop with CALayer rendering.");
+    println!("Showing pulsing recording indicator for 10 seconds...");
+    println!("Using GPU-accelerated Core Animation.");
     println!();
     println!("Features:");
-    println!("  - Scale pulse: 0.85 -> 1.15 (visible breathing effect)");
-    println!("  - Red glow ring: actual shape layer behind dot, opacity 0.4 -> 1.0");
-    println!("  - Glow ring is CLEARLY visible (not shadow-based)");
-    println!("  - Smooth 60 FPS software animation");
+    println!("  - Scale pulse: 0.9 -> 1.1 (visible breathing effect)");
+    println!("  - Red glow layer behind dot");
+    println!("  - GPU-accelerated 60 FPS animation");
     println!();
 
-    // Create the pulsing recording icon with defaults
-    // The defaults are now designed for high visibility:
-    //   - Scale: 0.85 to 1.15 (pronounced breathing)
-    //   - Glow ring: 0.4 to 1.0 opacity (actual circle layer, not shadow)
-    //   - Glow ring radius: ~28% of icon size (larger than the dot)
-
-    let window = OsdFlashBuilder::new()
-        .level(WindowLevel::AboveAll)
-        .position(FlashPosition::TopLeft)
-        .dimensions(size)
+    OsdBuilder::new()
+        .size(size)
+        .position(Position::TopLeft)
         .margin(margin)
-        .corner_radius(14.0)
         .background(Color::rgba(0.08, 0.08, 0.08, 0.92))
-        .container(PulsingRecordingIcon::new(size))
-        .build()?;
+        .corner_radius(14.0)
+        // Outer glow layer (pulses more dramatically)
+        .layer("outer_glow", |l| {
+            l.circle(50.0)
+                .center()
+                .fill(Color::rgba(1.0, 0.1, 0.1, 0.25))
+                .animate(Animation::pulse_range(0.85, 1.2))
+        })
+        // Inner glow layer
+        .layer("inner_glow", |l| {
+            l.circle(38.0)
+                .center()
+                .fill(Color::rgba(1.0, 0.2, 0.2, 0.4))
+                .animate(Animation::pulse_range(0.9, 1.15))
+        })
+        // Main recording dot
+        .layer("dot", |l| {
+            l.circle(24.0)
+                .center()
+                .fill(Color::RED)
+                .animate(Animation::pulse())
+        })
+        // Highlight
+        .layer("highlight", |l| {
+            l.circle(6.0)
+                .center_offset(-4.0, -4.0)
+                .fill(Color::rgba(1.0, 0.5, 0.5, 0.5))
+        })
+        .show_for(10.seconds())?;
 
-    window.show_for(10.seconds());
-
+    println!("Done!");
     Ok(())
 }

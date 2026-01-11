@@ -61,6 +61,7 @@
 //! - [`Color`] - RGBA color with presets (`Color::CYAN`, `Color::rgb(...)`)
 //! - [`CALayerBuilder`] - Generic layer builder
 //! - [`CAShapeLayerBuilder`] - Vector shape builder
+//! - [`CATextLayerBuilder`] - Text rendering builder with fonts and alignment
 //! - [`DurationExt`] - `5.seconds()`, `500.millis()` syntax
 //!
 //! **Re-exported from Apple frameworks:**
@@ -80,17 +81,19 @@ mod layer_builder;
 mod layer_ext;
 pub mod particles;
 mod shape_layer_builder;
+mod text_layer_builder;
 pub mod window;
 
 // Re-export Color type
 pub use color::Color;
 
 // Re-export the main types from objc2-quartz-core
-pub use objc2_quartz_core::{CALayer, CAShapeLayer, CATransform3D};
+pub use objc2_quartz_core::{CALayer, CAShapeLayer, CATextLayer, CATransform3D};
 
 // Re-export our builders
 pub use layer_builder::CALayerBuilder;
 pub use shape_layer_builder::CAShapeLayerBuilder;
+pub use text_layer_builder::{CATextLayerBuilder, TextAlign, Truncation};
 
 // Re-export window types
 pub use window::{Screen, Window, WindowBuilder, WindowLevel, WindowStyle};
@@ -122,6 +125,7 @@ pub mod prelude {
         PointBurstBuilder, RenderMode,
     };
     pub use crate::shape_layer_builder::CAShapeLayerBuilder;
+    pub use crate::text_layer_builder::{CATextLayerBuilder, TextAlign, Truncation};
     pub use crate::window::{Screen, Window, WindowBuilder, WindowLevel, WindowStyle};
 
     // Duration extension for ergonomic timing
@@ -131,7 +135,7 @@ pub mod prelude {
     pub use crate::layer_ext::CALayerExt;
 
     // Core Animation types
-    pub use crate::{CALayer, CAShapeLayer, CATransform3D};
+    pub use crate::{CALayer, CAShapeLayer, CATextLayer, CATransform3D};
     pub use objc2_quartz_core::CABasicAnimation;
 
     // Core Foundation types (geometry, strings, collections, run loop)

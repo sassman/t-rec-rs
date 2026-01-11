@@ -6,62 +6,98 @@
 
 use osd_flash::prelude::*;
 
-fn branded_icon(size: f64, primary: &str, secondary: &str) -> Icon {
-    let primary_color = Color::from_hex(primary).unwrap_or(Color::BLUE);
-    let secondary_color = Color::from_hex(secondary).unwrap_or(Color::WHITE);
-    let center = size / 2.0;
-
-    IconBuilder::new(size)
-        .padding(12.0)
-        .background(primary_color.with_alpha(0.95), 18.0)
-        // Decorative circles
-        .circle(
-            center - 15.0,
-            center - 10.0,
-            12.0,
-            secondary_color.with_alpha(0.9),
-        )
-        .circle(
-            center + 15.0,
-            center - 10.0,
-            12.0,
-            secondary_color.with_alpha(0.9),
-        )
-        .circle(center, center + 12.0, 14.0, secondary_color.with_alpha(0.9))
-        .build()
-}
-
 fn main() -> osd_flash::Result<()> {
     let size = 100.0;
 
     // GitHub colors
     println!("Showing GitHub-themed icon...");
-    let github_icon = branded_icon(size, "#24292e", "#ffffff");
-    show_icon(github_icon, size, FlashPosition::TopRight)?;
+    let github_primary = Color::from_hex("#24292e").unwrap_or(Color::BLUE);
+    let github_secondary = Color::from_hex("#ffffff").unwrap_or(Color::WHITE);
+
+    OsdBuilder::new()
+        .size(size)
+        .position(Position::TopRight)
+        .margin(25.0)
+        .level(WindowLevel::AboveAll)
+        .background(github_primary.with_alpha(0.95))
+        .corner_radius(18.0)
+        .layer("dot1", |l| {
+            l.circle(24.0)
+                .center_offset(-15.0, -10.0)
+                .fill(github_secondary.with_alpha(0.9))
+        })
+        .layer("dot2", |l| {
+            l.circle(24.0)
+                .center_offset(15.0, -10.0)
+                .fill(github_secondary.with_alpha(0.9))
+        })
+        .layer("dot3", |l| {
+            l.circle(28.0)
+                .center_offset(0.0, 12.0)
+                .fill(github_secondary.with_alpha(0.9))
+        })
+        .show_for(1200.millis())?;
+
+    std::thread::sleep(std::time::Duration::from_millis(300));
 
     // Spotify colors
     println!("Showing Spotify-themed icon...");
-    let spotify_icon = branded_icon(size, "#1DB954", "#191414");
-    show_icon(spotify_icon, size, FlashPosition::Center)?;
+    let spotify_primary = Color::from_hex("#1DB954").unwrap_or(Color::GREEN);
+    let spotify_secondary = Color::from_hex("#191414").unwrap_or(Color::BLACK);
 
-    // Custom gradient-like effect with Discord colors
+    OsdBuilder::new()
+        .size(size)
+        .position(Position::Center)
+        .background(spotify_primary.with_alpha(0.95))
+        .corner_radius(18.0)
+        .layer("dot1", |l| {
+            l.circle(24.0)
+                .center_offset(-15.0, -10.0)
+                .fill(spotify_secondary.with_alpha(0.9))
+        })
+        .layer("dot2", |l| {
+            l.circle(24.0)
+                .center_offset(15.0, -10.0)
+                .fill(spotify_secondary.with_alpha(0.9))
+        })
+        .layer("dot3", |l| {
+            l.circle(28.0)
+                .center_offset(0.0, 12.0)
+                .fill(spotify_secondary.with_alpha(0.9))
+        })
+        .show_for(1200.millis())?;
+
+    std::thread::sleep(std::time::Duration::from_millis(300));
+
+    // Discord colors
     println!("Showing Discord-themed icon...");
-    let discord_icon = branded_icon(size, "#5865F2", "#ffffff");
-    show_icon(discord_icon, size, FlashPosition::BottomRight)?;
+    let discord_primary = Color::from_hex("#5865F2").unwrap_or(Color::BLUE);
+    let discord_secondary = Color::from_hex("#ffffff").unwrap_or(Color::WHITE);
 
-    println!("Done!");
-    Ok(())
-}
-
-fn show_icon(icon: Icon, size: f64, position: FlashPosition) -> osd_flash::Result<()> {
-    OsdFlashBuilder::new()
-        .dimensions(size)
-        .position(position)
+    OsdBuilder::new()
+        .size(size)
+        .position(Position::BottomRight)
         .margin(25.0)
         .level(WindowLevel::AboveAll)
-        .build()?
-        .draw(icon)
-        .show_for_seconds(1.2)?;
+        .background(discord_primary.with_alpha(0.95))
+        .corner_radius(18.0)
+        .layer("dot1", |l| {
+            l.circle(24.0)
+                .center_offset(-15.0, -10.0)
+                .fill(discord_secondary.with_alpha(0.9))
+        })
+        .layer("dot2", |l| {
+            l.circle(24.0)
+                .center_offset(15.0, -10.0)
+                .fill(discord_secondary.with_alpha(0.9))
+        })
+        .layer("dot3", |l| {
+            l.circle(28.0)
+                .center_offset(0.0, 12.0)
+                .fill(discord_secondary.with_alpha(0.9))
+        })
+        .show_for(1200.millis())?;
 
+    println!("Done!");
     Ok(())
 }

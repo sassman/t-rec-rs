@@ -24,35 +24,68 @@ fn main() -> osd_flash::Result<()> {
                 .unwrap_or(0)
         });
 
-    println!("Attaching OSD flash to window ID: {}", win_id);
+    println!("Target window ID: {}", win_id);
     println!("(Use WINDOWID env var or pass window ID as argument)");
+    println!();
+    println!("NOTE: attach_to_window() is not yet implemented.");
+    println!("Showing at screen positions instead.\n");
 
-    // Show camera icon attached to the window
-    println!("\nShowing camera icon (top-right of window)...");
-    OsdFlashBuilder::new()
-        .dimensions(100.0)
-        .position(FlashPosition::TopRight)
+    // Show recording indicator at top-right
+    // TODO: When attach_to_window is implemented, use:
+    // .attach_to_window(win_id)
+    println!("Recording indicator (top-right)...");
+    OsdBuilder::new()
+        .size(100.0)
+        .position(Position::TopRight)
         .margin(30.0)
         .level(WindowLevel::AboveAll)
-        .attach_to_window(win_id)
-        .build()?
-        .draw(CameraIcon::new(100.0).build())
-        .show_for_seconds(2.0)?;
+        // .attach_to_window(win_id)  // Future: attach relative to window
+        .background(Color::rgba(0.1, 0.1, 0.1, 0.9))
+        .corner_radius(14.0)
+        .layer("glow", |l| {
+            l.circle(60.0)
+                .center()
+                .fill(Color::rgba(1.0, 0.2, 0.2, 0.3))
+                .animate(Animation::pulse_range(0.9, 1.15))
+        })
+        .layer("dot", |l| {
+            l.circle(40.0)
+                .center()
+                .fill(Color::RED)
+                .animate(Animation::pulse())
+        })
+        .show_for(2.seconds())?;
 
-    // Brief pause between indicators
     std::thread::sleep(std::time::Duration::from_millis(300));
 
-    // Show recording icon at a different position
-    println!("Showing recording icon (top-left of window)...");
-    OsdFlashBuilder::new()
-        .dimensions(80.0)
-        .position(FlashPosition::TopLeft)
+    // Show camera indicator at top-left
+    // TODO: When attach_to_window is implemented, use:
+    // .attach_to_window(win_id)
+    println!("Camera indicator (top-left)...");
+    OsdBuilder::new()
+        .size(100.0)
+        .position(Position::TopLeft)
         .margin(30.0)
         .level(WindowLevel::AboveAll)
-        .attach_to_window(win_id)
-        .build()?
-        .draw(RecordingIcon::new(80.0).build())
-        .show_for_seconds(2.0)?;
+        // .attach_to_window(win_id)  // Future: attach relative to window
+        .background(Color::rgba(0.15, 0.45, 0.9, 0.92))
+        .corner_radius(14.0)
+        .layer("body", |l| {
+            l.ellipse(60.0, 45.0)
+                .center()
+                .fill(Color::WHITE)
+        })
+        .layer("lens", |l| {
+            l.circle(28.0)
+                .center()
+                .fill(Color::rgba(0.3, 0.5, 0.8, 1.0))
+        })
+        .layer("lens_center", |l| {
+            l.circle(12.0)
+                .center()
+                .fill(Color::rgba(0.1, 0.2, 0.4, 1.0))
+        })
+        .show_for(2.seconds())?;
 
     println!("Done!");
     Ok(())

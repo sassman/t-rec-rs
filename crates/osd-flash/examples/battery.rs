@@ -5,29 +5,23 @@
 //! Run with: cargo run -p osd-flash --example battery
 
 use osd_flash::prelude::*;
+use osd_flash::composition::FontWeight;
 
 fn main() -> osd_flash::Result<()> {
     println!("Showing battery indicators...\n");
 
     // Show different battery levels
     let levels = [
-        (0.85, "85%"),
-        (0.45, "45%"),
-        (0.15, "15%"),
-        (0.95, "95%"),
-        (0.30, "30%"),
-    ];
-    let positions = [
-        FlashPosition::TopLeft,
-        FlashPosition::Center,
-        FlashPosition::TopRight,
-        FlashPosition::BottomRight,
-        FlashPosition::BottomLeft,
+        (0.85, "85%", Position::TopLeft),
+        (0.45, "45%", Position::Center),
+        (0.15, "15%", Position::TopRight),
+        (0.95, "95%", Position::BottomRight),
+        (0.30, "30%", Position::BottomLeft),
     ];
 
-    for ((level, label), position) in levels.iter().zip(positions.iter()) {
+    for (level, label, position) in levels {
         println!("Battery at {}", label);
-        show_battery(*level, label, *position)?;
+        show_battery(level, label, position)?;
         std::thread::sleep(std::time::Duration::from_millis(800));
     }
 
@@ -35,27 +29,21 @@ fn main() -> osd_flash::Result<()> {
     Ok(())
 }
 
-fn show_battery(level: f64, label: &str, position: FlashPosition) -> osd_flash::Result<()> {
-    let padding = 15.0;
-
+fn show_battery(level: f64, label: &str, position: Position) -> osd_flash::Result<()> {
     // Battery dimensions
     let batt_width = 80.0;
     let batt_height = 40.0;
-    let tip_width = 6.0;
-    let tip_height = 16.0;
-    let border = 3.0;
+    let tip_width = 8.0;
+    let tip_height = 20.0;
+    let border = 4.0;
 
-    // Content area needs to fit: battery + tip + some margin for text
-    let content_width = batt_width + tip_width + 10.0;
-    let content_height = batt_height + 25.0; // Room for text below
+    // Padding around battery (extra at bottom for text)
+    let padding = 20.0;
+    let text_area_height = 16.0;
 
-    // Window = content + padding
-    let width = content_width + 2.0 * padding;
-    let height = content_height + 2.0 * padding;
-
-    // Center battery in content area
-    let batt_x = (content_width - batt_width - tip_width) / 2.0;
-    let batt_y = 5.0;
+    // Window size - includes space for percentage text below battery
+    let width = batt_width + tip_width + padding * 2.0;
+    let height = batt_height + padding * 2.0 + text_area_height;
 
     // Color based on level
     let fill_color = if level > 0.5 {
@@ -66,72 +54,54 @@ fn show_battery(level: f64, label: &str, position: FlashPosition) -> osd_flash::
         Color::rgba(1.0, 0.2, 0.2, 1.0) // Red
     };
 
-    let fill_width = (batt_width - border * 2.0 - 4.0) * level;
-    let text_x = content_width / 2.0 - 12.0;
+    // Calculate fill width based on charge level
+    let inner_width = batt_width - border * 2.0 - 4.0;
+    let fill_width = inner_width * level;
 
-    OsdFlashBuilder::new()
-        .dimensions(Size::new(width, height))
+    // Offset to center the battery+tip combo horizontally
+    let batt_offset_x = -tip_width / 2.0;
+    // Offset battery up to make room for text
+    let batt_offset_y = text_area_height / 2.0;
+
+    OsdBuilder::new()
+        .dimensions(width, height)
         .position(position)
         .margin(20.0)
         .background(Color::rgba(0.1, 0.1, 0.15, 0.95))
-        .corner_radius(16.0)
-        .padding(Padding::all(padding))
-        .build()?
-        // Battery outline
-        .draw(StyledShape::new(
-            Shape::rounded_rect(
-                Rect::from_xywh(batt_x, batt_y, batt_width, batt_height),
-                6.0,
-            ),
-            Color::WHITE,
-        ))
+        .corner_radius(12.0)
+        // Battery outline (white rounded rect)
+        .layer("outline", |l| {
+            l.rounded_rect(batt_width, batt_height, 6.0)
+                .center_offset(batt_offset_x, batt_offset_y)
+                .fill(Color::WHITE)
+        })
         // Battery tip (positive terminal)
-        .draw(StyledShape::new(
-            Shape::rounded_rect(
-                Rect::from_xywh(
-                    batt_x + batt_width,
-                    batt_y + (batt_height - tip_height) / 2.0,
-                    tip_width,
-                    tip_height,
-                ),
-                2.0,
-            ),
-            Color::WHITE,
-        ))
-        // Battery inner (dark)
-        .draw(StyledShape::new(
-            Shape::rounded_rect(
-                Rect::from_xywh(
-                    batt_x + border,
-                    batt_y + border,
-                    batt_width - border * 2.0,
-                    batt_height - border * 2.0,
-                ),
-                3.0,
-            ),
-            Color::rgba(0.1, 0.1, 0.15, 1.0),
-        ))
-        // Battery fill (charge level)
-        .draw(StyledShape::new(
-            Shape::rounded_rect(
-                Rect::from_xywh(
-                    batt_x + border + 2.0,
-                    batt_y + border + 2.0,
-                    fill_width,
-                    batt_height - border * 2.0 - 4.0,
-                ),
-                2.0,
-            ),
-            fill_color,
-        ))
-        // Percentage label (centered below battery)
-        .draw(StyledText::at(
-            label,
-            text_x,
-            batt_y + batt_height + 8.0,
-            14.0,
-            Color::WHITE,
-        ))
-        .show_for_seconds(2.0)?;
-    Ok(())
+        .layer("tip", |l| {
+            l.rounded_rect(tip_width, tip_height, 2.0)
+                .center_offset(batt_offset_x + batt_width / 2.0 + tip_width / 2.0, batt_offset_y)
+                .fill(Color::WHITE)
+        })
+        // Battery inner (dark background)
+        .layer("inner", |l| {
+            l.rounded_rect(batt_width - border * 2.0, batt_height - border * 2.0, 4.0)
+                .center_offset(batt_offset_x, batt_offset_y)
+                .fill(Color::rgba(0.1, 0.1, 0.15, 1.0))
+        })
+        // Battery fill (charge level) - positioned from left edge
+        .layer("fill", |l| {
+            // Calculate position to align fill with left edge of inner area
+            let fill_offset_x = batt_offset_x - (inner_width - fill_width) / 2.0;
+            l.rounded_rect(fill_width, batt_height - border * 2.0 - 4.0, 3.0)
+                .center_offset(fill_offset_x, batt_offset_y)
+                .fill(fill_color)
+        })
+        // Percentage label (centered in the text area below battery)
+        .layer("label", |l| {
+            l.text(label)
+                .font_size(16.0)
+                .font_weight(FontWeight::Medium)
+                .text_color(Color::WHITE)
+                .center_offset(0.0, -(batt_height / 2.0 + text_area_height / 2.0))
+        })
+        .show_for(2.seconds())
 }

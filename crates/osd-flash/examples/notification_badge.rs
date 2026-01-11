@@ -6,38 +6,35 @@
 
 use osd_flash::prelude::*;
 
-fn create_badge(text_color: Color, bg_color: Color, size: f64) -> Icon {
-    let center = size / 2.0;
-
-    IconBuilder::new(size)
-        .padding(8.0)
-        // Circular background
-        .background(bg_color, size / 2.0 - 4.0)
-        // Inner highlight (subtle)
-        .circle(center, center - 2.0, size * 0.3, text_color.with_alpha(0.3))
-        // Number indicator dot
-        .circle(center, center, size * 0.15, text_color)
-        .build()
-}
-
 fn show_badge_at_position(
-    position: FlashPosition,
+    position: Position,
     color: Color,
     label: &str,
 ) -> osd_flash::Result<()> {
     let size = 80.0;
-    let icon = create_badge(Color::WHITE, color, size);
 
     println!("Showing {} badge...", label);
 
-    OsdFlashBuilder::new()
-        .dimensions(size)
+    OsdBuilder::new()
+        .size(size)
         .position(position)
         .margin(30.0)
         .level(WindowLevel::AboveAll)
-        .build()?
-        .draw(icon)
-        .show_for_seconds(1.0)?;
+        .background(color)
+        .corner_radius(size / 2.0 - 4.0)
+        // Inner highlight
+        .layer("highlight", |l| {
+            l.circle(size * 0.6)
+                .center_offset(0.0, -2.0)
+                .fill(Color::WHITE.with_alpha(0.3))
+        })
+        // Center dot indicator
+        .layer("dot", |l| {
+            l.circle(size * 0.3)
+                .center()
+                .fill(Color::WHITE)
+        })
+        .show_for(1.seconds())?;
 
     Ok(())
 }
@@ -45,22 +42,31 @@ fn show_badge_at_position(
 fn main() -> osd_flash::Result<()> {
     // Show badges at different corners with different colors
     show_badge_at_position(
-        FlashPosition::TopRight,
+        Position::TopRight,
         Color::rgba(0.9, 0.2, 0.2, 0.95),
         "red (top-right)",
     )?;
+
+    std::thread::sleep(std::time::Duration::from_millis(200));
+
     show_badge_at_position(
-        FlashPosition::TopLeft,
+        Position::TopLeft,
         Color::rgba(0.2, 0.6, 0.9, 0.95),
         "blue (top-left)",
     )?;
+
+    std::thread::sleep(std::time::Duration::from_millis(200));
+
     show_badge_at_position(
-        FlashPosition::BottomRight,
+        Position::BottomRight,
         Color::rgba(0.9, 0.6, 0.1, 0.95),
         "orange (bottom-right)",
     )?;
+
+    std::thread::sleep(std::time::Duration::from_millis(200));
+
     show_badge_at_position(
-        FlashPosition::BottomLeft,
+        Position::BottomLeft,
         Color::rgba(0.6, 0.2, 0.8, 0.95),
         "purple (bottom-left)",
     )?;
