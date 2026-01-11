@@ -21,49 +21,16 @@ impl SkylightPresenter {
     }
 }
 
-/// Show a camera flash indicator using the new OSD API.
+/// Show a camera flash indicator using the library composition.
 fn show_camera_flash() -> osd_flash::Result<()> {
+    let camera = CameraFlash::new();
     OsdBuilder::new()
-        .size(120.0)
         .position(Position::TopRight)
         .margin(20.0)
         .level(WindowLevel::AboveAll)
-        .background(Color::rgba(0.15, 0.45, 0.9, 0.92))
-        .corner_radius(20.0)
-        // Camera body
-        .layer("body", |l| {
-            l.rounded_rect(70.0, 45.0, 8.0).center().fill(Color::WHITE)
-        })
-        // Viewfinder bump
-        .layer("viewfinder", |l| {
-            l.rounded_rect(20.0, 10.0, 3.0)
-                .center_offset(0.0, 22.0)
-                .fill(Color::WHITE)
-        })
-        // Lens outer ring
-        .layer("lens_outer", |l| {
-            l.circle(32.0)
-                .center()
-                .fill(Color::rgba(0.2, 0.3, 0.5, 1.0))
-        })
-        // Lens inner
-        .layer("lens_inner", |l| {
-            l.circle(22.0)
-                .center()
-                .fill(Color::rgba(0.1, 0.15, 0.3, 1.0))
-        })
-        // Lens highlight
-        .layer("lens_highlight", |l| {
-            l.circle(8.0)
-                .center_offset(-4.0, 4.0)
-                .fill(Color::rgba(1.0, 1.0, 1.0, 0.4))
-        })
-        // Flash indicator
-        .layer("flash", |l| {
-            l.circle(10.0)
-                .center_offset(22.0, 12.0)
-                .fill(Color::rgba(1.0, 0.85, 0.2, 1.0))
-        })
+        .background(camera.get_background_color())
+        .corner_radius(camera.get_corner_radius())
+        .composition(camera)
         .show_for(1500.millis())
 }
 

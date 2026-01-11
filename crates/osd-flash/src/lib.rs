@@ -58,7 +58,7 @@
 //!
 //! // Camera flash icon
 //! OsdBuilder::new()
-//!     .composition(CameraIcon::new())
+//!     .composition(CameraFlash::new())
 //!     .show_for(3.seconds())?;
 //! ```
 
@@ -78,6 +78,9 @@ pub mod geometry;
 /// Layout types for spacing (margin, padding).
 pub mod layout;
 
+/// Pre-built layer compositions for common OSD patterns.
+pub mod library;
+
 /// Platform-specific backend implementations.
 pub mod backends;
 
@@ -92,6 +95,7 @@ pub use duration_ext::DurationExt;
 pub use geometry::{Point, Rect, Size};
 pub use layout::Margin;
 pub use level::WindowLevel;
+pub use library::{CameraFlash, RecordingIndicator};
 pub use position::Position;
 
 /// Prelude for convenient imports.
@@ -109,5 +113,6 @@ pub mod prelude {
     pub use crate::geometry::{Point, Rect, Size};
     pub use crate::layout::Margin;
     pub use crate::level::WindowLevel;
+    pub use crate::library::{CameraFlash, RecordingIndicator};
     pub use crate::position::Position;
 }

@@ -11,5 +11,5 @@ repository.workspace = true
 name = "pulsing-poc"
 path = "src/main.rs"
 
-[dependencies]
+[target.'cfg(target_os = "macos")'.dependencies]
 core-animation = { path = "../core-animation" }

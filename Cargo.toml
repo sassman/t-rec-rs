@@ -1,6 +1,10 @@
 [workspace]
 resolver = "3"
-members = ["crates/*"]
+members = [
+    "crates/t-rec",
+    "crates/osd-flash",
+    "crates/core-animation",
+]
 
 [workspace.package]
 version = "0.8.2"
