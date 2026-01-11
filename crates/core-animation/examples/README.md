@@ -34,9 +34,7 @@ Or generate all recordings at once:
 
 Basic layer example with animated shapes. Demonstrates CALayer and CAShapeLayer with the builder APIs and GPU-accelerated animations using `.animate()`.
 
-| GIF | Video |
-|-----|-------|
-| ![basic_layers](screenshots/basic_layers.gif) | [basic_layers.mp4](screenshots/basic_layers.mp4) |
+[![basic_layers](screenshots/basic_layers.gif)](screenshots/basic_layers.mp4)
 
 ```bash
 cargo run -p core-animation --example basic_layers
@@ -48,9 +46,7 @@ cargo run -p core-animation --example basic_layers
 
 Breathing circle - a soft pulsing orb with coordinated scale and opacity. Demonstrates multiple animations on one layer with `phase_offset` coordination.
 
-| GIF | Video |
-|-----|-------|
-| ![breathing_circle](screenshots/breathing_circle.gif) | [breathing_circle.mp4](screenshots/breathing_circle.mp4) |
+[![breathing_circle](screenshots/breathing_circle.gif)](screenshots/breathing_circle.mp4)
 
 ```bash
 cargo run -p core-animation --example breathing_circle
@@ -62,9 +58,7 @@ cargo run -p core-animation --example breathing_circle
 
 Particle emitter using `CAEmitterLayerBuilder` with the closure-based particle configuration.
 
-| GIF | Video |
-|-----|-------|
-| ![emitter](screenshots/emitter.gif) | [emitter.mp4](screenshots/emitter.mp4) |
+[![emitter](screenshots/emitter.gif)](screenshots/emitter.mp4)
 
 ```bash
 cargo run -p core-animation --example emitter
@@ -76,9 +70,7 @@ cargo run -p core-animation --example emitter
 
 Loading spinner with smooth rotating indicator using linear easing. Demonstrates `TransformRotation` animation with `Easing::Linear` for constant rotational speed.
 
-| GIF | Video |
-|-----|-------|
-| ![loading_spinner](screenshots/loading_spinner.gif) | [loading_spinner.mp4](screenshots/loading_spinner.mp4) |
+[![loading_spinner](screenshots/loading_spinner.gif)](screenshots/loading_spinner.mp4)
 
 ```bash
 cargo run -p core-animation --example loading_spinner
@@ -90,9 +82,7 @@ cargo run -p core-animation --example loading_spinner
 
 Neon glow - retro neon sign effect with pulsing shadows. Demonstrates shadow property animations (`ShadowRadius`, `ShadowOpacity`) to create a glowing neon effect.
 
-| GIF | Video |
-|-----|-------|
-| ![neon_glow](screenshots/neon_glow.gif) | [neon_glow.mp4](screenshots/neon_glow.mp4) |
+[![neon_glow](screenshots/neon_glow.gif)](screenshots/neon_glow.mp4)
 
 ```bash
 cargo run -p core-animation --example neon_glow
@@ -108,9 +98,7 @@ Showcases all `ParticleImage` types side by side:
 - `star` - Multi-pointed star (bottom-left)
 - `spark` - Elongated streak (bottom-right)
 
-| GIF | Video |
-|-----|-------|
-| ![particle_images](screenshots/particle_images.gif) | [particle_images.mp4](screenshots/particle_images.mp4) |
+[![particle_images](screenshots/particle_images.gif)](screenshots/particle_images.mp4)
 
 ```bash
 cargo run -p core-animation --example particle_images
@@ -122,9 +110,7 @@ cargo run -p core-animation --example particle_images
 
 Demonstrates `PointBurstBuilder` - a convenience API for the common pattern of particles bursting from a point in all directions.
 
-| GIF | Video |
-|-----|-------|
-| ![point_burst](screenshots/point_burst.gif) | [point_burst.mp4](screenshots/point_burst.mp4) |
+[![point_burst](screenshots/point_burst.gif)](screenshots/point_burst.mp4)
 
 ```bash
 cargo run -p core-animation --example point_burst
@@ -141,9 +127,7 @@ Ripple rings - water ripple effect with concentric expanding rings. Demonstrates
 - `phase_offset` for staggered timing across multiple rings
 - `Easing::Out` for realistic ripple physics
 
-| GIF | Video |
-|-----|-------|
-| ![ripple_rings](screenshots/ripple_rings.gif) | [ripple_rings.mp4](screenshots/ripple_rings.mp4) |
+[![ripple_rings](screenshots/ripple_rings.gif)](screenshots/ripple_rings.mp4)
 
 ```bash
 cargo run -p core-animation --example ripple_rings
@@ -155,9 +139,7 @@ cargo run -p core-animation --example ripple_rings
 
 Staggered dots - classic loading indicator with phase-offset animations. Demonstrates using `phase_offset` to create staggered timing across multiple elements.
 
-| GIF | Video |
-|-----|-------|
-| ![staggered_dots](screenshots/staggered_dots.gif) | [staggered_dots.mp4](screenshots/staggered_dots.mp4) |
+[![staggered_dots](screenshots/staggered_dots.gif)](screenshots/staggered_dots.mp4)
 
 ```bash
 cargo run -p core-animation --example staggered_dots
@@ -169,9 +151,7 @@ cargo run -p core-animation --example staggered_dots
 
 Basic window creation with the `WindowBuilder` API.
 
-| GIF | Video |
-|-----|-------|
-| ![window_builder](screenshots/window_builder.gif) | [window_builder.mp4](screenshots/window_builder.mp4) |
+[![window_builder](screenshots/window_builder.gif)](screenshots/window_builder.mp4)
 
 ```bash
 cargo run -p core-animation --example window_builder

@@ -34,7 +34,7 @@ jobs:
           default: true
           profile: minimal
           components: clippy, rustfmt
-      - run: cargo check
+      - run: cargo check --all-targets
 
   lint:
     name: lint
