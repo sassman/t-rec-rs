@@ -1,4 +1,3 @@
-#![cfg(target_os = "macos")]
 //! Staggered dots - classic loading indicator with phase-offset animations.
 //!
 //! Demonstrates using `phase_offset` to create staggered timing across multiple
@@ -8,11 +7,14 @@
 //! Run with: cargo run -p core-animation --example staggered_dots
 //! With recording: cargo run -p core-animation --example staggered_dots --features record
 
+#[cfg(target_os = "macos")]
 use core_animation::prelude::*;
 
+#[cfg(target_os = "macos")]
 #[path = "common/mod.rs"]
 mod common;
 
+#[cfg(target_os = "macos")]
 fn main() {
     println!("Staggered Dots - Loading Indicator\n");
 
@@ -155,4 +157,9 @@ fn main() {
     window.show_for(10.seconds());
 
     println!("Done!");
+}
+
+#[cfg(not(target_os = "macos"))]
+fn main() {
+    eprintln!("This example only runs on macOS");
 }

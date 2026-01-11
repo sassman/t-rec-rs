@@ -1,4 +1,3 @@
-#![cfg(target_os = "macos")]
 //! Loading spinner - smooth rotating indicator with linear easing.
 //!
 //! Demonstrates `TransformRotation` animation with `Easing::Linear` for constant
@@ -8,12 +7,16 @@
 //! Run with: cargo run -p core-animation --example loading_spinner
 //! With recording: cargo run -p core-animation --example loading_spinner --features record
 
+#[cfg(target_os = "macos")]
 use core_animation::prelude::*;
+#[cfg(target_os = "macos")]
 use std::f64::consts::PI;
 
+#[cfg(target_os = "macos")]
 #[path = "common/mod.rs"]
 mod common;
 
+#[cfg(target_os = "macos")]
 fn main() {
     println!("Loading Spinner - Smooth Rotation\n");
 
@@ -212,4 +215,9 @@ fn main() {
     window.show_for(10.seconds());
 
     println!("Done!");
+}
+
+#[cfg(not(target_os = "macos"))]
+fn main() {
+    eprintln!("This example only runs on macOS");
 }

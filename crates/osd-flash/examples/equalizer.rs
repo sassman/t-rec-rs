@@ -5,8 +5,10 @@
 //!
 //! Run with: cargo run -p osd-flash --example equalizer
 
+#[cfg(target_os = "macos")]
 use osd_flash::prelude::*;
 
+#[cfg(target_os = "macos")]
 fn main() -> osd_flash::Result<()> {
     println!("Showing audio equalizer...\n");
 
@@ -49,4 +51,10 @@ fn main() -> osd_flash::Result<()> {
 
     println!("Done!");
     Ok(())
+}
+
+
+#[cfg(not(target_os = "macos"))]
+fn main() {
+    eprintln!("This example only runs on macOS");
 }

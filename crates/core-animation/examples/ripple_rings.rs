@@ -1,4 +1,3 @@
-#![cfg(target_os = "macos")]
 //! Ripple rings - water ripple effect with concentric expanding rings.
 //!
 //! Creates a mesmerizing effect like dropping a pebble in still water.
@@ -16,11 +15,14 @@
 //! Run with: cargo run -p core-animation --example ripple_rings
 //! With recording: cargo run -p core-animation --example ripple_rings --features record
 
+#[cfg(target_os = "macos")]
 use core_animation::prelude::*;
 
+#[cfg(target_os = "macos")]
 #[path = "common/mod.rs"]
 mod common;
 
+#[cfg(target_os = "macos")]
 fn main() {
     println!("Ripple Rings - Water Ripple Effect\n");
 
@@ -203,4 +205,9 @@ fn main() {
     window.show_for(15.seconds());
 
     println!("Done!");
+}
+
+#[cfg(not(target_os = "macos"))]
+fn main() {
+    eprintln!("This example only runs on macOS");
 }

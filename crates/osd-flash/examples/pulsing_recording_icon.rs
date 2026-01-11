@@ -7,8 +7,10 @@
 //!
 //! Run with: cargo run -p osd-flash --example pulsing_recording_icon
 
+#[cfg(target_os = "macos")]
 use osd_flash::prelude::*;
 
+#[cfg(target_os = "macos")]
 fn main() -> osd_flash::Result<()> {
     let size = 80.0;
     let margin = 30.0;
@@ -59,4 +61,10 @@ fn main() -> osd_flash::Result<()> {
 
     println!("Done!");
     Ok(())
+}
+
+
+#[cfg(not(target_os = "macos"))]
+fn main() {
+    eprintln!("This example only runs on macOS");
 }

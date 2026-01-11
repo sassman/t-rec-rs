@@ -8,9 +8,12 @@
 //! You can pass a window ID as argument:
 //!   cargo run -p osd-flash --example attach_to_window -- 12345
 
+#[cfg(target_os = "macos")]
 use osd_flash::prelude::*;
+#[cfg(target_os = "macos")]
 use std::env;
 
+#[cfg(target_os = "macos")]
 fn main() -> osd_flash::Result<()> {
     // Get window ID from command line or use 0 (main display fallback)
     let win_id: u64 = env::args()
@@ -87,4 +90,10 @@ fn main() -> osd_flash::Result<()> {
 
     println!("Done!");
     Ok(())
+}
+
+
+#[cfg(not(target_os = "macos"))]
+fn main() {
+    eprintln!("This example only runs on macOS");
 }

@@ -4,8 +4,10 @@
 //!
 //! Run with: cargo run -p osd-flash --example notification_badge
 
+#[cfg(target_os = "macos")]
 use osd_flash::prelude::*;
 
+#[cfg(target_os = "macos")]
 fn show_badge_at_position(position: Position, color: Color, label: &str) -> osd_flash::Result<()> {
     let size = 80.0;
 
@@ -31,6 +33,7 @@ fn show_badge_at_position(position: Position, color: Color, label: &str) -> osd_
     Ok(())
 }
 
+#[cfg(target_os = "macos")]
 fn main() -> osd_flash::Result<()> {
     // Show badges at different corners with different colors
     show_badge_at_position(
@@ -65,4 +68,10 @@ fn main() -> osd_flash::Result<()> {
 
     println!("Done!");
     Ok(())
+}
+
+
+#[cfg(not(target_os = "macos"))]
+fn main() {
+    eprintln!("This example only runs on macOS");
 }

@@ -1,4 +1,3 @@
-#![cfg(target_os = "macos")]
 //! Neon glow - retro neon sign effect with pulsing shadows.
 //!
 //! Demonstrates shadow property animations (`ShadowRadius`, `ShadowOpacity`)
@@ -8,11 +7,14 @@
 //! Run with: cargo run -p core-animation --example neon_glow
 //! With recording: cargo run -p core-animation --example neon_glow --features record
 
+#[cfg(target_os = "macos")]
 use core_animation::prelude::*;
 
+#[cfg(target_os = "macos")]
 #[path = "common/mod.rs"]
 mod common;
 
+#[cfg(target_os = "macos")]
 fn main() {
     println!("Neon Glow - Retro Neon Sign Effect\n");
 
@@ -184,4 +186,9 @@ fn main() {
     window.show_for(10.seconds());
 
     println!("Done!");
+}
+
+#[cfg(not(target_os = "macos"))]
+fn main() {
+    eprintln!("This example only runs on macOS");
 }

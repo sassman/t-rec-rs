@@ -1,4 +1,3 @@
-#![cfg(target_os = "macos")]
 //! Particle emitter example using the builder API.
 //!
 //! Demonstrates CAEmitterLayerBuilder with the particle closure pattern.
@@ -36,13 +35,17 @@
 //! Run with: cargo run -p core-animation --example emitter
 //! With recording: cargo run -p core-animation --example emitter --features record
 
+#[cfg(target_os = "macos")]
 use std::f64::consts::PI;
 
+#[cfg(target_os = "macos")]
 use core_animation::prelude::*;
 
+#[cfg(target_os = "macos")]
 #[path = "common/mod.rs"]
 mod common;
 
+#[cfg(target_os = "macos")]
 fn main() {
     println!("Particle Emitter Example\n");
     println!("Particles burst from a single point in all directions.\n");
@@ -89,4 +92,9 @@ fn main() {
     window.show_for(15.seconds());
 
     println!("Done!");
+}
+
+#[cfg(not(target_os = "macos"))]
+fn main() {
+    eprintln!("This example only runs on macOS");
 }

@@ -1,4 +1,3 @@
-#![cfg(target_os = "macos")]
 //! PointBurstBuilder example - simplified API for common particle burst pattern.
 //!
 //! Demonstrates the convenience builder for particles bursting from a point.
@@ -6,11 +5,14 @@
 //! Run with: cargo run -p core-animation --example point_burst
 //! With recording: cargo run -p core-animation --example point_burst --features record
 
+#[cfg(target_os = "macos")]
 use core_animation::prelude::*;
 
+#[cfg(target_os = "macos")]
 #[path = "common/mod.rs"]
 mod common;
 
+#[cfg(target_os = "macos")]
 fn main() {
     println!("PointBurstBuilder Example\n");
     println!("Simplified API for particles bursting from a point.\n");
@@ -83,4 +85,9 @@ fn main() {
     window.show_for(12.seconds());
 
     println!("Done!");
+}
+
+#[cfg(not(target_os = "macos"))]
+fn main() {
+    eprintln!("This example only runs on macOS");
 }

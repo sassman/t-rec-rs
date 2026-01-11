@@ -5,12 +5,18 @@
 //!
 //! Run with: cargo run -p osd-flash --example typewriter
 
+#[cfg(target_os = "macos")]
 use crossterm::event::{self, Event, KeyCode, KeyEvent, KeyModifiers};
+#[cfg(target_os = "macos")]
 use crossterm::terminal::{self, EnterAlternateScreen, LeaveAlternateScreen};
+#[cfg(target_os = "macos")]
 use crossterm::ExecutableCommand;
+#[cfg(target_os = "macos")]
 use osd_flash::prelude::*;
+#[cfg(target_os = "macos")]
 use std::io::stdout;
 
+#[cfg(target_os = "macos")]
 fn main() -> osd_flash::Result<()> {
     println!("=== Typewriter Demo ===");
     println!("Type any key to see it displayed.");
@@ -33,6 +39,7 @@ fn main() -> osd_flash::Result<()> {
     result
 }
 
+#[cfg(target_os = "macos")]
 fn run_typewriter() -> osd_flash::Result<()> {
     loop {
         // Wait for a key event
@@ -62,6 +69,7 @@ fn run_typewriter() -> osd_flash::Result<()> {
 }
 
 /// Get display label for a key
+#[cfg(target_os = "macos")]
 fn get_key_label(code: KeyCode, modifiers: KeyModifiers) -> String {
     match code {
         KeyCode::Char(c) => {
@@ -92,6 +100,7 @@ fn get_key_label(code: KeyCode, modifiers: KeyModifiers) -> String {
 }
 
 /// Display a key on screen
+#[cfg(target_os = "macos")]
 fn show_key(label: &str) -> osd_flash::Result<()> {
     let size = if label.len() > 2 { 120.0 } else { 80.0 };
     let font_size = if label.len() > 2 { 20.0 } else { 32.0 };
@@ -122,4 +131,10 @@ fn show_key(label: &str) -> osd_flash::Result<()> {
                 .text_color(Color::rgba(0.2, 0.2, 0.22, 1.0))
         })
         .show_for(800.millis())
+}
+
+
+#[cfg(not(target_os = "macos"))]
+fn main() {
+    eprintln!("This example only runs on macOS");
 }

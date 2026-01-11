@@ -4,9 +4,12 @@
 //!
 //! Run with: cargo run -p osd-flash --example battery
 
+#[cfg(target_os = "macos")]
 use osd_flash::composition::FontWeight;
+#[cfg(target_os = "macos")]
 use osd_flash::prelude::*;
 
+#[cfg(target_os = "macos")]
 fn main() -> osd_flash::Result<()> {
     println!("Showing battery indicators...\n");
 
@@ -29,6 +32,7 @@ fn main() -> osd_flash::Result<()> {
     Ok(())
 }
 
+#[cfg(target_os = "macos")]
 fn show_battery(level: f64, label: &str, position: Position) -> osd_flash::Result<()> {
     // Battery dimensions
     let batt_width = 80.0;
@@ -107,4 +111,10 @@ fn show_battery(level: f64, label: &str, position: Position) -> osd_flash::Resul
                 .center_offset(0.0, -(batt_height / 2.0 + text_area_height / 2.0))
         })
         .show_for(2.seconds())
+}
+
+
+#[cfg(not(target_os = "macos"))]
+fn main() {
+    eprintln!("This example only runs on macOS");
 }

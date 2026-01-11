@@ -1,4 +1,3 @@
-#![cfg(target_os = "macos")]
 //! Particle image showcase - demonstrates all ParticleImage types.
 //!
 //! Shows soft_glow, circle, star, and spark particle images side by side.
@@ -6,13 +5,17 @@
 //! Run with: cargo run -p core-animation --example particle_images
 //! With recording: cargo run -p core-animation --example particle_images --features record
 
+#[cfg(target_os = "macos")]
 use std::f64::consts::PI;
 
+#[cfg(target_os = "macos")]
 use core_animation::prelude::*;
 
+#[cfg(target_os = "macos")]
 #[path = "common/mod.rs"]
 mod common;
 
+#[cfg(target_os = "macos")]
 fn main() {
     println!("Particle Images Showcase\n");
     println!("Four emitters demonstrating different particle image types.\n");
@@ -141,4 +144,9 @@ fn main() {
     window.show_for(15.seconds());
 
     println!("Done!");
+}
+
+#[cfg(not(target_os = "macos"))]
+fn main() {
+    eprintln!("This example only runs on macOS");
 }

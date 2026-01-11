@@ -1,4 +1,3 @@
-#![cfg(target_os = "macos")]
 //! Basic layer example with animated shapes.
 //!
 //! Demonstrates CALayer and CAShapeLayer with the builder APIs and
@@ -7,11 +6,14 @@
 //! Run with: cargo run -p core-animation --example basic_layers
 //! With recording: cargo run -p core-animation --example basic_layers --features record
 
+#[cfg(target_os = "macos")]
 use core_animation::prelude::*;
 
+#[cfg(target_os = "macos")]
 #[path = "common/mod.rs"]
 mod common;
 
+#[cfg(target_os = "macos")]
 fn main() {
     println!("Basic Layers - Animated Shapes\n");
 
@@ -104,4 +106,9 @@ fn main() {
     window.show_for(5.seconds());
 
     println!("Done!");
+}
+
+#[cfg(not(target_os = "macos"))]
+fn main() {
+    eprintln!("This example only runs on macOS");
 }

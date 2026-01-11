@@ -7,8 +7,10 @@
 //!
 //! Run with: cargo run -p osd-flash --example animation_poc
 
+#[cfg(target_os = "macos")]
 use osd_flash::prelude::*;
 
+#[cfg(target_os = "macos")]
 fn main() -> osd_flash::Result<()> {
     println!("POC: GPU-accelerated Core Animation");
     println!("===================================");
@@ -108,4 +110,9 @@ fn main() -> osd_flash::Result<()> {
     println!();
 
     Ok(())
+}
+
+#[cfg(not(target_os = "macos"))]
+fn main() {
+    eprintln!("This example only runs on macOS");
 }

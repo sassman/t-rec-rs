@@ -1,4 +1,3 @@
-#![cfg(target_os = "macos")]
 //! WindowBuilder example - creating layer-backed windows with a builder API.
 //!
 //! This example demonstrates the fully fluent API for creating windows with
@@ -7,11 +6,14 @@
 //! Run with: cargo run -p core-animation --example window_builder
 //! With recording: cargo run -p core-animation --example window_builder --features record
 
+#[cfg(target_os = "macos")]
 use core_animation::prelude::*;
 
+#[cfg(target_os = "macos")]
 #[path = "common/mod.rs"]
 mod common;
 
+#[cfg(target_os = "macos")]
 fn main() {
     println!("WindowBuilder Example - Fluent API\n");
 
@@ -65,4 +67,9 @@ fn main() {
     window.show_for(10.seconds());
 
     println!("Done!");
+}
+
+#[cfg(not(target_os = "macos"))]
+fn main() {
+    eprintln!("This example only runs on macOS");
 }

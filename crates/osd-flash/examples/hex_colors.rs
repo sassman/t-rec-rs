@@ -4,8 +4,10 @@
 //!
 //! Run with: cargo run -p osd-flash --example hex_colors
 
+#[cfg(target_os = "macos")]
 use osd_flash::prelude::*;
 
+#[cfg(target_os = "macos")]
 fn main() -> osd_flash::Result<()> {
     let size = 100.0;
 
@@ -100,4 +102,10 @@ fn main() -> osd_flash::Result<()> {
 
     println!("Done!");
     Ok(())
+}
+
+
+#[cfg(not(target_os = "macos"))]
+fn main() {
+    eprintln!("This example only runs on macOS");
 }

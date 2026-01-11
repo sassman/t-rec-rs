@@ -1,4 +1,3 @@
-#![cfg(target_os = "macos")]
 //! Test that verifies window visibility after show_for.
 //!
 //! This test ensures that:
@@ -7,9 +6,12 @@
 //!
 //! Run with: cargo run -p core-animation --example test_window_visibility
 
+#[cfg(target_os = "macos")]
 use core_animation::prelude::*;
+#[cfg(target_os = "macos")]
 use std::time::Duration;
 
+#[cfg(target_os = "macos")]
 fn main() {
     println!("Testing window visibility behavior...\n");
 
@@ -106,4 +108,9 @@ fn main() {
     println!("  [PASS] All 3 flash windows closed correctly");
 
     println!("\n=== All tests passed! ===");
+}
+
+#[cfg(not(target_os = "macos"))]
+fn main() {
+    eprintln!("This example only runs on macOS");
 }
