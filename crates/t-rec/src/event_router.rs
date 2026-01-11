@@ -2,6 +2,7 @@ use tokio::sync::broadcast::Sender;
 
 /// Capture commands for the Photographer actor.
 #[derive(Debug, Clone)]
+#[allow(dead_code)]
 pub enum CaptureEvent {
     Start,
     Screenshot { timecode_ms: u128 },
@@ -10,6 +11,7 @@ pub enum CaptureEvent {
 
 /// Visual feedback events for the Presenter actor.
 #[derive(Debug, Clone)]
+#[allow(dead_code)]
 pub enum FlashEvent {
     ScreenshotTaken,
     #[allow(dead_code)]
@@ -20,6 +22,7 @@ pub enum FlashEvent {
 
 /// Lifecycle events for actor coordination.
 #[derive(Debug, Clone)]
+#[allow(dead_code)]
 pub enum LifecycleEvent {
     Shutdown,
     #[allow(dead_code)]
@@ -28,6 +31,7 @@ pub enum LifecycleEvent {
 
 /// Unified event type for all actors.
 #[derive(Debug, Clone)]
+#[allow(dead_code)]
 pub enum Event {
     Capture(CaptureEvent),
     Flash(FlashEvent),
@@ -52,6 +56,7 @@ impl EventRouter {
     }
 
     /// like `send` but returns a `Result`
+    #[allow(dead_code)]
     pub fn try_send(
         &self,
         event: Event,
@@ -60,6 +65,7 @@ impl EventRouter {
     }
 
     /// Sends a shutdown event to all actors.
+    #[allow(dead_code)]
     pub fn shutdown(&self) {
         let _ = self.tx.send(Event::Lifecycle(LifecycleEvent::Shutdown));
     }

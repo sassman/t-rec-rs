@@ -1,6 +1,7 @@
 mod validation;
 mod ventura;
 
+#[allow(unused_imports)]
 pub use validation::{is_builtin_wallpaper, load_and_validate_wallpaper};
 pub use ventura::get_ventura_wallpaper;
 

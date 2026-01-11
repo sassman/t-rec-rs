@@ -4,15 +4,20 @@ use std::io::Write;
 use std::ops::Add;
 use std::time::Duration;
 
+#[allow(dead_code)]
 const ONE_MIN: Duration = Duration::from_secs(60);
+#[allow(dead_code)]
 const ONE_SEC: Duration = Duration::from_secs(1);
+#[allow(dead_code)]
 const MAX_DELAY: Duration = Duration::from_secs(5 * 60);
 
+#[allow(dead_code)]
 pub fn clear_screen() {
     print!("\x1b[2J\x1b[H");
     std::io::stdout().flush().ok();
 }
 
+#[allow(dead_code)]
 pub trait HumanReadable {
     fn as_human_readable(&self) -> String;
 }
@@ -34,6 +39,7 @@ impl HumanReadable for Duration {
 }
 
 /// Print items in a tree-style format
+#[allow(dead_code)]
 pub fn print_tree_list<I, S>(items: I)
 where
     I: IntoIterator<Item = S>,
@@ -48,6 +54,7 @@ where
 }
 
 /// parses a human duration string into something valid
+#[allow(dead_code)]
 pub fn parse_delay(
     s: Option<impl AsRef<str>>,
     t: impl AsRef<str>,

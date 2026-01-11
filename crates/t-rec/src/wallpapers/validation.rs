@@ -82,6 +82,7 @@ pub fn load_and_validate_wallpaper(
 }
 
 /// Check if a wallpaper value is a built-in preset or a custom path
+#[allow(dead_code)]
 pub fn is_builtin_wallpaper(value: &str) -> bool {
     matches!(value.to_lowercase().as_str(), "ventura")
 }

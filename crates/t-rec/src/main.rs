@@ -159,32 +159,65 @@ fn validate_prerequisites(settings: &ProfileSettings) -> Result<()> {
 
 /// Test flash indicator (macOS only, requires osd-flash-indicator feature).
 #[cfg(all(target_os = "macos", feature = "osd-flash-indicator"))]
-fn run_test_flash(win_id: WindowId) -> Result<()> {
+fn run_test_flash(_win_id: WindowId) -> Result<()> {
     use osd_flash::prelude::*;
     use std::thread;
 
-    fn show_camera_flash(win_id: u64) -> osd_flash::Result<()> {
-        OsdFlashBuilder::new()
-            .dimensions(120.0)
-            .position(FlashPosition::TopRight)
+    fn show_camera_flash() -> osd_flash::Result<()> {
+        OsdBuilder::new()
+            .size(120.0)
+            .position(Position::TopRight)
             .margin(20.0)
             .level(WindowLevel::AboveAll)
-            .attach_to_window(win_id)
-            .build()?
-            .draw(CameraIcon::new(120.0).build())
-            .show_for_seconds(1.5)
+            .background(Color::rgba(0.15, 0.45, 0.9, 0.92))
+            .corner_radius(20.0)
+            // Camera body
+            .layer("body", |l| {
+                l.rounded_rect(70.0, 45.0, 8.0).center().fill(Color::WHITE)
+            })
+            // Viewfinder bump
+            .layer("viewfinder", |l| {
+                l.rounded_rect(20.0, 10.0, 3.0)
+                    .center_offset(0.0, 22.0)
+                    .fill(Color::WHITE)
+            })
+            // Lens outer ring
+            .layer("lens_outer", |l| {
+                l.circle(32.0)
+                    .center()
+                    .fill(Color::rgba(0.2, 0.3, 0.5, 1.0))
+            })
+            // Lens inner
+            .layer("lens_inner", |l| {
+                l.circle(22.0)
+                    .center()
+                    .fill(Color::rgba(0.1, 0.15, 0.3, 1.0))
+            })
+            // Lens highlight
+            .layer("lens_highlight", |l| {
+                l.circle(8.0)
+                    .center_offset(-4.0, 4.0)
+                    .fill(Color::rgba(1.0, 1.0, 1.0, 0.4))
+            })
+            // Flash indicator
+            .layer("flash", |l| {
+                l.circle(10.0)
+                    .center_offset(22.0, 12.0)
+                    .fill(Color::rgba(1.0, 0.85, 0.2, 1.0))
+            })
+            .show_for(1500.millis())
     }
 
     println!("Testing screen flash indicator within a background thread...");
     println!("Showing flash indicator from main thread...");
-    if let Err(e) = show_camera_flash(win_id) {
+    if let Err(e) = show_camera_flash() {
         log::warn!("Failed to show flash: {}", e);
     }
     thread::sleep(Duration::from_secs(5));
 
     thread::spawn(move || {
         println!("Showing flash indicator from background thread...");
-        if let Err(e) = show_camera_flash(win_id) {
+        if let Err(e) = show_camera_flash() {
             log::warn!("Failed to show flash: {}", e);
         }
         thread::sleep(Duration::from_secs(5));

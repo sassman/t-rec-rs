@@ -785,9 +785,10 @@ impl Window {
         }
     }
 
-    /// Show the window for a specified duration.
+    /// Show the window for a specified duration, then hide it.
     ///
-    /// This shows the window and processes events for the given duration.
+    /// This shows the window, processes events for the given duration,
+    /// and then hides the window before returning.
     ///
     /// # Example
     ///
@@ -805,6 +806,37 @@ impl Window {
         while start.elapsed() < duration {
             self.run_loop_tick();
         }
+
+        self.hide();
+        self.close();
+    }
+
+    /// Hide the window.
+    ///
+    /// The window is removed from the screen but not destroyed.
+    /// It can be shown again with `show()`.
+    ///
+    /// This method runs a brief event loop tick after ordering out
+    /// to ensure the hide takes effect immediately, which is important
+    /// when called from within another run loop (like t-rec's presenter).
+    pub fn hide(&self) {
+        self.ns_window.orderOut(None);
+        // Run a brief event loop tick to ensure the hide takes effect
+        self.run_loop_tick();
+    }
+
+    /// Close and release the window.
+    ///
+    /// After calling this, the window should not be used again.
+    /// Runs an event loop tick to ensure the close takes effect immediately.
+    pub fn close(&self) {
+        self.ns_window.close();
+        self.run_loop_tick();
+    }
+
+    /// Returns whether the window is currently visible.
+    pub fn is_visible(&self) -> bool {
+        self.ns_window.isVisible()
     }
 
     /// Run a single iteration of the event loop.

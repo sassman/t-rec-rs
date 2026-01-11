@@ -56,9 +56,8 @@ fn main() {
     };
 
     // Create each dot with staggered phase offset
-    for i in 0..num_dots {
+    for (i, &color) in colors.iter().enumerate().take(num_dots) {
         let x = start_x + (i as f64 * dot_spacing);
-        let color = colors[i];
 
         // Phase offset creates the wave effect
         // Each dot is offset by 1/num_dots of the cycle

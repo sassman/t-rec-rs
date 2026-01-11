@@ -25,6 +25,7 @@ pub fn sub_shell_thread<T: AsRef<OsStr> + Clone>(program: T) -> Result<ExitStatu
 /// returns a new filename that does not yet exists.
 /// Note: returns without extension, but checks with extension
 /// like `t-rec` or `t-rec_1`
+#[allow(dead_code)]
 pub fn target_file(basename: impl AsRef<str>) -> String {
     let basename = basename.as_ref();
     let mut suffix = "".to_string();

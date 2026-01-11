@@ -18,6 +18,7 @@ pub fn screenshot_file_name(timecode: u128, ext: &str) -> String {
 }
 
 /// Generate the final output filename for a screenshot.
+#[allow(dead_code)]
 pub fn screenshot_output_name(base: &str, timecode: u128, format: &str) -> String {
     format!("{}_screenshot-{}.{}", base, timecode, format)
 }

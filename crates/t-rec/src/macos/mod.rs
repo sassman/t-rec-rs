@@ -13,6 +13,7 @@ use screenshot::capture_window_screenshot;
 use std::env;
 use window_id::window_list;
 
+#[allow(dead_code)]
 pub const DEFAULT_SHELL: &str = "/bin/sh";
 
 impl PlatformApiFactory for Platform {

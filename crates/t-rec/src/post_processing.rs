@@ -61,13 +61,16 @@ impl<'a> PostProcessingOptions<'a> {
     /// # Panics
     ///
     /// Panics if `decor` is not a valid decoration value.
+    #[allow(dead_code)]
     pub fn from_strings(decor: &str, bg_color: &'a BackgroundColor) -> Self {
         Self {
-            decor: decor.parse().expect(&format!(
-                "Invalid decor '{}'. Valid options: {}",
-                decor,
-                Decor::valid_values().join(", ")
-            )),
+            decor: decor.parse().unwrap_or_else(|_| {
+                panic!(
+                    "Invalid decor '{}'. Valid options: {}",
+                    decor,
+                    Decor::valid_values().join(", ")
+                )
+            }),
             bg_color,
             wallpaper: None,
         }
@@ -80,6 +83,7 @@ impl<'a> PostProcessingOptions<'a> {
     }
 }
 
+#[allow(dead_code)]
 pub fn post_process_screenshots(
     screenshots: &[ScreenshotInfo],
     target: &str,

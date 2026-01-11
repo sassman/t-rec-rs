@@ -5,8 +5,10 @@ use crate::event_router::FlashEvent;
 use crate::Result;
 use crate::WindowId;
 
+#[allow(dead_code)]
 pub struct NoopPresenter;
 
+#[allow(dead_code)]
 impl NoopPresenter {
     pub fn new(_win_id: WindowId) -> Self {
         Self
