@@ -1,3 +1,4 @@
+#![cfg(target_os = "macos")]
 //! PointBurstBuilder example - simplified API for common particle burst pattern.
 //!
 //! Demonstrates the convenience builder for particles bursting from a point.

@@ -1,3 +1,4 @@
+#![cfg(target_os = "macos")]
 //! Test that verifies window visibility after show_for.
 //!
 //! This test ensures that:

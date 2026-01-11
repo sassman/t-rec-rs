@@ -1,3 +1,4 @@
+#![cfg(target_os = "macos")]
 //! Loading spinner - smooth rotating indicator with linear easing.
 //!
 //! Demonstrates `TransformRotation` animation with `Easing::Linear` for constant

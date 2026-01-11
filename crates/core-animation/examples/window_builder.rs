@@ -1,3 +1,4 @@
+#![cfg(target_os = "macos")]
 //! WindowBuilder example - creating layer-backed windows with a builder API.
 //!
 //! This example demonstrates the fully fluent API for creating windows with

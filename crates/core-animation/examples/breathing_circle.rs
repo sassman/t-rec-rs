@@ -1,3 +1,4 @@
+#![cfg(target_os = "macos")]
 //! Breathing circle - a soft pulsing orb with coordinated scale and opacity.
 //!
 //! Demonstrates multiple animations on one layer with `phase_offset` coordination.

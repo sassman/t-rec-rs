@@ -1,3 +1,4 @@
+#![cfg(target_os = "macos")]
 //! Neon glow - retro neon sign effect with pulsing shadows.
 //!
 //! Demonstrates shadow property animations (`ShadowRadius`, `ShadowOpacity`)

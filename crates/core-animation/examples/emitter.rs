@@ -1,3 +1,4 @@
+#![cfg(target_os = "macos")]
 //! Particle emitter example using the builder API.
 //!
 //! Demonstrates CAEmitterLayerBuilder with the particle closure pattern.

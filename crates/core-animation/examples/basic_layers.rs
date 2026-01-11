@@ -1,3 +1,4 @@
+#![cfg(target_os = "macos")]
 //! Basic layer example with animated shapes.
 //!
 //! Demonstrates CALayer and CAShapeLayer with the builder APIs and

@@ -1,3 +1,4 @@
+#![cfg(target_os = "macos")]
 //! Ripple rings - water ripple effect with concentric expanding rings.
 //!
 //! Creates a mesmerizing effect like dropping a pebble in still water.

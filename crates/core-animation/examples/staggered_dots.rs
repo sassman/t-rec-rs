@@ -1,3 +1,4 @@
+#![cfg(target_os = "macos")]
 //! Staggered dots - classic loading indicator with phase-offset animations.
 //!
 //! Demonstrates using `phase_offset` to create staggered timing across multiple

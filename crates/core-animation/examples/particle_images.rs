@@ -1,3 +1,4 @@
+#![cfg(target_os = "macos")]
 //! Particle image showcase - demonstrates all ParticleImage types.
 //!
 //! Shows soft_glow, circle, star, and spark particle images side by side.
