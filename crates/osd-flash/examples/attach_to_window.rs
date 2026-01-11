@@ -71,9 +71,7 @@ fn main() -> osd_flash::Result<()> {
         .background(Color::rgba(0.15, 0.45, 0.9, 0.92))
         .corner_radius(14.0)
         .layer("body", |l| {
-            l.ellipse(60.0, 45.0)
-                .center()
-                .fill(Color::WHITE)
+            l.ellipse(60.0, 45.0).center().fill(Color::WHITE)
         })
         .layer("lens", |l| {
             l.circle(28.0)

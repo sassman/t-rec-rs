@@ -87,7 +87,10 @@ fn main() {
         .fill_color(Color::TRANSPARENT)
         .stroke_color(orb_color.with_alpha(0.3))
         .line_width(3.0)
-        .bounds(CGRect::new(CGPoint::ZERO, CGSize::new(glow_size, glow_size)))
+        .bounds(CGRect::new(
+            CGPoint::ZERO,
+            CGSize::new(glow_size, glow_size),
+        ))
         .position(center)
         // Scale opposite to main orb (phase_offset = 0.5)
         .animate("scale", KeyPath::TransformScale, |a| {

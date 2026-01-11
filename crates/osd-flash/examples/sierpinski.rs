@@ -30,9 +30,7 @@ fn main() -> osd_flash::Result<()> {
                 .animate(Animation::pulse_range(0.9, 1.1))
         })
         .layer("top", |l| {
-            l.circle(16.0)
-                .center_offset(0.0, -80.0)
-                .fill(Color::WHITE)
+            l.circle(16.0).center_offset(0.0, -80.0).fill(Color::WHITE)
         })
         // Bottom-left vertex marker
         .layer("bl_glow", |l| {
@@ -42,9 +40,7 @@ fn main() -> osd_flash::Result<()> {
                 .animate(Animation::pulse_range(0.9, 1.1))
         })
         .layer("bl", |l| {
-            l.circle(16.0)
-                .center_offset(-90.0, 70.0)
-                .fill(Color::WHITE)
+            l.circle(16.0).center_offset(-90.0, 70.0).fill(Color::WHITE)
         })
         // Bottom-right vertex marker
         .layer("br_glow", |l| {
@@ -54,9 +50,7 @@ fn main() -> osd_flash::Result<()> {
                 .animate(Animation::pulse_range(0.9, 1.1))
         })
         .layer("br", |l| {
-            l.circle(16.0)
-                .center_offset(90.0, 70.0)
-                .fill(Color::WHITE)
+            l.circle(16.0).center_offset(90.0, 70.0).fill(Color::WHITE)
         })
         // Inner triangular pattern (represented with circles at midpoints)
         // Top-left midpoint

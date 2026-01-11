@@ -85,7 +85,10 @@ fn main() {
     let central_glow = CAShapeLayerBuilder::new()
         .path(glow_path)
         .fill_color(water_cyan.with_alpha(0.3))
-        .bounds(CGRect::new(CGPoint::ZERO, CGSize::new(glow_size, glow_size)))
+        .bounds(CGRect::new(
+            CGPoint::ZERO,
+            CGSize::new(glow_size, glow_size),
+        ))
         .position(center)
         .animate("glow_scale", KeyPath::TransformScale, |a| {
             a.values(0.9, 1.4)

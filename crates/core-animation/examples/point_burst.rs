@@ -46,10 +46,10 @@ fn main() {
 
     // Using Color presets and constructors
     let colors = [
-        Color::PINK,                    // pink
-        Color::rgb(0.5, 1.0, 0.4),      // green
-        Color::ORANGE,                  // orange/gold
-        Color::PURPLE,                  // purple
+        Color::PINK,               // pink
+        Color::rgb(0.5, 1.0, 0.4), // green
+        Color::ORANGE,             // orange/gold
+        Color::PURPLE,             // purple
     ];
 
     for (i, (x, y)) in corner_positions.iter().enumerate() {

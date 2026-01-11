@@ -683,7 +683,9 @@ mod tests {
             assert_eq!(BackgroundColor::White.to_imagemagick_color(), "white");
             assert_eq!(BackgroundColor::Black.to_imagemagick_color(), "black");
             assert_eq!(
-                BackgroundColor::custom("#ff5500").unwrap().to_imagemagick_color(),
+                BackgroundColor::custom("#ff5500")
+                    .unwrap()
+                    .to_imagemagick_color(),
                 "#ff5500"
             );
         }
@@ -826,7 +828,10 @@ mod tests {
             // Non-existent path should fail
             let result = Wallpaper::custom("/nonexistent/path/wallpaper.png");
             assert!(result.is_err());
-            assert!(matches!(result.unwrap_err(), WallpaperError::PathNotFound(_)));
+            assert!(matches!(
+                result.unwrap_err(),
+                WallpaperError::PathNotFound(_)
+            ));
         }
 
         #[test]
@@ -852,7 +857,8 @@ mod tests {
                 assert_eq!(validated_path.as_path(), temp_file.path());
                 assert_eq!(validated_path.to_path_buf(), temp_file.path().to_path_buf());
                 // Display trait
-                assert!(format!("{}", validated_path).contains(temp_file.path().file_name().unwrap().to_str().unwrap()));
+                assert!(format!("{}", validated_path)
+                    .contains(temp_file.path().file_name().unwrap().to_str().unwrap()));
             } else {
                 panic!("Expected Custom variant");
             }

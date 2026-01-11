@@ -9,8 +9,8 @@ use objc2_core_text::CTFont;
 use objc2_foundation::NSString;
 use objc2_quartz_core::{
     kCAAlignmentCenter, kCAAlignmentJustified, kCAAlignmentLeft, kCAAlignmentNatural,
-    kCAAlignmentRight, kCATruncationEnd, kCATruncationMiddle, kCATruncationNone, kCATruncationStart,
-    CABasicAnimation, CATextLayer, CATransform3D,
+    kCAAlignmentRight, kCATruncationEnd, kCATruncationMiddle, kCATruncationNone,
+    kCATruncationStart, CABasicAnimation, CATextLayer, CATransform3D,
 };
 
 /// A pending animation to be applied when the layer is built.
@@ -49,7 +49,7 @@ pub enum TextAlign {
 
 impl TextAlign {
     /// Returns the Core Animation alignment mode string for this alignment.
-    fn to_ca_alignment(&self) -> &'static NSString {
+    fn to_ca_alignment(self) -> &'static NSString {
         // SAFETY: These extern statics are always valid on macOS.
         unsafe {
             match self {
@@ -90,7 +90,7 @@ pub enum Truncation {
 
 impl Truncation {
     /// Returns the Core Animation truncation mode string for this truncation mode.
-    fn to_ca_truncation(&self) -> &'static NSString {
+    fn to_ca_truncation(self) -> &'static NSString {
         // SAFETY: These extern statics are always valid on macOS.
         unsafe {
             match self {

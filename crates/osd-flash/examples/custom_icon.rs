@@ -19,9 +19,7 @@ fn main() -> osd_flash::Result<()> {
         .corner_radius(16.0)
         // White circle ring (outer)
         .layer("ring_outer", |l| {
-            l.circle(size * 0.5)
-                .center()
-                .fill(Color::WHITE)
+            l.circle(size * 0.5).center().fill(Color::WHITE)
         })
         // Inner green circle (creates ring effect)
         .layer("ring_inner", |l| {

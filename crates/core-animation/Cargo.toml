@@ -9,7 +9,6 @@ repository.workspace = true
 
 [features]
 default = []
-screenshot = []
 # Enable t-rec integration for recording examples to GIF and MP4.
 # This is a dev-only feature for generating demo content, not shipped by default.
 # Requires ImageMagick and ffmpeg to be installed.

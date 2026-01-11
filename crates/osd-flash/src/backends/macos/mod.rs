@@ -20,7 +20,7 @@ use objc2_app_kit::NSScreen;
 use crate::builder::OsdConfig;
 use crate::color::Color;
 use crate::composition::animation::{Animation, Easing as OsdEasing, Repeat as OsdRepeat};
-use crate::composition::layer_builder::{FontWeight, LayerConfig, LayerPosition, ShapeKind, TextAlign};
+use crate::composition::layer_builder::{LayerConfig, LayerPosition, ShapeKind, TextAlign};
 use crate::level::WindowLevel as OsdWindowLevel;
 use crate::position::Position;
 use crate::Result;
@@ -46,7 +46,7 @@ impl MacOsWindow {
             .size(width, height)
             .borderless()
             .transparent()
-            .non_activating()  // OSD windows should never steal focus
+            .non_activating() // OSD windows should never steal focus
             .level(convert_window_level(config.level));
 
         // Apply position
@@ -128,14 +128,12 @@ fn apply_position(builder: WindowBuilder, config: &OsdConfig) -> WindowBuilder {
     match config.position {
         Position::TopRight => {
             let x = screen_frame.origin.x + screen_frame.size.width - width - margin.right;
-            let y =
-                screen_frame.origin.y + screen_frame.size.height - height - margin.top;
+            let y = screen_frame.origin.y + screen_frame.size.height - height - margin.top;
             builder.position(x, y)
         }
         Position::TopLeft => {
             let x = screen_frame.origin.x + margin.left;
-            let y =
-                screen_frame.origin.y + screen_frame.size.height - height - margin.top;
+            let y = screen_frame.origin.y + screen_frame.size.height - height - margin.top;
             builder.position(x, y)
         }
         Position::BottomRight => {
@@ -259,11 +257,15 @@ fn convert_text_layer(
     // Apply bounds for text sizing
     // Use font size to estimate height, width based on parent or shape
     let text_height = config.font_size * 1.5; // Approximate line height
-    let text_width = config.shape.as_ref().map(|s| match s {
-        ShapeKind::Circle { diameter } => *diameter,
-        ShapeKind::Ellipse { width, .. } => *width,
-        ShapeKind::RoundedRect { width, .. } => *width,
-    }).unwrap_or(parent_width);
+    let text_width = config
+        .shape
+        .as_ref()
+        .map(|s| match s {
+            ShapeKind::Circle { diameter } => *diameter,
+            ShapeKind::Ellipse { width, .. } => *width,
+            ShapeKind::RoundedRect { width, .. } => *width,
+        })
+        .unwrap_or(parent_width);
     builder = builder.size(text_width, text_height);
 
     // Apply opacity
@@ -413,10 +415,7 @@ fn apply_shape(builder: CAShapeLayerBuilder, shape: &ShapeKind) -> CAShapeLayerB
             // For rounded rectangles, we need to create a custom path
             // For now, fall back to an ellipse-ish shape
             // TODO: Add rounded_rect support to core-animation
-            let rect = CGRect::new(
-                CGPoint::ZERO,
-                CGSize::new(*width, *height),
-            );
+            let rect = CGRect::new(CGPoint::ZERO, CGSize::new(*width, *height));
             let path = unsafe {
                 CGPath::with_rounded_rect(rect, *corner_radius, *corner_radius, std::ptr::null())
             };
@@ -556,7 +555,6 @@ fn convert_repeat(repeat: OsdRepeat) -> Repeat {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::composition::{CompositionBuilder, LayerBuilder};
     use crate::geometry::Size;
     use crate::layout::Margin;
 

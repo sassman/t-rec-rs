@@ -6,14 +6,18 @@
 pub use core_animation::Color;
 
 // OSD-flash specific color presets as standalone constants
+// These are library exports for future compositions.
 
 /// Vibrant blue (used for camera icon background).
+#[allow(dead_code)]
 pub const VIBRANT_BLUE: Color = Color::rgba(0.15, 0.45, 0.9, 0.92);
 
 /// Light blue (used for lens reflection).
+#[allow(dead_code)]
 pub const LIGHT_BLUE: Color = Color::rgb(0.3, 0.5, 0.8);
 
 /// Warm yellow (used for flash indicator).
+#[allow(dead_code)]
 pub const WARM_YELLOW: Color = Color::rgb(1.0, 0.85, 0.2);
 
 #[cfg(test)]

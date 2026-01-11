@@ -21,9 +21,7 @@ fn main() -> osd_flash::Result<()> {
         .corner_radius(20.0)
         // Camera body (rounded rectangle)
         .layer("body", |l| {
-            l.rounded_rect(70.0, 45.0, 8.0)
-                .center()
-                .fill(Color::WHITE)
+            l.rounded_rect(70.0, 45.0, 8.0).center().fill(Color::WHITE)
         })
         // Viewfinder bump (small rounded rect at top - positive Y)
         .layer("viewfinder", |l| {

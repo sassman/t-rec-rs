@@ -164,7 +164,7 @@ impl CompositionBuilder {
     where
         F: FnOnce(LayerBuilder) -> LayerBuilder,
     {
-        let builder = LayerBuilder::with_parent_size(self.size);
+        let builder = LayerBuilder::new();
         let configured = configure(builder);
         let config = configured.build(name);
         self.layers.push(config);

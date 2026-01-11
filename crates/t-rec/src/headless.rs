@@ -39,7 +39,7 @@ use crate::event_router::{CaptureEvent, Event, EventRouter};
 use crate::generators::{check_for_gif, check_for_mp4, generate_gif, generate_mp4};
 use crate::post_processing::{post_process_effects, PostProcessingOptions};
 use crate::types::{BackgroundColor, Decor, Wallpaper};
-use crate::utils::{file_name_for, IMG_EXT, DEFAULT_EXT, MOVIE_EXT};
+use crate::utils::{file_name_for, DEFAULT_EXT, IMG_EXT, MOVIE_EXT};
 use crate::wallpapers::{get_ventura_wallpaper, load_and_validate_wallpaper};
 use crate::WindowId;
 
@@ -625,12 +625,12 @@ impl HeadlessRecorder {
             .collect();
 
         // Load wallpaper if configured
-        let wallpaper: Option<DynamicImage> =
-            if let Some((ref wp, padding)) = self.config.wallpaper {
-                Some(self.load_wallpaper(wp, &frame_files, padding)?)
-            } else {
-                None
-            };
+        let wallpaper: Option<DynamicImage> = if let Some((ref wp, padding)) = self.config.wallpaper
+        {
+            Some(self.load_wallpaper(wp, &frame_files, padding)?)
+        } else {
+            None
+        };
 
         // Build post-processing options
         let post_opts = if let Some(ref wp) = wallpaper {
@@ -727,7 +727,12 @@ impl HeadlessRecorder {
             }
             Wallpaper::Custom(validated_path) => {
                 // Handle custom wallpaper file (path already validated at construction)
-                load_and_validate_wallpaper(validated_path.as_path(), frame_width, frame_height, padding)
+                load_and_validate_wallpaper(
+                    validated_path.as_path(),
+                    frame_width,
+                    frame_height,
+                    padding,
+                )
             }
         }
     }
@@ -844,7 +849,8 @@ mod tests {
         let builder = HeadlessRecorderBuilder::new().bg_color(BackgroundColor::White);
         assert_eq!(builder.bg_color, BackgroundColor::White);
 
-        let builder = HeadlessRecorderBuilder::new().bg_color(BackgroundColor::custom("#ff5500").unwrap());
+        let builder =
+            HeadlessRecorderBuilder::new().bg_color(BackgroundColor::custom("#ff5500").unwrap());
         assert_eq!(builder.bg_color.as_str(), "#ff5500");
     }
 

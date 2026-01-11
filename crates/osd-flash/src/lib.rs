@@ -85,7 +85,9 @@ pub mod backends;
 pub use anyhow::Result;
 pub use builder::{OsdBuilder, OsdConfig};
 pub use color::Color;
-pub use composition::{Animation, CompositionBuilder, Easing, LayerBuilder, LayerComposition, Repeat};
+pub use composition::{
+    Animation, CompositionBuilder, Easing, LayerBuilder, LayerComposition, Repeat,
+};
 pub use duration_ext::DurationExt;
 pub use geometry::{Point, Rect, Size};
 pub use layout::Margin;

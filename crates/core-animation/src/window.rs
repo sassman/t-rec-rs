@@ -2,8 +2,6 @@
 //!
 //! For production use, integrate layers with your own window management.
 
-#[cfg(feature = "screenshot")]
-use std::path::Path;
 use std::time::Duration;
 
 use crate::color::Color;
@@ -19,15 +17,6 @@ use objc2_core_foundation::{kCFRunLoopDefaultMode, CFRunLoop, CFTimeInterval};
 use objc2_core_graphics::CGColor;
 use objc2_foundation::{NSPoint, NSRect, NSSize, NSString};
 use objc2_quartz_core::{CALayer, CAShapeLayer, CATextLayer};
-
-#[cfg(feature = "screenshot")]
-use objc2::AnyThread;
-#[cfg(feature = "screenshot")]
-use objc2_app_kit::NSBitmapImageRep;
-#[cfg(feature = "screenshot")]
-use objc2_core_graphics::{CGWindowImageOption, CGWindowListCreateImage, CGWindowListOption};
-#[cfg(feature = "screenshot")]
-use objc2_foundation::NSDictionary;
 
 /// Specifies which screen to use for window placement.
 #[derive(Clone, Debug, Default)]
@@ -640,7 +629,7 @@ impl WindowBuilder {
 
         // Apply window level
         if let Some(level) = self.level {
-            ns_window.setLevel(level.raw_level().into());
+            ns_window.setLevel(level.raw_level());
         }
 
         // Enable layer backing

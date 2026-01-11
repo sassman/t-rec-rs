@@ -36,10 +36,9 @@ use objc2_foundation::NSArray;
 use objc2_quartz_core::{
     kCAEmitterLayerAdditive, kCAEmitterLayerBackToFront, kCAEmitterLayerCircle,
     kCAEmitterLayerCuboid, kCAEmitterLayerLine, kCAEmitterLayerOldestFirst,
-    kCAEmitterLayerOldestLast, kCAEmitterLayerOutline, kCAEmitterLayerPoint,
-    kCAEmitterLayerPoints, kCAEmitterLayerRectangle, kCAEmitterLayerSphere,
-    kCAEmitterLayerSurface, kCAEmitterLayerUnordered, kCAEmitterLayerVolume, CAEmitterCell,
-    CAEmitterLayer,
+    kCAEmitterLayerOldestLast, kCAEmitterLayerOutline, kCAEmitterLayerPoint, kCAEmitterLayerPoints,
+    kCAEmitterLayerRectangle, kCAEmitterLayerSphere, kCAEmitterLayerSurface,
+    kCAEmitterLayerUnordered, kCAEmitterLayerVolume, CAEmitterCell, CAEmitterLayer,
 };
 
 // ============================================================================
@@ -770,7 +769,10 @@ fn create_circle_image(size: usize) -> CFRetained<CGImage> {
     CGContext::set_rgb_fill_color(Some(&context), 1.0, 1.0, 1.0, 1.0);
     CGContext::fill_ellipse_in_rect(
         Some(&context),
-        CGRect::new(CGPoint::new(0.0, 0.0), CGSize::new(size as f64, size as f64)),
+        CGRect::new(
+            CGPoint::new(0.0, 0.0),
+            CGSize::new(size as f64, size as f64),
+        ),
     );
 
     CGBitmapContextCreateImage(Some(&context)).expect("Failed to create image")

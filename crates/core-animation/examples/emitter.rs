@@ -60,12 +60,12 @@ fn main() {
         .position(size / 2.0, size / 2.0)
         .shape(EmitterShape::Point)
         .particle(|p| {
-            p.birth_rate(100.0)        // 100 particles per second
-                .lifetime(10.0)        // each lives 10 seconds
-                .velocity(100.0)       // move at 100 points/sec
-                .scale(0.1)            // scale down the image
-                .emission_range(PI * 2.0)  // emit in all directions
-                .color(Color::CYAN)    // using Color preset
+            p.birth_rate(100.0) // 100 particles per second
+                .lifetime(10.0) // each lives 10 seconds
+                .velocity(100.0) // move at 100 points/sec
+                .scale(0.1) // scale down the image
+                .emission_range(PI * 2.0) // emit in all directions
+                .color(Color::CYAN) // using Color preset
                 .image(ParticleImage::soft_glow(64))
         })
         .build();

@@ -4,8 +4,8 @@
 //!
 //! Run with: cargo run -p osd-flash --example battery
 
-use osd_flash::prelude::*;
 use osd_flash::composition::FontWeight;
+use osd_flash::prelude::*;
 
 fn main() -> osd_flash::Result<()> {
     println!("Showing battery indicators...\n");
@@ -78,7 +78,10 @@ fn show_battery(level: f64, label: &str, position: Position) -> osd_flash::Resul
         // Battery tip (positive terminal)
         .layer("tip", |l| {
             l.rounded_rect(tip_width, tip_height, 2.0)
-                .center_offset(batt_offset_x + batt_width / 2.0 + tip_width / 2.0, batt_offset_y)
+                .center_offset(
+                    batt_offset_x + batt_width / 2.0 + tip_width / 2.0,
+                    batt_offset_y,
+                )
                 .fill(Color::WHITE)
         })
         // Battery inner (dark background)

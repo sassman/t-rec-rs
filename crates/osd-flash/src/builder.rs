@@ -332,7 +332,7 @@ impl OsdBuilder {
     where
         F: FnOnce(LayerBuilder) -> LayerBuilder,
     {
-        let builder = LayerBuilder::with_parent_size(self.config.size);
+        let builder = LayerBuilder::new();
         let configured = configure(builder);
         let layer_config = configured.build(name);
         self.config.layers.push(layer_config);

@@ -6,11 +6,7 @@
 
 use osd_flash::prelude::*;
 
-fn show_badge_at_position(
-    position: Position,
-    color: Color,
-    label: &str,
-) -> osd_flash::Result<()> {
+fn show_badge_at_position(position: Position, color: Color, label: &str) -> osd_flash::Result<()> {
     let size = 80.0;
 
     println!("Showing {} badge...", label);
@@ -29,11 +25,7 @@ fn show_badge_at_position(
                 .fill(Color::WHITE.with_alpha(0.3))
         })
         // Center dot indicator
-        .layer("dot", |l| {
-            l.circle(size * 0.3)
-                .center()
-                .fill(Color::WHITE)
-        })
+        .layer("dot", |l| l.circle(size * 0.3).center().fill(Color::WHITE))
         .show_for(1.seconds())?;
 
     Ok(())

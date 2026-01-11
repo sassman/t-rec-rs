@@ -257,7 +257,7 @@ impl KeyPath {
     /// Creates an `NSString` for this key path.
     ///
     /// This is used internally when constructing `CABasicAnimation`.
-    fn to_nsstring(&self) -> Retained<NSString> {
+    fn to_nsstring(self) -> Retained<NSString> {
         NSString::from_str(self.as_str())
     }
 }
@@ -291,7 +291,7 @@ pub enum Easing {
 
 impl Easing {
     /// Creates the corresponding `CAMediaTimingFunction` for this easing curve.
-    fn to_timing_function(&self) -> Retained<CAMediaTimingFunction> {
+    fn to_timing_function(self) -> Retained<CAMediaTimingFunction> {
         // SAFETY: The timing function name constants are valid extern statics
         // that are always available on macOS.
         let name = unsafe {
@@ -339,10 +339,10 @@ impl Repeat {
     /// - `Once` returns 1.0 (play once)
     /// - `Times(n)` returns n as f32
     /// - `Forever` returns `f32::INFINITY`
-    fn to_repeat_count(&self) -> f32 {
+    fn to_repeat_count(self) -> f32 {
         match self {
             Repeat::Once => 1.0,
-            Repeat::Times(n) => *n as f32,
+            Repeat::Times(n) => n as f32,
             Repeat::Forever => f32::INFINITY,
         }
     }

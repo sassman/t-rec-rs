@@ -2,7 +2,6 @@
 
 use crate::color::Color;
 use crate::composition::animation::Animation;
-use crate::geometry::Size;
 
 /// Position of a layer within its parent composition.
 #[derive(Debug, Clone, Copy, PartialEq, Default)]
@@ -155,23 +154,12 @@ impl Default for LayerConfig {
 #[derive(Debug, Clone, Default)]
 pub struct LayerBuilder {
     config: LayerConfig,
-    parent_size: Option<Size>,
 }
 
 impl LayerBuilder {
     /// Create a new layer builder.
     pub fn new() -> Self {
         Self::default()
-    }
-
-    /// Create a new layer builder with parent size context.
-    ///
-    /// The parent size is used for centering calculations.
-    pub(crate) fn with_parent_size(parent_size: Size) -> Self {
-        Self {
-            parent_size: Some(parent_size),
-            ..Default::default()
-        }
     }
 
     // =========================================================================
@@ -438,16 +426,6 @@ impl LayerBuilder {
         self.config.name = name.into();
         self.config
     }
-
-    /// Get the current configuration (for internal use).
-    pub(crate) fn into_config(self) -> LayerConfig {
-        self.config
-    }
-
-    /// Get the parent size if set.
-    pub(crate) fn parent_size(&self) -> Option<Size> {
-        self.parent_size
-    }
 }
 
 #[cfg(test)]
@@ -457,10 +435,7 @@ mod tests {
     #[test]
     fn test_circle() {
         let layer = LayerBuilder::new().circle(50.0).build("test");
-        assert_eq!(
-            layer.shape,
-            Some(ShapeKind::Circle { diameter: 50.0 })
-        );
+        assert_eq!(layer.shape, Some(ShapeKind::Circle { diameter: 50.0 }));
     }
 
     #[test]
@@ -493,10 +468,7 @@ mod tests {
     #[test]
     fn test_position() {
         let layer = LayerBuilder::new().position(10.0, 20.0).build("test");
-        assert_eq!(
-            layer.position,
-            LayerPosition::Absolute { x: 10.0, y: 20.0 }
-        );
+        assert_eq!(layer.position, LayerPosition::Absolute { x: 10.0, y: 20.0 });
     }
 
     #[test]
@@ -522,9 +494,7 @@ mod tests {
 
     #[test]
     fn test_stroke() {
-        let layer = LayerBuilder::new()
-            .stroke(Color::WHITE, 2.0)
-            .build("test");
+        let layer = LayerBuilder::new().stroke(Color::WHITE, 2.0).build("test");
         assert_eq!(layer.stroke, Some((Color::WHITE, 2.0)));
     }
 

@@ -301,9 +301,12 @@ impl Animation {
                 easing,
                 repeat,
             },
-            Self::Group(animations) => {
-                Self::Group(animations.into_iter().map(|a| a.duration(duration)).collect())
-            }
+            Self::Group(animations) => Self::Group(
+                animations
+                    .into_iter()
+                    .map(|a| a.duration(duration))
+                    .collect(),
+            ),
         }
     }
 
@@ -362,9 +365,12 @@ impl Animation {
                 easing: new_easing,
                 repeat,
             },
-            Self::Group(animations) => {
-                Self::Group(animations.into_iter().map(|a| a.easing(new_easing)).collect())
-            }
+            Self::Group(animations) => Self::Group(
+                animations
+                    .into_iter()
+                    .map(|a| a.easing(new_easing))
+                    .collect(),
+            ),
         }
     }
 }
