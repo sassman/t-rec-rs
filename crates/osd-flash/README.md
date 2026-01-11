@@ -6,7 +6,7 @@ This crate provides a simple API for creating overlay windows that appear above 
 
 ## Backends
 
-- **skylight** (macOS): Uses Apple's private SkyLight framework for overlay windows that appear above all other content, including fullscreen apps.
+- macOS: core-animation that uses NSWindow and [Quartz-Core/Core-Animation](https://developer.apple.com/documentation/quartzcore) for animations.
 
 ## Features
 
@@ -18,7 +18,7 @@ This crate provides a simple API for creating overlay windows that appear above 
 
 ## Requirements
 
-- macOS: Uses private SkyLight framework, works on macOS 10.14+
+- macOS: version 10.3+
 
 ## Quick Start
 

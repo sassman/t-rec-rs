@@ -1,9 +1,9 @@
 //! Visual feedback during recording (screenshot indicators, keystroke overlays).
 //!
-//! On macOS with `osd-flash-indicator` feature enabled, uses Skylight for on-screen display.
+//! On macOS with `osd-flash-indicator` feature enabled, uses core-animation for on-screen display.
 //! Otherwise falls back to a no-op implementation.
 //!
-//! The Skylight presenter must run on the main thread due to macOS requirements.
+//! The Presenter must run on the main thread due to macOS requirements.
 
 #[cfg(all(target_os = "macos", feature = "osd-flash-indicator"))]
 mod macos;

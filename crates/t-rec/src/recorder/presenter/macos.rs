@@ -1,4 +1,4 @@
-//! macOS presenter using Skylight for on-screen display.
+//! macOS presenter using core-animation for on-screen display.
 //!
 //! This module is only compiled when both:
 //! - `target_os = "macos"`
