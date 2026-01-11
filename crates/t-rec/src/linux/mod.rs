@@ -15,4 +15,5 @@ pub fn setup() -> Result<impl PlatformApi> {
     X11Api::new()
 }
 
+#[allow(dead_code)]
 pub const DEFAULT_SHELL: &str = "/bin/sh";

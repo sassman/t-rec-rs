@@ -332,6 +332,8 @@ impl RecordingSession {
         })
     }
 
+    // todo: refactor the arguments into a recording context struct
+    #[allow(clippy::too_many_arguments)]
     fn run_recording(
         mut runtime: Runtime,
         config: &SessionConfig,
