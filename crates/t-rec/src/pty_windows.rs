@@ -12,7 +12,10 @@ use std::thread;
 use tokio::sync::broadcast;
 
 use windows::core::PWSTR;
-use windows::Win32::Foundation::{CloseHandle, HANDLE, INVALID_HANDLE_VALUE};
+use windows::Win32::Foundation::{
+    CloseHandle, SetHandleInformation, HANDLE, HANDLE_FLAGS, HANDLE_FLAG_INHERIT,
+    INVALID_HANDLE_VALUE,
+};
 use windows::Win32::Security::SECURITY_ATTRIBUTES;
 use windows::Win32::Storage::FileSystem::{ReadFile, WriteFile};
 use windows::Win32::System::Console::{
@@ -21,8 +24,9 @@ use windows::Win32::System::Console::{
 use windows::Win32::System::Pipes::CreatePipe;
 use windows::Win32::System::Threading::{
     CreateProcessW, InitializeProcThreadAttributeList, UpdateProcThreadAttribute,
-    WaitForSingleObject, EXTENDED_STARTUPINFO_PRESENT, LPPROC_THREAD_ATTRIBUTE_LIST,
-    PROCESS_INFORMATION, PROC_THREAD_ATTRIBUTE_PSEUDOCONSOLE, STARTUPINFOEXW,
+    WaitForSingleObject, CREATE_UNICODE_ENVIRONMENT, EXTENDED_STARTUPINFO_PRESENT,
+    LPPROC_THREAD_ATTRIBUTE_LIST, PROCESS_CREATION_FLAGS, PROCESS_INFORMATION,
+    PROC_THREAD_ATTRIBUTE_PSEUDOCONSOLE, STARTUPINFOEXW,
 };
 
 use crate::event_router::{Event, LifecycleEvent};
@@ -95,6 +99,13 @@ impl PtyShell {
         CreatePipe(&mut pipe_out_read, &mut pipe_out_write, Some(&sa), 0)
             .context("Failed to create output pipe")?;
 
+        // IMPORTANT: Clear the inherit flag on handles we're keeping
+        // Only the handles passed to CreatePseudoConsole should be inheritable
+        SetHandleInformation(pipe_in_write, HANDLE_FLAG_INHERIT.0, HANDLE_FLAGS(0))
+            .context("Failed to clear inherit on pipe_in_write")?;
+        SetHandleInformation(pipe_out_read, HANDLE_FLAG_INHERIT.0, HANDLE_FLAGS(0))
+            .context("Failed to clear inherit on pipe_out_read")?;
+
         // Get console size (default to 120x30 if we can't determine)
         let size = COORD { X: 120, Y: 30 };
 
@@ -108,6 +119,7 @@ impl PtyShell {
         .context("Failed to create pseudo-console")?;
 
         // Close the handles that the pseudo-console now owns
+        // (ConPTY duplicates them internally)
         let _ = CloseHandle(pipe_in_read);
         let _ = CloseHandle(pipe_out_write);
 
@@ -137,8 +149,17 @@ impl PtyShell {
         .context("Failed to update proc thread attribute")?;
 
         // Create startup info
+        // Set STARTF_USESTDHANDLES to prevent inheriting parent's redirected handles
+        // This is a workaround for ConPTY not working correctly when parent output is redirected
+        // See: https://github.com/microsoft/terminal/issues/11276
+        use windows::Win32::System::Threading::STARTF_USESTDHANDLES;
+
         let mut startup_info: STARTUPINFOEXW = zeroed();
         startup_info.StartupInfo.cb = size_of::<STARTUPINFOEXW>() as u32;
+        startup_info.StartupInfo.dwFlags = STARTF_USESTDHANDLES;
+        startup_info.StartupInfo.hStdInput = INVALID_HANDLE_VALUE;
+        startup_info.StartupInfo.hStdOutput = INVALID_HANDLE_VALUE;
+        startup_info.StartupInfo.hStdError = INVALID_HANDLE_VALUE;
         startup_info.lpAttributeList = attr_list_ptr;
 
         // Create process
@@ -149,19 +170,30 @@ impl PtyShell {
 
         // IMPORTANT: Cast &STARTUPINFOEXW to *const STARTUPINFOW (not &startup_info.StartupInfo)
         // This ensures the attribute list remains accessible
+        // Use EXTENDED_STARTUPINFO_PRESENT to attach to the pseudo-console
+        let creation_flags = PROCESS_CREATION_FLAGS(EXTENDED_STARTUPINFO_PRESENT.0);
+
         CreateProcessW(
             None,
             Some(PWSTR(cmd_wide.as_mut_ptr())),
             None,
             None,
-            false,
-            EXTENDED_STARTUPINFO_PRESENT,
+            false, // Don't inherit handles from parent
+            creation_flags,
             None,
             None,
             &startup_info.StartupInfo,
             &mut process_info,
         )
         .context(format!("Failed to create process: {}", program))?;
+
+        log::debug!(
+            "ConPTY spawned: hpc={:?}, pid={}, pipe_in={:?}, pipe_out={:?}",
+            hpc.0,
+            process_info.dwProcessId,
+            pipe_in_write.0,
+            pipe_out_read.0
+        );
 
         Ok(Self {
             hpc,
@@ -263,10 +295,19 @@ impl Write for PtyWriter {
                 },
             )?;
         }
+        log::debug!(
+            "PtyWriter::write: requested {} bytes, wrote {} bytes",
+            buf.len(),
+            bytes_written
+        );
         Ok(bytes_written as usize)
     }
 
     fn flush(&mut self) -> std::io::Result<()> {
+        use windows::Win32::Storage::FileSystem::FlushFileBuffers;
+        unsafe {
+            let _ = FlushFileBuffers(self.handle);
+        }
         Ok(())
     }
 }
@@ -287,18 +328,24 @@ impl PtyReader {
 
         // Check if there's data available
         let mut bytes_available: u32 = 0;
+        let mut total_bytes_avail: u32 = 0;
         unsafe {
-            if PeekNamedPipe(
+            match PeekNamedPipe(
                 self.handle,
                 None,
                 0,
                 None,
                 Some(&mut bytes_available),
-                None,
-            )
-            .is_err()
-            {
-                return Ok(0);
+                Some(&mut total_bytes_avail),
+            ) {
+                Ok(_) => {}
+                Err(e) => {
+                    log::debug!("PeekNamedPipe error: {}", e);
+                    return Err(std::io::Error::new(
+                        std::io::ErrorKind::BrokenPipe,
+                        e.to_string(),
+                    ));
+                }
             }
         }
 
@@ -317,6 +364,7 @@ impl PtyReader {
                 None,
             )
             .map_err(|e: windows::core::Error| {
+                log::debug!("ReadFile error: {}", e);
                 std::io::Error::new(std::io::ErrorKind::Other, e.to_string())
             })?;
         }
@@ -353,5 +401,100 @@ mod tests {
 
         // Drop the shell (tests cleanup)
         drop(shell);
+    }
+
+    #[test]
+    fn test_pty_interactive() {
+        // Test interactive shell communication
+        let _ = env_logger::builder().is_test(true).try_init();
+        println!("\n=== ConPTY Interactive Test ===");
+
+        let shell = PtyShell::spawn("cmd.exe").expect("Failed to spawn shell");
+        let reader = shell.get_reader().expect("Failed to get reader");
+        let mut writer = shell.get_writer().expect("Failed to get writer");
+
+        let mut buf = [0u8; 4096];
+        let mut all_output = Vec::new();
+        let mut responded_to_cpr = false;
+
+        // Read initial output and respond to terminal queries
+        println!("Reading initial output...");
+        for i in 0..50 {
+            match reader.read_timeout(&mut buf, 100) {
+                Ok(n) if n > 0 => {
+                    all_output.extend_from_slice(&buf[..n]);
+                    print!("[{}:{}b]", i, n);
+                    std::io::Write::flush(&mut std::io::stdout()).ok();
+
+                    // Check for cursor position query ESC[6n and respond ONCE
+                    if !responded_to_cpr {
+                        let output_str = String::from_utf8_lossy(&all_output);
+                        if output_str.contains("\x1b[6n") {
+                            println!("\nResponding to cursor position query...");
+                            let written = writer.write(b"\x1b[1;1R").expect("Failed to write cursor pos");
+                            println!("Wrote {} bytes for cursor position response", written);
+                            writer.flush().expect("Failed to flush");
+                            responded_to_cpr = true;
+                        }
+                    }
+                }
+                _ => {
+                    // Wait a bit if no data
+                    std::thread::sleep(std::time::Duration::from_millis(50));
+                }
+            }
+
+            // After some iterations, check if we have the prompt
+            if i > 20 {
+                let output_str = String::from_utf8_lossy(&all_output);
+                if output_str.contains(">") {
+                    println!("\nFound prompt, shell ready");
+                    break;
+                }
+            }
+        }
+
+        println!(
+            "\nAll output so far ({} bytes):\n{:?}",
+            all_output.len(),
+            String::from_utf8_lossy(&all_output)
+        );
+
+        // Send echo command
+        println!("\nSending: echo TEST_OUTPUT_12345");
+        let written = writer.write(b"echo TEST_OUTPUT_12345\r\n").expect("Failed to write");
+        println!("Wrote {} bytes for echo command", written);
+        writer.flush().expect("Failed to flush");
+
+        // Read response
+        println!("Reading response...");
+        let mut response = Vec::new();
+        for i in 0..30 {
+            match reader.read_timeout(&mut buf, 100) {
+                Ok(n) if n > 0 => {
+                    response.extend_from_slice(&buf[..n]);
+                    print!("[{}:{}b]", i, n);
+                    std::io::Write::flush(&mut std::io::stdout()).ok();
+                }
+                _ => {
+                    std::thread::sleep(std::time::Duration::from_millis(50));
+                }
+            }
+        }
+
+        let response_str = String::from_utf8_lossy(&response);
+        println!(
+            "\nResponse ({} bytes):\n{:?}",
+            response.len(),
+            &response_str
+        );
+
+        // Check if we got the expected output
+        assert!(
+            response_str.contains("TEST_OUTPUT_12345"),
+            "Expected response to contain TEST_OUTPUT_12345"
+        );
+
+        println!("\n=== Test Passed ===\n");
     }
 }
