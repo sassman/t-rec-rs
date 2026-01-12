@@ -94,8 +94,6 @@ use image::FlatSamples;
 pub type Image = FlatSamples<Vec<u8>>;
 /// Boxed image type for efficient passing.
 pub type ImageOnHeap = Box<Image>;
-/// Window identifier (platform-specific).
-pub type WindowId = u64;
 /// List of windows with optional names.
 pub type WindowList = Vec<WindowListEntry>;
 /// A window entry: optional name and ID.
@@ -103,8 +101,9 @@ pub type WindowListEntry = (Option<String>, WindowId);
 /// Result type using anyhow for error handling.
 pub type Result<T> = anyhow::Result<T>;
 
-// Re-export Margin for other modules
+// Re-export Margin and WindowId for other modules
 pub use crate::common::Margin;
+pub use crate::common::WindowId;
 
 // Re-export platform API trait
 pub use crate::common::PlatformApi;

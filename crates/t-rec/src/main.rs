@@ -60,13 +60,13 @@ use std::time::Duration;
 // Re-export common types
 pub type Image = FlatSamples<Vec<u8>>;
 pub type ImageOnHeap = Box<Image>;
-pub type WindowId = u64;
 pub type WindowList = Vec<WindowListEntry>;
 pub type WindowListEntry = (Option<String>, WindowId);
 pub type Result<T> = anyhow::Result<T>;
 
-// Re-export Margin for other modules
+// Re-export Margin and WindowId for other modules
 pub use crate::common::Margin;
+pub use crate::common::WindowId;
 
 fn main() -> Result<()> {
     init_logging();
@@ -259,7 +259,7 @@ fn validate_wallpaper_config(
 /// and finding the Terminal in that list.
 fn current_win_id(api: &impl PlatformApi, args: &CliArgs) -> Result<(WindowId, Option<String>)> {
     match args.win_id.ok_or_else(|| env::var("WINDOWID")) {
-        Ok(win_id) => Ok((win_id, None)),
+        Ok(win_id) => Ok((WindowId::from(win_id), None)),
         Err(_) => {
             let terminal = env::var("TERM_PROGRAM").context(
                 "Env variable 'TERM_PROGRAM' was empty but is needed for figure out the WindowId. Please set it to e.g. TERM_PROGRAM=alacitty",

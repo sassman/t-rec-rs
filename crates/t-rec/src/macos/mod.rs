@@ -4,7 +4,7 @@ mod window_id;
 
 use crate::common::identify_transparency::identify_transparency;
 use crate::common::image::crop;
-use crate::common::{Platform, PlatformApiFactory};
+use crate::common::{Platform, PlatformApiFactory, WindowId};
 use crate::PlatformApi;
 use crate::{ImageOnHeap, Margin, Result, WindowList};
 
@@ -27,8 +27,8 @@ struct QuartzApi {
 }
 
 impl PlatformApi for QuartzApi {
-    fn calibrate(&mut self, window_id: u64) -> Result<()> {
-        let image = capture_window_screenshot(window_id)?;
+    fn calibrate(&mut self, window_id: WindowId) -> Result<()> {
+        let image = capture_window_screenshot(window_id.as_u64())?;
         self.margin = identify_transparency(*image)?;
 
         Ok(())
@@ -38,8 +38,8 @@ impl PlatformApi for QuartzApi {
         window_list()
     }
 
-    fn capture_window_screenshot(&self, window_id: u64) -> Result<ImageOnHeap> {
-        let img = capture_window_screenshot(window_id)?;
+    fn capture_window_screenshot(&self, window_id: WindowId) -> Result<ImageOnHeap> {
+        let img = capture_window_screenshot(window_id.as_u64())?;
         if let Some(margin) = self.margin.as_ref() {
             if !margin.is_zero() {
                 // in this case we want to crop away the transparent margins
@@ -49,7 +49,7 @@ impl PlatformApi for QuartzApi {
         Ok(img)
     }
 
-    fn get_active_window(&self) -> Result<u64> {
+    fn get_active_window(&self) -> Result<WindowId> {
         env::var("WINDOWID")
             .context(
                 r#"Cannot determine the active window.
@@ -58,7 +58,7 @@ impl PlatformApi for QuartzApi {
  - If you're using alacritty: https://github.com/sassman/t-rec-rs/issues/44#issuecomment-830630348
 "#,
             )?
-            .parse::<u64>()
+            .parse::<WindowId>()
             .context("Cannot parse env variable 'WINDOWID' as number")
     }
 }
