@@ -44,7 +44,12 @@ pub fn generate_mp4_with_ffmpeg(
     fps: u8,
 ) -> Result<()> {
     println!("🎬 🎉 🚀 Generating {target}");
-    Command::new(FFMPEG_BINARY)
+
+    // Build the glob pattern - need to use forward slashes for ffmpeg on Windows
+    let temp_path = tempdir.path().to_string_lossy().replace('\\', "/");
+    let pattern = format!("{temp_path}/*.{IMG_EXT}");
+
+    let output = Command::new(FFMPEG_BINARY)
         .arg("-y")
         .arg("-r")
         // framerate
@@ -54,7 +59,7 @@ pub fn generate_mp4_with_ffmpeg(
         .arg("-pattern_type")
         .arg("glob")
         .arg("-i")
-        .arg(tempdir.path().join(format!("*.{IMG_EXT}")))
+        .arg(&pattern)
         .arg("-vcodec")
         .arg("libx264")
         .arg("-pix_fmt")
@@ -65,6 +70,15 @@ pub fn generate_mp4_with_ffmpeg(
         // end of fix
         .arg(target)
         .output()
-        .with_context(|| format!("Cannot start '{FFMPEG_BINARY}' to generate the final video"))
-        .map(|_| ())
+        .with_context(|| format!("Cannot start '{FFMPEG_BINARY}' to generate the final video"))?;
+
+    if !output.status.success() {
+        anyhow::bail!(
+            "ffmpeg failed with exit code {:?}\nStderr: {}",
+            output.status.code(),
+            String::from_utf8_lossy(&output.stderr)
+        );
+    }
+
+    Ok(())
 }
