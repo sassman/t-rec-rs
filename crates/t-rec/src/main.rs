@@ -28,6 +28,8 @@ mod linux;
 mod macos;
 #[cfg(unix)]
 mod pty;
+#[cfg(target_os = "windows")]
+mod pty_windows;
 mod utils;
 #[cfg(target_os = "windows")]
 mod windows;
