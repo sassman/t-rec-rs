@@ -1,3 +1,4 @@
+pub(crate) mod pty;
 mod screenshot;
 mod window_id;
 

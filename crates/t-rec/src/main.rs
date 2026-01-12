@@ -28,8 +28,6 @@ mod linux;
 mod macos;
 #[cfg(unix)]
 mod pty;
-#[cfg(target_os = "windows")]
-mod pty_windows;
 mod utils;
 #[cfg(target_os = "windows")]
 mod windows;
@@ -136,12 +134,14 @@ fn main() -> Result<()> {
     // Run recording session
     let session = RecordingSession::new(session_config, Box::new(api), Runtime::new())?;
     let output_config = session.output_config();
+    // TODO: would be good to let the result remain in the session and have a session.result() method, but then work further with `session.create_output_generator().run()` below
     let result = session.run()?;
 
     // Print recording summary
     print_recording_summary(&settings, result.frame_count);
 
     // Generate outputs (GIF, MP4, screenshots)
+    // TODO: the output generator should be creatable from the session, i.e. session.create_output_generator()
     OutputGenerator::new(result, output_config).process()?;
 
     Ok(())
