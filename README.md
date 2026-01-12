@@ -22,7 +22,7 @@ Blazingly fast terminal recorder that generates animated gif images for the web 
 - Generates high quality small sized animated gif images or mp4 videos
 - **built-in idle frames detection and optimization** (for super fluid presentations)
 - Applies (can be disabled) border decor effects like drop shadow
-- Runs on MacOS, Linux and NetBSD
+- Runs on Windows, MacOS, Linux and NetBSD
 - Uses native efficient APIs
 - Runs without any cloud service and entirely offline
 - No issues with terminal sizes larger than 80x24
@@ -103,7 +103,31 @@ cd /usr/pkgsrc/multimedia/t-rec
 make install
 ```
 
+## Installation on Windows
+
+### Prerequisites
+
+t-rec requires ImageMagick and optionally ffmpeg for video generation. Install them using winget:
+
+```powershell
+# Install ImageMagick (required for GIF generation and effects)
+winget install ImageMagick.ImageMagick
+
+# Install ffmpeg (optional, for MP4 video generation)
+winget install ffmpeg
+```
+
 ### with cargo
+
+After installing the prerequisites:
+
+```powershell
+cargo install -f t-rec
+```
+
+**Note:** Make sure ImageMagick and ffmpeg are in your PATH after installation. You may need to restart your terminal.
+
+### with cargo (Linux)
 ```sh
 sudo apt-get install libx11-dev imagemagick
 cargo install -f t-rec
@@ -379,7 +403,7 @@ this is how it looks then:
 ## Contribute
 
 To contribute to t-rec you can either checkout existing issues [labeled with `good first issue`][4] or [open a new issue][5] and describe your problem.
-Also every PR is welcome. Support for Linux and Windows needs to be done.
+Also every PR is welcome.
 
 ## On the web & social media
 
