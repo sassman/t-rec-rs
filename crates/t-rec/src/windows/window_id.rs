@@ -1,3 +1,4 @@
+use crate::common::WindowId;
 use crate::WindowList;
 use anyhow::{anyhow, Result};
 use windows::Win32::UI::WindowsAndMessaging::GetForegroundWindow;
@@ -11,7 +12,7 @@ pub fn window_list() -> Result<WindowList> {
 
     let win_list = windows
         .into_iter()
-        .map(|w| (Some(w.window_name), w.hwnd as u64))
+        .map(|w| (Some(w.window_name), WindowId::from(w.hwnd as u64)))
         .collect();
 
     Ok(win_list)
@@ -20,7 +21,7 @@ pub fn window_list() -> Result<WindowList> {
 /// Returns the window ID (HWND) of the currently active/foreground window.
 ///
 /// Uses the Win32 GetForegroundWindow API.
-pub fn get_foreground_window() -> Result<u64> {
+pub fn get_foreground_window() -> Result<WindowId> {
     let hwnd = unsafe { GetForegroundWindow() };
 
     if hwnd.0.is_null() {
@@ -33,5 +34,5 @@ pub fn get_foreground_window() -> Result<u64> {
         ));
     }
 
-    Ok(hwnd.0 as u64)
+    Ok(WindowId::from(hwnd.0 as u64))
 }
