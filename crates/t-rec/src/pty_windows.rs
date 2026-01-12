@@ -224,8 +224,11 @@ impl PtyShell {
     /// Returns when the shell exits, a shutdown signal is received, or an error occurs.
     pub fn forward_output(&mut self, mut event_rx: broadcast::Receiver<Event>) -> Result<()> {
         let reader = self.get_reader()?;
+        let mut writer = self.get_writer()?;
         let mut stdout = std::io::stdout();
         let mut buf = [0u8; 4096];
+        let mut pending_data = Vec::new();
+        let mut responded_to_cpr = false;
 
         loop {
             // Check for lifecycle events (non-blocking)
@@ -244,8 +247,7 @@ impl PtyShell {
                 Err(broadcast::error::TryRecvError::Lagged(_)) => {}
             }
 
-            // Try to read from PTY (non-blocking via PeekNamedPipe would be better,
-            // but for simplicity we'll use a small timeout approach)
+            // Try to read from PTY
             match reader.read_timeout(&mut buf, 10) {
                 Ok(0) => {
                     // Check if process has exited
@@ -257,7 +259,29 @@ impl PtyShell {
                     thread::sleep(std::time::Duration::from_millis(10));
                 }
                 Ok(n) => {
-                    stdout.write_all(&buf[..n])?;
+                    let data = &buf[..n];
+
+                    // Check for cursor position request (ESC[6n) and respond
+                    // This is needed because cmd.exe queries cursor position at startup
+                    if !responded_to_cpr {
+                        pending_data.extend_from_slice(data);
+                        if pending_data
+                            .windows(4)
+                            .any(|w| w == b"\x1b[6n" || w == [0x1b, b'[', b'6', b'n'])
+                        {
+                            log::debug!("Responding to cursor position request");
+                            // Respond with cursor at row 1, column 1
+                            let _ = writer.write_all(b"\x1b[1;1R");
+                            let _ = writer.flush();
+                            responded_to_cpr = true;
+                        }
+                        // After 500 bytes, stop looking for CPR
+                        if pending_data.len() > 500 {
+                            responded_to_cpr = true;
+                        }
+                    }
+
+                    stdout.write_all(data)?;
                     stdout.flush()?;
                 }
                 Err(_) => {
