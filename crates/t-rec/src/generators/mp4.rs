@@ -9,6 +9,8 @@ const FFMPEG_BINARY: &str = "ffmpeg";
 
 #[cfg(target_os = "macos")]
 const INST_CMD: &str = "brew install ffmpeg";
+#[cfg(target_os = "windows")]
+const INST_CMD: &str = "winget install ffmpeg";
 #[cfg(not(any(target_os = "macos", target_os = "windows")))]
 const INST_CMD: &str = "apt-get install ffmpeg";
 
