@@ -74,7 +74,7 @@ mod windows;
 mod assets;
 mod capture;
 mod common;
-mod decors;
+pub mod decors;
 mod event_router;
 mod generators;
 mod post_processing;
