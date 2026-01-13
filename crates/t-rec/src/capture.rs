@@ -233,9 +233,11 @@ mod tests {
     use tokio::sync::broadcast;
 
     /// Mock PlatformApi that returns predefined 1x1 pixel frames.
+    /// Sends a Stop event after all frames have been consumed, making tests deterministic.
     struct TestApi {
         frames: Vec<Vec<u8>>,
         index: std::cell::Cell<usize>,
+        stop_sender: tokio::sync::broadcast::Sender<Event>,
     }
 
     impl crate::PlatformApi for TestApi {
@@ -251,6 +253,10 @@ mod tests {
             let frame_index = if i >= self.frames.len() {
                 self.frames.len() - 1
             } else {
+                // Send stop after returning the last frame
+                if i == self.frames.len() - 1 {
+                    let _ = self.stop_sender.send(Event::Capture(CaptureEvent::Stop));
+                }
                 i
             };
             Ok(Box::new(image::FlatSamples {
@@ -284,27 +290,21 @@ mod tests {
     }
 
     /// Run a capture test with the given frames and settings, returning captured timestamps.
+    /// The test stops deterministically after all frames are consumed, not based on timing.
     fn run_capture_test(
         test_frames: Vec<Vec<u8>>,
         natural_mode: bool,
         idle_threshold: Option<Duration>,
     ) -> crate::Result<Vec<u128>> {
-        let test_api = TestApi {
-            frames: test_frames.clone(),
-            index: Default::default(),
-        };
         let captured_timestamps = Arc::new(Mutex::new(Vec::new()));
         let temp_directory = Arc::new(Mutex::new(TempDir::new()?));
         let (tx, rx) = broadcast::channel::<Event>(10);
 
-        let frame_interval = 10;
-        let capture_duration_ms = (test_frames.len() as u64 * frame_interval) + 15;
-
-        let tx_clone = tx.clone();
-        std::thread::spawn(move || {
-            std::thread::sleep(Duration::from_millis(capture_duration_ms));
-            let _ = tx_clone.send(Event::Capture(CaptureEvent::Stop));
-        });
+        let test_api = TestApi {
+            frames: test_frames.clone(),
+            index: Default::default(),
+            stop_sender: tx.clone(),
+        };
 
         // Send start event
         tx.send(Event::Capture(CaptureEvent::Start)).unwrap();
@@ -417,13 +417,15 @@ mod tests {
 
     #[test]
     fn test_stop_event_terminates_capture() {
-        let test_api = TestApi {
-            frames: frames([1, 2, 3]),
-            index: Default::default(),
-        };
         let captured_timestamps = Arc::new(Mutex::new(Vec::new()));
         let temp_directory = Arc::new(Mutex::new(TempDir::new().unwrap()));
         let (tx, rx) = broadcast::channel::<Event>(10);
+
+        let test_api = TestApi {
+            frames: frames([1, 2, 3]),
+            index: Default::default(),
+            stop_sender: tx.clone(),
+        };
 
         // Send start then immediate stop
         tx.send(Event::Capture(CaptureEvent::Start)).unwrap();
@@ -445,13 +447,15 @@ mod tests {
 
     #[test]
     fn test_shutdown_event_terminates_capture() {
-        let test_api = TestApi {
-            frames: frames([1, 2, 3]),
-            index: Default::default(),
-        };
         let captured_timestamps = Arc::new(Mutex::new(Vec::new()));
         let temp_directory = Arc::new(Mutex::new(TempDir::new().unwrap()));
         let (tx, rx) = broadcast::channel::<Event>(10);
+
+        let test_api = TestApi {
+            frames: frames([1, 2, 3]),
+            index: Default::default(),
+            stop_sender: tx.clone(),
+        };
 
         // Shutdown before start should exit cleanly
         tx.send(Event::Lifecycle(LifecycleEvent::Shutdown)).unwrap();
@@ -472,10 +476,6 @@ mod tests {
     #[test]
     fn test_frames_saved_to_tempdir() {
         let test_frames = frames([1, 2, 3]);
-        let test_api = TestApi {
-            frames: test_frames,
-            index: Default::default(),
-        };
         let captured_timestamps = Arc::new(Mutex::new(Vec::new()));
         let temp_directory = Arc::new(Mutex::new(TempDir::new().unwrap()));
         let (tx, rx) = broadcast::channel::<Event>(10);
@@ -483,11 +483,11 @@ mod tests {
         // Clone the Arc to keep tempdir alive for file check
         let temp_directory_check = temp_directory.clone();
 
-        let tx_clone = tx.clone();
-        std::thread::spawn(move || {
-            std::thread::sleep(Duration::from_millis(45));
-            let _ = tx_clone.send(Event::Capture(CaptureEvent::Stop));
-        });
+        let test_api = TestApi {
+            frames: test_frames,
+            index: Default::default(),
+            stop_sender: tx.clone(),
+        };
 
         tx.send(Event::Capture(CaptureEvent::Start)).unwrap();
 

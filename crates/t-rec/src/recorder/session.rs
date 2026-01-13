@@ -296,11 +296,11 @@ impl RecordingSession {
             for i in (1..=3).rev() {
                 print!("\r[t-rec]: Recording starts in {}...", i);
                 io::stdout().flush().ok();
-                router.send(Event::Flash(FlashEvent::RecordingStarted));
                 thread::sleep(Duration::from_secs(1));
             }
             print!("\r[t-rec]: Recording!                         \n");
             io::stdout().flush().ok();
+            router.send(Event::Flash(FlashEvent::RecordingStarted));
             thread::sleep(Duration::from_millis(250));
         }
 
