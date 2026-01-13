@@ -276,7 +276,7 @@ mod tests {
             Ok(vec![])
         }
         fn get_active_window(&self) -> crate::Result<crate::WindowId> {
-            Ok(0)
+            Ok(crate::WindowId::default())
         }
     }
 
@@ -310,7 +310,7 @@ mod tests {
         tx.send(Event::Capture(CaptureEvent::Start)).unwrap();
 
         let ctx = CaptureContext {
-            win_id: 0,
+            win_id: crate::WindowId::default(),
             time_codes: captured_timestamps.clone(),
             tempdir: temp_directory,
             natural: natural_mode,
@@ -432,7 +432,7 @@ mod tests {
         tx.send(Event::Capture(CaptureEvent::Stop)).unwrap();
 
         let ctx = CaptureContext {
-            win_id: 0,
+            win_id: crate::WindowId::default(),
             time_codes: captured_timestamps.clone(),
             tempdir: temp_directory,
             natural: false,
@@ -461,7 +461,7 @@ mod tests {
         tx.send(Event::Lifecycle(LifecycleEvent::Shutdown)).unwrap();
 
         let ctx = CaptureContext {
-            win_id: 0,
+            win_id: crate::WindowId::default(),
             time_codes: captured_timestamps.clone(),
             tempdir: temp_directory,
             natural: false,
@@ -492,7 +492,7 @@ mod tests {
         tx.send(Event::Capture(CaptureEvent::Start)).unwrap();
 
         let ctx = CaptureContext {
-            win_id: 0,
+            win_id: crate::WindowId::default(),
             time_codes: captured_timestamps.clone(),
             tempdir: temp_directory,
             natural: false,

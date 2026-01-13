@@ -6,22 +6,43 @@ use std::process::{Command, Output};
 use std::time::Duration;
 use tempfile::TempDir;
 
+// On Windows, ImageMagick 7.x uses 'magick' instead of 'convert'
+// because 'convert.exe' conflicts with Windows filesystem conversion utility
+#[cfg(target_os = "windows")]
+const PROGRAM: &str = "magick";
+#[cfg(not(target_os = "windows"))]
 const PROGRAM: &str = "convert";
+
 #[cfg(target_os = "macos")]
 const INST_CMD: &str = "brew install imagemagick";
-#[cfg(not(target_os = "macos"))]
+#[cfg(target_os = "windows")]
+const INST_CMD: &str = "winget install ImageMagick.ImageMagick";
+#[cfg(not(any(target_os = "macos", target_os = "windows")))]
 const INST_CMD: &str = "apt-get install imagemagick";
 
 ///
 /// checks for imagemagick
 /// and suggests the installation command if there are issues
+/// On Windows, also verifies the output is actually from ImageMagick
+/// (not Windows system convert.exe)
 pub fn check_for_imagemagick() -> Result<Output> {
-    Command::new(PROGRAM)
-        .arg("--version")
+    let output = Command::new(PROGRAM)
+        .arg("-version")
         .output()
         .with_context(|| {
             format!("There is an issue with '{PROGRAM}', please install: `{INST_CMD}`")
-        })
+        })?;
+
+    // Verify it's actually ImageMagick by checking the version output
+    let version_str = String::from_utf8_lossy(&output.stdout);
+    if !version_str.contains("ImageMagick") {
+        anyhow::bail!(
+            "'{PROGRAM}' does not appear to be ImageMagick. \
+             Please install ImageMagick: `{INST_CMD}`"
+        );
+    }
+
+    Ok(output)
 }
 
 ///

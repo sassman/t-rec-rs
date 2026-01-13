@@ -52,7 +52,7 @@ impl X11Api {
 
     pub fn get_window_name(&self, window: &WindowId) -> Result<Option<String>> {
         let conn = &self.conn;
-        let window = *window as Window;
+        let window = window.as_u32();
         let atoms = Atoms::new(conn)?.reply()?;
 
         let prop = conn
@@ -85,17 +85,17 @@ impl X11Api {
     }
 
     pub fn get_all_sub_windows(&self, root: &WindowId) -> Result<Vec<WindowId>> {
-        let root = *root as Window;
+        let root = root.as_u32();
         let conn = &self.conn;
         let tree = conn.query_tree(root)?.reply()?;
         let mut result = vec![];
         for window in tree.children {
-            let window_id = window as WindowId;
+            let window_id = WindowId::from(window);
             let (_, _, width, height) = self.get_window_geometry(&window_id)?;
             if width > 1 && height > 1 {
                 let attr = conn.get_window_attributes(window)?.reply()?;
                 if let MapState::VIEWABLE = attr.map_state {
-                    result.push(window as WindowId);
+                    result.push(WindowId::from(window));
                 } else {
                     debug!(
                         "Window {} with {} x {} is unmapped",
@@ -114,12 +114,12 @@ impl X11Api {
 
     pub fn get_visible_windows(&self) -> Result<Vec<WindowId>> {
         let screen = self.screen();
-        self.get_all_sub_windows(&(screen.root as WindowId))
+        self.get_all_sub_windows(&WindowId::from(screen.root))
     }
 
     pub fn get_window_geometry(&self, window: &WindowId) -> Result<(i16, i16, u16, u16)> {
         let conn = &self.conn;
-        let window = *window as Window;
+        let window = window.as_u32();
         let geom = conn.get_geometry(window)?.reply()?;
         Ok((geom.x, geom.y, geom.width, geom.height))
     }
@@ -169,7 +169,7 @@ impl PlatformApi for X11Api {
             // NOTE: x and y are not the absolute coordinates but relative to the windows dimensions, that is why 0, 0
             .get_image(
                 ImageFormat::Z_PIXMAP,
-                window_id as Drawable,
+                window_id.as_u32(),
                 x,
                 y,
                 width,
@@ -253,7 +253,7 @@ impl PlatformApi for X11Api {
             .next()
             .unwrap();
 
-        Ok(window as WindowId)
+        Ok(WindowId::from(window))
     }
 }
 
@@ -420,7 +420,7 @@ mod test {
         let api = X11Api::new()?;
         let tree = api.get_visible_windows()?;
         for input in tree {
-            let _input = input as WindowId;
+            let _input = input;
             // println!("Window {}:", input);
             // println!("  - class: {:?}", api.get_window_class(&input)?);
             // println!("  - name: {:?}", api.get_window_name(&input)?);

@@ -25,6 +25,10 @@ jobs:
             os: macos-latest
             cross: false
             binName: t-rec
+          - target: x86_64-pc-windows-msvc
+            os: windows-latest
+            cross: false
+            binName: t-rec.exe
     steps:
       - uses: actions/checkout@v4
       - name: Setup Rust
@@ -44,6 +48,11 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y libx11-dev
+      - if: ${{ matrix.os == 'windows-latest' }}
+        name: install ImageMagick and ffmpeg for Windows
+        run: |
+          winget install --id ImageMagick.ImageMagick --silent --accept-source-agreements --accept-package-agreements
+          winget install --id Gyan.FFmpeg --silent --accept-source-agreements --accept-package-agreements
       - name: Build
         uses: actions-rs/cargo@v1
         with:
@@ -59,10 +68,14 @@ jobs:
       - name: Create Archive
         id: archive
         shell: bash
-        env:
-          FILENAME: ${{ matrix.binName }}-${{ env.TAG }}-${{ matrix.target }}.tar.gz
         run: |
-          tar -czvf "$FILENAME" README.md LICENSE -C "target/${{ matrix.target }}/release" "${{ matrix.binName }}"
+          if [[ "${{ matrix.os }}" == "windows-latest" ]]; then
+            FILENAME="${{ matrix.binName }}-${{ env.TAG }}-${{ matrix.target }}.zip"
+            7z a "$FILENAME" README.md LICENSE "./target/${{ matrix.target }}/release/${{ matrix.binName }}"
+          else
+            FILENAME="${{ matrix.binName }}-${{ env.TAG }}-${{ matrix.target }}.tar.gz"
+            tar -czvf "$FILENAME" README.md LICENSE -C "target/${{ matrix.target }}/release" "${{ matrix.binName }}"
+          fi
           echo "FILENAME=$FILENAME" >> $GITHUB_ENV
       - name: Upload Archive
         uses: ncipollo/release-action@v1.8.7

@@ -4,7 +4,10 @@ use image::flat::View;
 use image::{imageops, GenericImageView, ImageBuffer, Rgba};
 
 /// specialized version of crop for [`ImageOnHeap`] and [`Margin`]
-#[cfg_attr(not(target_os = "macos"), allow(dead_code))]
+#[cfg_attr(
+    not(any(target_os = "macos", target_os = "windows")),
+    allow(dead_code)
+)]
 pub fn crop(image: Image, margin: &Margin) -> Result<ImageOnHeap> {
     let mut img2: View<_, Rgba<u8>> = image.as_view()?;
     let (width, height) = (

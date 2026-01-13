@@ -32,6 +32,8 @@ use crate::{Result, WindowId};
 
 #[cfg(unix)]
 use crate::pty::PtyShell;
+#[cfg(target_os = "windows")]
+use crate::windows::pty::PtyShell;
 
 /// Configuration for post-processing effects.
 ///

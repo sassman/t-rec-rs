@@ -60,13 +60,13 @@ use std::time::Duration;
 // Re-export common types
 pub type Image = FlatSamples<Vec<u8>>;
 pub type ImageOnHeap = Box<Image>;
-pub type WindowId = u64;
 pub type WindowList = Vec<WindowListEntry>;
 pub type WindowListEntry = (Option<String>, WindowId);
 pub type Result<T> = anyhow::Result<T>;
 
-// Re-export Margin for other modules
+// Re-export Margin and WindowId for other modules
 pub use crate::common::Margin;
+pub use crate::common::WindowId;
 
 fn main() -> Result<()> {
     init_logging();
@@ -134,12 +134,14 @@ fn main() -> Result<()> {
     // Run recording session
     let session = RecordingSession::new(session_config, Box::new(api), Runtime::new())?;
     let output_config = session.output_config();
+    // TODO: would be good to let the result remain in the session and have a session.result() method, but then work further with `session.create_output_generator().run()` below
     let result = session.run()?;
 
     // Print recording summary
     print_recording_summary(&settings, result.frame_count);
 
     // Generate outputs (GIF, MP4, screenshots)
+    // TODO: the output generator should be creatable from the session, i.e. session.create_output_generator()
     OutputGenerator::new(result, output_config).process()?;
 
     Ok(())
@@ -257,7 +259,7 @@ fn validate_wallpaper_config(
 /// and finding the Terminal in that list.
 fn current_win_id(api: &impl PlatformApi, args: &CliArgs) -> Result<(WindowId, Option<String>)> {
     match args.win_id.ok_or_else(|| env::var("WINDOWID")) {
-        Ok(win_id) => Ok((win_id, None)),
+        Ok(win_id) => Ok((WindowId::from(win_id), None)),
         Err(_) => {
             let terminal = env::var("TERM_PROGRAM").context(
                 "Env variable 'TERM_PROGRAM' was empty but is needed for figure out the WindowId. Please set it to e.g. TERM_PROGRAM=alacitty",

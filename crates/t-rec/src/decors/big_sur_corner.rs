@@ -4,6 +4,7 @@ use std::process::Command;
 use anyhow::Context;
 
 use crate::Result;
+use super::IMAGEMAGICK_CMD;
 
 /// Apply corner radius effect to a single file.
 ///
@@ -21,7 +22,7 @@ use crate::Result;
 /// ```
 pub fn apply_corner_to_file(file: &Path) -> Result<()> {
     let radius = 13;
-    let e = Command::new("convert")
+    let e = Command::new(IMAGEMAGICK_CMD)
         .arg(file.to_str().unwrap())
         .arg("(")
         .args(["+clone", "-alpha", "extract"])

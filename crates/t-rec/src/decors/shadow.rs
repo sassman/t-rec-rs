@@ -4,6 +4,7 @@ use std::process::Command;
 use anyhow::Context;
 
 use crate::Result;
+use super::IMAGEMAGICK_CMD;
 
 /// apply a border decor effect via a chain of convert commands
 ///
@@ -15,7 +16,7 @@ use crate::Result;
 ///     t-rec-frame-000000251.bmp
 /// ```
 pub fn apply_shadow_to_file(file: &Path, bg_color: &str) -> Result<()> {
-    let e = Command::new("convert")
+    let e = Command::new(IMAGEMAGICK_CMD)
         .arg(file.to_str().unwrap())
         .arg("(")
         .args(["+clone", "-background", "black", "-shadow", "100x20+0+0"])

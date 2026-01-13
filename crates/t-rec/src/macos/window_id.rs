@@ -1,3 +1,4 @@
+use crate::common::WindowId;
 use crate::macos::core_foundation_sys_patches::{
     kCFNumberSInt32Type as I32, kCFNumberSInt64Type as I64,
 };
@@ -64,7 +65,7 @@ pub fn window_list() -> Result<WindowList> {
         if let (DictEntryValue::String(name), DictEntryValue::Number(win_id)) =
             (window_owner, window_id)
         {
-            win_list.push((Some(name), win_id as u64));
+            win_list.push((Some(name), WindowId::from(win_id as u64)));
         }
     }
 
