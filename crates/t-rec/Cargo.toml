@@ -74,6 +74,9 @@ lib = []
 # Disable with: cargo build --no-default-features
 osd-flash-indicator = ["dep:osd-flash"]
 
+# Experimental: Use native Rust image operations instead of ImageMagick
+x-native-imgops = []
+
 [package.metadata.deb]
 section = "x11"
 depends = "imagemagick"
