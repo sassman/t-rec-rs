@@ -54,13 +54,12 @@ impl Presenter for OsdPresenter {
         match event {
             FlashEvent::RecordingStarted => {
                 log::debug!(
-                    "Recording started - no indicator for window {}",
+                    "Recording started - showing indicator for window {}",
                     self.win_id
                 );
                 if let Err(e) = show_recording_indicator() {
                     log::error!("Cannot show the recording started indicator: {}", e);
                 }
-                show_recording_indicator()?;
             }
             FlashEvent::ScreenshotTaken => {
                 log::debug!(
