@@ -1,0 +1,3 @@
+[alias]
+# open the report at `target/criterion/report/index.html`
+"b:run" = "bench -p t-rec --bench decors_benchmark -- --sample-size 10 --warm-up-time 1"

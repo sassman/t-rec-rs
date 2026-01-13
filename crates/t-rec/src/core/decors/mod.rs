@@ -10,3 +10,7 @@ pub use shadow::apply_shadow_to_file;
 pub(crate) const IMAGEMAGICK_CMD: &str = "magick";
 #[cfg(not(target_os = "windows"))]
 pub(crate) const IMAGEMAGICK_CMD: &str = "convert";
+
+// Benchmark exports
+pub use big_sur_corner::{apply_corner_to_file_imagemagick, apply_corner_to_file_native};
+pub use shadow::{apply_shadow_to_file_imagemagick, apply_shadow_to_file_native};
