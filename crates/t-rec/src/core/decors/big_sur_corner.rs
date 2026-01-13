@@ -14,6 +14,16 @@ pub fn apply_corner_to_file(file: &Path) -> Result<()> {
     }
 }
 
+/// Native implementation (for benchmarking)
+pub fn apply_corner_to_file_native(file: &Path) -> Result<()> {
+    native::apply_corner_to_file(file)
+}
+
+/// ImageMagick implementation (for benchmarking)
+pub fn apply_corner_to_file_imagemagick(file: &Path) -> Result<()> {
+    imagemagick::apply_corner_to_file(file)
+}
+
 /// Native implementation using the image crate with anti-aliased corners.
 mod native {
     use super::*;
@@ -63,8 +73,8 @@ mod native {
     /// - 0.0 = fully outside (pixel transparent)
     /// - 0.0-1.0 = on the edge (smooth anti-aliased blend)
     fn corner_coverage(x: u32, y: u32, width: u32, height: u32, radius: f32) -> f32 {
-        let x = x as f32 + 0.5; // pixel center
-        let y = y as f32 + 0.5;
+        let x = x as f32; // use pixel coordinate (matches ImageMagick)
+        let y = y as f32;
         let w = width as f32;
         let h = height as f32;
 
@@ -101,7 +111,8 @@ mod native {
         let signed_distance = distance - radius;
 
         // Smooth falloff over ~1 pixel for anti-aliasing
-        (0.5 - signed_distance).clamp(0.0, 1.0)
+        // Bias inward so pixels on the edge stay opaque (matches ImageMagick rasterization)
+        (1.0 - signed_distance).clamp(0.0, 1.0)
     }
 
     #[cfg(test)]
@@ -188,14 +199,23 @@ mod native {
             let outside = circle_coverage(0.5, 0.5, 13.0, 13.0, 13.0);
             assert!(outside < 0.01, "outside should be ~0.0");
 
-            // Pixel on the edge should be ~0.5
+            // Pixel exactly on the edge should be ~1.0 (biased inward)
             let on_edge = circle_coverage(13.0, 0.0, 13.0, 13.0, 13.0);
             assert!(
-                on_edge > 0.3 && on_edge < 0.7,
-                "edge should be ~0.5, got {}",
+                (on_edge - 1.0).abs() < 0.01,
+                "edge should be ~1.0, got {}",
                 on_edge
             );
+
+            // Pixel 0.5 outside the edge should be ~0.5
+            let half_out = circle_coverage(13.0, -0.5, 13.0, 13.0, 13.0);
+            assert!(
+                half_out > 0.4 && half_out < 0.6,
+                "half pixel outside should be ~0.5, got {}",
+                half_out
+            );
         }
+
     }
 }
 
