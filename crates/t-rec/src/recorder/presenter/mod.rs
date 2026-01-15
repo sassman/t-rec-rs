@@ -1,12 +1,10 @@
 //! Visual feedback during recording (screenshot indicators, keystroke overlays).
 //!
-//! On macOS with `osd-flash-indicator` feature enabled, uses core-animation for on-screen display.
-//! Otherwise falls back to a no-op implementation.
+//! Currently uses a no-op implementation. Future versions may add platform-specific
+//! on-screen display support.
 //!
 //! The Presenter must run on the main thread due to macOS requirements.
 
-#[cfg(all(target_os = "macos", feature = "osd-flash-indicator"))]
-mod macos;
 mod noop;
 
 use std::thread;
@@ -46,12 +44,6 @@ pub trait Presenter {
     }
 }
 
-#[cfg(all(target_os = "macos", feature = "osd-flash-indicator"))]
-pub fn create_presenter(win_id: WindowId) -> impl Presenter {
-    macos::OsdPresenter::new(win_id)
-}
-
-#[cfg(not(all(target_os = "macos", feature = "osd-flash-indicator")))]
 pub fn create_presenter(win_id: WindowId) -> impl Presenter {
     noop::NoopPresenter::new(win_id)
 }

@@ -33,9 +33,6 @@ dialoguer = { version = "0.12", default-features = false }
 crossterm = "0.28"
 tokio = { version = "1", default-features = false, features = ["sync"] }
 
-# from the workspace (optional, enabled by osd-flash-indicator feature)
-osd-flash = { workspace = true, optional = true }
-
 [dependencies.clap]
 version = "4.5"
 features = ["cargo", "derive", "help", "color", "std"]
@@ -66,10 +63,6 @@ e2e_tests = []
 # Library feature for programmatic recording (headless mode)
 # Enables HeadlessRecorder for recording windows without PTY/shell
 lib = []
-
-# On-screen display indicator for screenshots (macOS only)
-# Disable with: cargo build --no-default-features
-osd-flash-indicator = ["dep:osd-flash"]
 
 [package.metadata.deb]
 section = "x11"

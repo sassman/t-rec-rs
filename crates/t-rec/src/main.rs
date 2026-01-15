@@ -102,12 +102,6 @@ fn main() -> Result<()> {
     let (win_id, window_name) = current_win_id(&api, &args)?;
     api.calibrate(win_id)?;
 
-    // TODO(release): this should be removed eventually
-    #[cfg(all(target_os = "macos", feature = "osd-flash-indicator"))]
-    if args.test_flash {
-        return run_test_flash(win_id);
-    }
-
     // Validate wallpaper BEFORE recording starts
     let wallpaper_config = validate_wallpaper_config(&settings, &api, win_id)?;
 
@@ -154,45 +148,6 @@ fn validate_prerequisites(settings: &ProfileSettings) -> Result<()> {
         check_for_mp4()?;
     }
 
-    Ok(())
-}
-
-/// Test flash indicator (macOS only, requires osd-flash-indicator feature).
-#[cfg(all(target_os = "macos", feature = "osd-flash-indicator"))]
-fn run_test_flash(_win_id: WindowId) -> Result<()> {
-    use osd_flash::prelude::*;
-    use std::thread;
-
-    fn show_camera_flash() -> osd_flash::Result<()> {
-        let camera = CameraFlash::new();
-        OsdBuilder::new()
-            .position(Position::TopRight)
-            .margin(20.0)
-            .level(WindowLevel::AboveAll)
-            .background(camera.get_background_color())
-            .corner_radius(camera.get_corner_radius())
-            .composition(camera)
-            .show_for(1500.millis())
-    }
-
-    println!("Testing screen flash indicator within a background thread...");
-    println!("Showing flash indicator from main thread...");
-    if let Err(e) = show_camera_flash() {
-        log::warn!("Failed to show flash: {}", e);
-    }
-    thread::sleep(Duration::from_secs(5));
-
-    thread::spawn(move || {
-        println!("Showing flash indicator from background thread...");
-        if let Err(e) = show_camera_flash() {
-            log::warn!("Failed to show flash: {}", e);
-        }
-        thread::sleep(Duration::from_secs(5));
-    })
-    .join()
-    .unwrap();
-
-    println!("Test complete!");
     Ok(())
 }
 

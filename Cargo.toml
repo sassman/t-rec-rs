@@ -2,7 +2,6 @@
 resolver = "3"
 members = [
     "crates/t-rec",
-    "crates/osd-flash",
 ]
 
 [workspace.package]
@@ -13,9 +12,6 @@ license = "GPL-3.0-only"
 repository = "https://github.com/sassman/t-rec-rs"
 
 [workspace.dependencies]
-osd-flash = { path = "crates/osd-flash" }
-core-animation = { version = "0.3" }
-duration-ext = { version = "1.0" }
 
 anyhow = "1.0"
 log = "0.4"
