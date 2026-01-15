@@ -66,6 +66,7 @@
 mod builder;
 mod color;
 mod duration_ext;
+mod error;
 mod level;
 mod position;
 
@@ -85,13 +86,13 @@ pub mod library;
 pub mod backends;
 
 // Public re-exports (new API)
-pub use anyhow::Result;
 pub use builder::{OsdBuilder, OsdConfig};
 pub use color::Color;
 pub use composition::{
     Animation, CompositionBuilder, Easing, LayerBuilder, LayerComposition, Repeat,
 };
 pub use duration_ext::DurationExt;
+pub use error::{Error, Result};
 pub use geometry::{Point, Rect, Size};
 pub use layout::Margin;
 pub use level::WindowLevel;
@@ -110,6 +111,7 @@ pub mod prelude {
         LayerConfig, LayerPosition, Repeat, ShadowConfig, ShapeKind, TextAlign,
     };
     pub use crate::duration_ext::DurationExt;
+    pub use crate::error::{Error, Result};
     pub use crate::geometry::{Point, Rect, Size};
     pub use crate::layout::Margin;
     pub use crate::level::WindowLevel;

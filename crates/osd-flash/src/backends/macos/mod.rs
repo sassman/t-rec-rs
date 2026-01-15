@@ -21,9 +21,9 @@ use crate::builder::OsdConfig;
 use crate::color::Color;
 use crate::composition::animation::{Animation, Easing as OsdEasing, Repeat as OsdRepeat};
 use crate::composition::layer_builder::{LayerConfig, LayerPosition, ShapeKind, TextAlign};
+use crate::error::{Error, Result};
 use crate::level::WindowLevel as OsdWindowLevel;
 use crate::position::Position;
-use crate::Result;
 
 /// macOS OSD window backed by Core Animation.
 ///
@@ -38,7 +38,9 @@ impl MacOsWindow {
     ///
     /// # Errors
     ///
-    /// Returns an error if the window cannot be created (e.g., not on main thread).
+    /// Returns an error if:
+    /// - Not called from the main thread ([`Error::NotOnMainThread`])
+    /// - No screen is available for positioning ([`Error::NoScreenAvailable`])
     pub fn from_config(config: OsdConfig) -> Result<Self> {
         let (width, height) = (config.size.width, config.size.height);
 
@@ -50,7 +52,7 @@ impl MacOsWindow {
             .level(config.level.into());
 
         // Apply position
-        builder = apply_position(builder, &config);
+        builder = apply_position(builder, &config)?;
 
         // Apply background styling
         if let Some(bg) = config.background {
@@ -155,15 +157,15 @@ impl From<TextAlign> for core_animation::TextAlign {
 }
 
 /// Apply position configuration to the window builder.
-fn apply_position(builder: WindowBuilder, config: &OsdConfig) -> WindowBuilder {
-    let mtm = MainThreadMarker::new().expect("Must be on main thread");
-    let screen = NSScreen::mainScreen(mtm).expect("No main screen");
+fn apply_position(builder: WindowBuilder, config: &OsdConfig) -> Result<WindowBuilder> {
+    let mtm = MainThreadMarker::new().ok_or(Error::NotOnMainThread)?;
+    let screen = NSScreen::mainScreen(mtm).ok_or(Error::NoScreenAvailable)?;
     let screen_frame = screen.frame();
 
     let (width, height) = (config.size.width, config.size.height);
     let margin = &config.margin;
 
-    match config.position {
+    let positioned = match config.position {
         Position::TopRight => {
             let x = screen_frame.origin.x + screen_frame.size.width - width - margin.right;
             let y = screen_frame.origin.y + screen_frame.size.height - height - margin.top;
@@ -186,7 +188,9 @@ fn apply_position(builder: WindowBuilder, config: &OsdConfig) -> WindowBuilder {
         }
         Position::Center => builder.centered(),
         Position::Custom { x, y } => builder.position(x, y),
-    }
+    };
+
+    Ok(positioned)
 }
 
 /// Add a layer to the window builder.
