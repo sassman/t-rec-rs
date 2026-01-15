@@ -10,13 +10,14 @@ use anyhow::{ensure, Context, Result};
 use image::flat::SampleLayout;
 use image::{ColorType, FlatSamples};
 use objc2_core_foundation::{CGPoint, CGRect, CGSize};
-use objc2_core_graphics::{CGDataProvider, CGImage, CGWindowListCreateImage};
+use objc2_core_graphics::{CGDataProvider, CGImage};
 
+#[allow(deprecated)] // CGWindowListCreateImage is deprecated but we still need it
 pub fn capture_window_screenshot(win_id: u64) -> Result<ImageOnHeap> {
+    use objc2_core_graphics::CGWindowListCreateImage;
     let (w, h, channels, mut raw_data) = {
         let null_rect = CGRect::new(CGPoint::new(0.0, 0.0), CGSize::new(0.0, 0.0));
 
-        #[allow(deprecated)] // CGWindowListCreateImage is deprecated but we still need it
         let image = CGWindowListCreateImage(
             null_rect,
             K_CG_WINDOW_LIST_OPTION_INCLUDING_WINDOW | K_CG_WINDOW_LIST_EXCLUDE_DESKTOP_ELEMENTS,
