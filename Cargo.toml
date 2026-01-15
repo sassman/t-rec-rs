@@ -3,7 +3,6 @@ resolver = "3"
 members = [
     "crates/t-rec",
     "crates/osd-flash",
-    "crates/core-animation",
 ]
 
 [workspace.package]
@@ -15,7 +14,8 @@ repository = "https://github.com/sassman/t-rec-rs"
 
 [workspace.dependencies]
 osd-flash = { path = "crates/osd-flash" }
-core-animation = { path = "crates/core-animation" }
+core-animation = { version = "0.3" }
+duration-ext = { version = "1.0" }
 
 anyhow = "1.0"
 log = "0.4"
@@ -24,16 +24,12 @@ log = "0.4"
 objc2 = "0.6.3"
 objc2-foundation = "0.3.2"
 objc2-app-kit = "0.3.2"
-objc2-quartz-core = "0.3.2"
-objc2-core-graphics = { version = "0.3", features = ["CGColor", "CGColorSpace", "CGPath", "CGContext", "CGAffineTransform"] }
-objc2-core-foundation = { version = "0.3", features = ["CFRunLoop", "CFDate", "CFArray", "CFDictionary", "CFString", "CFNumber", "CFAttributedString"] }
-objc2-core-text = { version = "0.3", features = ["CTFont", "CTLine", "CTStringAttributes", "objc2-core-graphics"] }
-
-# Legacy crates (being phased out)
-objc_id = "0.1.1"
-objc-foundation = "0.1.1"
-objc = "0.2.7"
-libloading = "0.8"
-core-graphics = "0.25.0"
-core-foundation = "0.10.1"
-core-foundation-sys = "0.8.7"
+# objc2-quartz-core = "0.3.2"
+objc2-core-graphics = { version = "0.3", features = [
+    "CGColor", "CGColorSpace", "CGPath", "CGContext", "CGAffineTransform",
+    "CGWindow", "CGDirectDisplay", "CGImage", "CGDataProvider", "CGBitmapContext"
+] }
+objc2-core-foundation = { version = "0.3", features = [
+    "CFRunLoop", "CFDate", "CFArray", "CFDictionary", "CFString", "CFNumber", "CFAttributedString", "CFBase"
+] }
+# objc2-core-text = { version = "0.3", features = ["CTFont", "CTLine", "CTStringAttributes", "objc2-core-graphics"] }

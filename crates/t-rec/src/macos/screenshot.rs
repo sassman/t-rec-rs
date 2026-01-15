@@ -1,45 +1,60 @@
 use crate::common::image::convert_bgra_to_rgba;
+use crate::macos::cg_window_constants::{
+    K_CG_WINDOW_IMAGE_BOUNDS_IGNORE_FRAMING, K_CG_WINDOW_IMAGE_NOMINAL_RESOLUTION,
+    K_CG_WINDOW_IMAGE_SHOULD_BE_OPAQUE, K_CG_WINDOW_LIST_EXCLUDE_DESKTOP_ELEMENTS,
+    K_CG_WINDOW_LIST_OPTION_INCLUDING_WINDOW,
+};
 use crate::ImageOnHeap;
 
 use anyhow::{ensure, Context, Result};
-use core_graphics::display::{CGDisplay, CGRectNull};
-use core_graphics::image::CGImageRef;
 use image::flat::SampleLayout;
 use image::{ColorType, FlatSamples};
+use objc2_core_foundation::{CGPoint, CGRect, CGSize};
+use objc2_core_graphics::{CGDataProvider, CGImage, CGWindowListCreateImage};
 
 pub fn capture_window_screenshot(win_id: u64) -> Result<ImageOnHeap> {
     let (w, h, channels, mut raw_data) = {
-        let image = unsafe {
-            use core_graphics::window::*;
+        let null_rect = CGRect::new(CGPoint::new(0.0, 0.0), CGSize::new(0.0, 0.0));
 
-            CGDisplay::screenshot(
-                CGRectNull,
-                kCGWindowListOptionIncludingWindow | kCGWindowListExcludeDesktopElements,
-                win_id as u32,
-                kCGWindowImageNominalResolution
-                    | kCGWindowImageBoundsIgnoreFraming
-                    | kCGWindowImageShouldBeOpaque,
-            )
-        }
-        .context(format!(
-            "Cannot grab screenshot from CGDisplay of window id {}",
+        #[allow(deprecated)] // CGWindowListCreateImage is deprecated but we still need it
+        let image = CGWindowListCreateImage(
+            null_rect,
+            K_CG_WINDOW_LIST_OPTION_INCLUDING_WINDOW | K_CG_WINDOW_LIST_EXCLUDE_DESKTOP_ELEMENTS,
+            win_id as u32,
+            K_CG_WINDOW_IMAGE_NOMINAL_RESOLUTION
+                | K_CG_WINDOW_IMAGE_BOUNDS_IGNORE_FRAMING
+                | K_CG_WINDOW_IMAGE_SHOULD_BE_OPAQUE,
+        );
+
+        let image = image.context(format!(
+            "Cannot grab screenshot from CGWindowListCreateImage of window id {}",
             win_id
         ))?;
 
-        let img_ref: &CGImageRef = &image;
         // CAUTION: the width is not trust worthy, only the buffer dimensions are real
-        let (_wrong_width, h) = (img_ref.width() as u32, img_ref.height() as u32);
-        let raw_data: Vec<_> = img_ref.data().to_vec();
-        let byte_per_row = img_ref.bytes_per_row() as u32;
+        let (_wrong_width, h) = (
+            CGImage::width(Some(&image)) as u32,
+            CGImage::height(Some(&image)) as u32,
+        );
+
+        let data_provider = CGImage::data_provider(Some(&image))
+            .context("Cannot get data provider from CGImage")?;
+        let cf_data = CGDataProvider::data(Some(&data_provider))
+            .context("Cannot copy data from data provider")?;
+        let raw_data: Vec<u8> = unsafe {
+            std::slice::from_raw_parts(cf_data.byte_ptr(), cf_data.length() as usize).to_vec()
+        };
+
+        let byte_per_row = CGImage::bytes_per_row(Some(&image)) as u32;
         // the buffer must be as long as the row length x height
         ensure!(
             byte_per_row * h == raw_data.len() as u32,
             format!(
-                "Cannot grab screenshot from CGDisplay of window id {}",
+                "Cannot grab screenshot from CGWindowListCreateImage of window id {}",
                 win_id
             )
         );
-        let byte_per_pixel = (img_ref.bits_per_pixel() / 8) as u8;
+        let byte_per_pixel = (CGImage::bits_per_pixel(Some(&image)) / 8) as u8;
         // the actual width based on the buffer dimensions
         let w = byte_per_row / byte_per_pixel as u32;
 
@@ -63,7 +78,9 @@ mod tests {
     use super::*;
 
     #[test]
-    #[should_panic(expected = "Cannot grab screenshot from CGDisplay of window id 999999")]
+    #[should_panic(
+        expected = "Cannot grab screenshot from CGWindowListCreateImage of window id 999999"
+    )]
     fn should_throw_on_invalid_window_id() {
         capture_window_screenshot(9999999).unwrap();
     }

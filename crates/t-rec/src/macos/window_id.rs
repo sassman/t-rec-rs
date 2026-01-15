@@ -1,66 +1,53 @@
-use crate::macos::core_foundation_sys_patches::{
-    kCFNumberSInt32Type as I32, kCFNumberSInt64Type as I64,
+use crate::macos::cg_window_constants::{
+    K_CG_NULL_WINDOW_ID, K_CG_WINDOW_LIST_EXCLUDE_DESKTOP_ELEMENTS,
+    K_CG_WINDOW_LIST_OPTION_INCLUDING_WINDOW, K_CG_WINDOW_LIST_OPTION_ON_SCREEN_ONLY,
 };
 use crate::WindowList;
 use anyhow::{anyhow, Result};
-use core_foundation::base::{CFGetTypeID, CFTypeID, ToVoid};
-use core_foundation::number::{CFBooleanGetValue, CFNumberGetType};
-use core_foundation::string::{kCFStringEncodingUTF8, CFString, CFStringGetCStringPtr};
-use core_foundation_sys::number::{
-    CFBooleanGetTypeID, CFNumberGetTypeID, CFNumberGetValue, CFNumberRef,
+use objc2_core_foundation::{
+    CFArray, CFBoolean, CFDictionary, CFGetTypeID, CFNumber, CFRetained, CFString, CFType,
+    ConcreteType,
 };
-use core_foundation_sys::string::CFStringGetTypeID;
-use core_graphics::display::*;
-use core_graphics::window::*;
-
-use std::ffi::CStr;
-use std::ops::Deref;
-use std::os::raw::c_void;
+use objc2_core_graphics::CGWindowListCopyWindowInfo;
+use std::ffi::c_void;
 
 #[derive(Debug)]
 enum DictEntryValue {
     Number(i64),
-    #[allow(dead_code)] // false warning of clippy
+    #[allow(dead_code)]
     Bool(bool),
     String(String),
     Unknown,
 }
 
-///
-/// hard nut to crack, some starting point was:
-/// https://stackoverflow.com/questions/60117318/getting-window-owner-names-via-cgwindowlistcopywindowinfo-in-rust
-/// then some more PRs where needed:
-/// https://github.com/servo/core-foundation-rs/pulls?q=is%3Apr+author%3Asassman+
 pub fn window_list() -> Result<WindowList> {
     let mut win_list = vec![];
-    let window_list_info = unsafe {
-        use core_graphics::display::CGWindowListCopyWindowInfo;
 
-        CGWindowListCopyWindowInfo(
-            kCGWindowListOptionIncludingWindow
-                | kCGWindowListOptionOnScreenOnly
-                | kCGWindowListExcludeDesktopElements,
-            kCGNullWindowID,
-        )
-    };
-    if window_list_info.is_null() {
-        return Err(anyhow!(
+    #[allow(deprecated)] // CGWindowListCopyWindowInfo is deprecated but we still need it
+    let window_list_info: Option<CFRetained<CFArray>> = CGWindowListCopyWindowInfo(
+        K_CG_WINDOW_LIST_OPTION_INCLUDING_WINDOW
+            | K_CG_WINDOW_LIST_OPTION_ON_SCREEN_ONLY
+            | K_CG_WINDOW_LIST_EXCLUDE_DESKTOP_ELEMENTS,
+        K_CG_NULL_WINDOW_ID,
+    );
+
+    let window_list_info = window_list_info.ok_or_else(|| {
+        anyhow!(
             "Cannot get window list results from low level C-API call `CGWindowListCopyWindowInfo` -> null"
-        ));
-    }
-    let count = unsafe { CFArrayGetCount(window_list_info) };
+        )
+    })?;
+
+    let count = window_list_info.count();
     for i in 0..count {
-        let dic_ref = unsafe { CFArrayGetValueAtIndex(window_list_info, i) as CFDictionaryRef };
-        if dic_ref.is_null() {
-            unsafe {
-                CFRelease(window_list_info.cast());
-            }
-            return Err(anyhow!(
-                "Cannot get a result from the window list from low level C-API call `CFArrayGetValueAtIndex` -> null"
-            ));
-        }
-        let window_owner = get_from_dict(dic_ref, "kCGWindowOwnerName");
-        let window_id = get_from_dict(dic_ref, "kCGWindowNumber");
+        // SAFETY: index is within bounds, get raw pointer to dictionary
+        let dict_ptr = unsafe { window_list_info.value_at_index(i) };
+
+        // Cast to CFDictionary - the array contains dictionaries
+        let dict: &CFDictionary = unsafe { &*(dict_ptr as *const CFDictionary) };
+
+        let window_owner = get_from_dict(dict, "kCGWindowOwnerName");
+        let window_id = get_from_dict(dict, "kCGWindowNumber");
+
         if let (DictEntryValue::String(name), DictEntryValue::Number(win_id)) =
             (window_owner, window_id)
         {
@@ -68,65 +55,46 @@ pub fn window_list() -> Result<WindowList> {
         }
     }
 
-    unsafe {
-        CFRelease(window_list_info.cast());
-    }
-
     Ok(win_list)
 }
 
-fn get_from_dict(dict: CFDictionaryRef, key: &str) -> DictEntryValue {
-    let key: CFString = key.into();
-    let mut value: *const c_void = std::ptr::null();
-    if unsafe { CFDictionaryGetValueIfPresent(dict, key.to_void(), &mut value) != 0 } {
-        let type_id: CFTypeID = unsafe { CFGetTypeID(value) };
-        if type_id == unsafe { CFNumberGetTypeID() } {
-            let value = value as CFNumberRef;
-            match unsafe { CFNumberGetType(value) } {
-                I64 => {
-                    let mut value_i64 = 0_i64;
-                    let out_value: *mut i64 = &mut value_i64;
-                    let converted = unsafe { CFNumberGetValue(value, I64, out_value.cast()) };
-                    if converted {
-                        return DictEntryValue::Number(value_i64);
-                    }
-                }
-                I32 => {
-                    let mut value_i32 = 0_i32;
-                    let out_value: *mut i32 = &mut value_i32;
-                    let converted = unsafe { CFNumberGetValue(value, I32, out_value.cast()) };
-                    if converted {
-                        return DictEntryValue::Number(value_i32 as i64);
-                    }
-                }
-                n => {
-                    eprintln!("Unsupported Number of typeId: {}", n);
-                }
-            }
-        } else if type_id == unsafe { CFBooleanGetTypeID() } {
-            return DictEntryValue::Bool(unsafe { CFBooleanGetValue(value.cast()) });
-        } else if type_id == unsafe { CFStringGetTypeID() } {
-            let c_ptr = unsafe { CFStringGetCStringPtr(value.cast(), kCFStringEncodingUTF8) };
-            return if !c_ptr.is_null() {
-                let c_result = unsafe { CStr::from_ptr(c_ptr) };
-                let result = String::from(c_result.to_str().unwrap());
-                DictEntryValue::String(result)
-            } else {
-                // in this case there is a high chance we got a `NSString` instead of `CFString`
-                // we have to use the objc runtime to fetch it
-                use objc_foundation::{INSString, NSString};
-                use objc_id::Id;
-                let nss: Id<NSString> = unsafe { Id::from_ptr(value as *mut NSString) };
-                let str = std::str::from_utf8(nss.deref().as_str().as_bytes());
+fn get_from_dict(dict: &CFDictionary, key: &str) -> DictEntryValue {
+    let key_cfstring = CFString::from_str(key);
 
-                match str {
-                    Ok(s) => DictEntryValue::String(s.to_owned()),
-                    Err(_) => DictEntryValue::Unknown,
-                }
-            };
-        } else {
-            eprintln!("Unexpected type: {}", type_id);
+    // Try to get value from dictionary
+    let value: *const c_void = unsafe {
+        let key_ptr: *const c_void = (&*key_cfstring as *const CFString).cast();
+        dict.value(key_ptr)
+    };
+
+    if value.is_null() {
+        return DictEntryValue::Unknown;
+    }
+
+    // Get type IDs for comparison
+    let cf_number_type_id = CFNumber::type_id();
+    let cf_boolean_type_id = CFBoolean::type_id();
+    let cf_string_type_id = CFString::type_id();
+
+    let value_type_id = {
+        let cf_type: &CFType = unsafe { &*(value as *const CFType) };
+        CFGetTypeID(Some(cf_type))
+    };
+
+    if value_type_id == cf_number_type_id {
+        let number: &CFNumber = unsafe { &*(value as *const CFNumber) };
+        if let Some(n) = number.as_i64() {
+            return DictEntryValue::Number(n);
         }
+        if let Some(n) = number.as_i32() {
+            return DictEntryValue::Number(n as i64);
+        }
+    } else if value_type_id == cf_boolean_type_id {
+        let boolean: &CFBoolean = unsafe { &*(value as *const CFBoolean) };
+        return DictEntryValue::Bool(boolean.as_bool());
+    } else if value_type_id == cf_string_type_id {
+        let cf_str: &CFString = unsafe { &*(value as *const CFString) };
+        return DictEntryValue::String(cf_str.to_string());
     }
 
     DictEntryValue::Unknown

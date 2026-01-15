@@ -47,13 +47,10 @@ default-features = false
 features = ["bmp", "tga", "jpeg", "png"]
 
 [target.'cfg(target_os = "macos")'.dependencies]
-objc_id.workspace = true
-objc-foundation.workspace = true
-objc.workspace = true
-libloading.workspace = true
-core-graphics.workspace = true
-core-foundation.workspace = true
-core-foundation-sys.workspace = true
+objc2.workspace = true
+objc2-foundation.workspace = true
+objc2-core-graphics.workspace = true
+objc2-core-foundation.workspace = true
 
 [target.'cfg(unix)'.dependencies]
 nix = { version = "0.29", features = ["term", "fs", "signal"] }
