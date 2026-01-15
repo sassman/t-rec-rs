@@ -60,7 +60,7 @@ libc = "0.2"
 x11rb = "0.13.1"
 
 [features]
-default = ["osd-flash-indicator"]
+default = []
 e2e_tests = []
 
 # Library feature for programmatic recording (headless mode)
