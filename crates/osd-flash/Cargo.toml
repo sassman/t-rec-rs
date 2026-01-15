@@ -1,0 +1,24 @@
+[package]
+name = "osd-flash"
+version = "0.1.0"
+description = "On-screen display (OSD) flash indicators for visual feedback, such as screenshot flash effects or status icons"
+authors.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[dependencies]
+log.workspace = true
+
+[target.'cfg(target_os = "macos")'.dependencies]
+# Modern objc2-based backend (GPU-accelerated)
+core-animation.workspace = true
+objc2.workspace = true
+objc2-app-kit.workspace = true
+objc2-foundation.workspace = true
+
+[dev-dependencies]
+crossterm = "0.28"
+
+[target.'cfg(target_os = "macos")'.dev-dependencies]
+objc2.workspace = true

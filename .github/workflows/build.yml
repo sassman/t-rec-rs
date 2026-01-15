@@ -34,7 +34,7 @@ jobs:
           default: true
           profile: minimal
           components: clippy, rustfmt
-      - run: cargo check
+      - run: cargo check --all-targets
 
   lint:
     name: lint
@@ -81,6 +81,8 @@ jobs:
           sudo apt-get install -y libx11-dev
       - name: cargo test
         run: cargo test --all --locked
+      - name: cargo test (no default features)
+        run: cargo test --all --locked --no-default-features
 
   pkg-deb:
     name: binary package .deb
