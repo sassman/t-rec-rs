@@ -1,8 +1,9 @@
+mod types;
 mod validation;
 mod ventura;
 
-#[allow(unused_imports)]
-pub use validation::{is_builtin_wallpaper, load_and_validate_wallpaper};
+pub use types::{ValidatedPath, Wallpaper, WallpaperConfig, WallpaperError};
+pub use validation::{is_builtin_wallpaper, load_and_validate_wallpaper, resolve_wallpaper};
 pub use ventura::get_ventura_wallpaper;
 
 use image::{DynamicImage, GenericImageView, Rgba, RgbaImage};

@@ -49,12 +49,11 @@ use crate::config::{expand_home, handle_init_config, handle_list_profiles, Profi
 use crate::output::OutputGenerator;
 use crate::recorder::{RecordingSession, SessionConfig};
 use crate::summary::print_recording_summary;
-use crate::wallpapers::{get_ventura_wallpaper, is_builtin_wallpaper, load_and_validate_wallpaper};
+use crate::wallpapers::{resolve_wallpaper, Wallpaper};
 
 use anyhow::{bail, Context};
-use image::{DynamicImage, FlatSamples, GenericImageView};
+use image::{DynamicImage, FlatSamples};
 use std::env;
-use std::path::Path;
 use std::time::Duration;
 
 // Re-export common types
@@ -165,8 +164,9 @@ fn validate_wallpaper_config(
         None => return Ok(None),
     };
 
-    // Expand $HOME in wallpaper path
+    // Expand $HOME in wallpaper path and parse into Wallpaper type
     let wp_value = expand_home(wp_value);
+    let wallpaper_type: Wallpaper = wp_value.parse().unwrap(); // Infallible
     let padding = settings.wallpaper_padding();
 
     // Capture a screenshot to get terminal dimensions
@@ -174,35 +174,8 @@ fn validate_wallpaper_config(
     let terminal_width = screenshot.layout.width;
     let terminal_height = screenshot.layout.height;
 
-    let wallpaper = if is_builtin_wallpaper(&wp_value) {
-        match wp_value.to_lowercase().as_str() {
-            "ventura" => {
-                // Validate built-in wallpaper dimensions too
-                let wp = get_ventura_wallpaper();
-                let (wp_width, wp_height) = wp.dimensions();
-                let min_width = terminal_width + (padding * 2);
-                let min_height = terminal_height + (padding * 2);
-
-                if wp_width < min_width || wp_height < min_height {
-                    bail!(
-                        "Terminal size {}x{} with {}px padding exceeds built-in wallpaper size {}x{}.\n\
-                         Try reducing the terminal size or padding.",
-                        terminal_width,
-                        terminal_height,
-                        padding,
-                        wp_width,
-                        wp_height
-                    );
-                }
-                wp.clone()
-            }
-            _ => bail!("Unknown built-in wallpaper: {}", wp_value),
-        }
-    } else {
-        // Custom wallpaper path - validate before recording
-        let path = Path::new(&wp_value);
-        load_and_validate_wallpaper(path, terminal_width, terminal_height, padding)?
-    };
+    // Resolve and validate the wallpaper
+    let wallpaper = resolve_wallpaper(&wallpaper_type, terminal_width, terminal_height, padding)?;
 
     Ok(Some((wallpaper, padding)))
 }

@@ -15,7 +15,8 @@
 //!
 //! ```ignore
 //! use t_rec::HeadlessRecorder;
-//! use t_rec::types::{Decor, BackgroundColor, Wallpaper};
+//! use t_rec::types::{Decor, BackgroundColor};
+//! use t_rec::wallpapers::Wallpaper;
 //!
 //! // Type-safe enum API (compile-time checked)
 //! let recorder = HeadlessRecorder::builder()
@@ -38,9 +39,11 @@ use crate::common::{Platform, PlatformApi, PlatformApiFactory};
 use crate::event_router::{CaptureEvent, Event, EventRouter};
 use crate::generators::{check_for_gif, check_for_mp4, generate_gif, generate_mp4};
 use crate::post_processing::{post_process_effects, PostProcessingOptions};
-use crate::types::{BackgroundColor, Decor, Wallpaper};
+use crate::types::{BackgroundColor, Decor};
 use crate::utils::{file_name_for, DEFAULT_EXT, IMG_EXT, MOVIE_EXT};
-use crate::wallpapers::{get_ventura_wallpaper, load_and_validate_wallpaper};
+use crate::wallpapers::{
+    get_ventura_wallpaper, load_and_validate_wallpaper, Wallpaper, WallpaperConfig,
+};
 use crate::WindowId;
 
 use anyhow::{bail, Context, Result};
@@ -76,7 +79,7 @@ pub struct HeadlessRecorderConfig {
     /// Background color for shadow effect.
     pub bg_color: BackgroundColor,
     /// Wallpaper and padding configuration.
-    pub wallpaper: Option<(Wallpaper, u32)>,
+    pub wallpaper: Option<WallpaperConfig>,
 
     // Output options
     /// Whether to generate GIF output.
@@ -109,7 +112,8 @@ pub struct RecordingOutput {
 /// # Example
 ///
 /// ```ignore
-/// use t_rec::types::{Decor, BackgroundColor, Wallpaper};
+/// use t_rec::types::{Decor, BackgroundColor};
+/// use t_rec::wallpapers::Wallpaper;
 ///
 /// // Type-safe enum API (compile-time checked)
 /// let recorder = HeadlessRecorderBuilder::new()
@@ -141,7 +145,7 @@ pub struct HeadlessRecorderBuilder {
     // Post-processing (type-safe enums)
     decor: Decor,
     bg_color: BackgroundColor,
-    wallpaper: Option<(Wallpaper, u32)>,
+    wallpaper: Option<WallpaperConfig>,
 
     // Output
     generate_gif: bool,
@@ -311,7 +315,7 @@ impl HeadlessRecorderBuilder {
     /// # Example
     ///
     /// ```ignore
-    /// use t_rec::types::Wallpaper;
+    /// use t_rec::wallpapers::Wallpaper;
     ///
     /// // Built-in wallpaper
     /// let recorder = HeadlessRecorder::builder()
@@ -328,7 +332,7 @@ impl HeadlessRecorderBuilder {
     ///     .build()?;
     /// ```
     pub fn wallpaper(mut self, wallpaper: Wallpaper, padding: u32) -> Self {
-        self.wallpaper = Some((wallpaper, padding));
+        self.wallpaper = Some(WallpaperConfig::new(wallpaper, padding));
         self
     }
 
@@ -625,16 +629,20 @@ impl HeadlessRecorder {
             .collect();
 
         // Load wallpaper if configured
-        let wallpaper: Option<DynamicImage> = if let Some((ref wp, padding)) = self.config.wallpaper
-        {
-            Some(self.load_wallpaper(wp, &frame_files, padding)?)
+        let wallpaper: Option<DynamicImage> = if let Some(ref wp_config) = self.config.wallpaper {
+            Some(self.load_wallpaper(&wp_config.wallpaper, &frame_files, wp_config.padding)?)
         } else {
             None
         };
 
         // Build post-processing options
         let post_opts = if let Some(ref wp) = wallpaper {
-            let padding = self.config.wallpaper.as_ref().map(|(_, p)| *p).unwrap_or(0);
+            let padding = self
+                .config
+                .wallpaper
+                .as_ref()
+                .map(|c| c.padding)
+                .unwrap_or(0);
             PostProcessingOptions::new(self.config.decor, &self.config.bg_color)
                 .with_wallpaper(wp, padding)
         } else {
@@ -772,9 +780,9 @@ impl HeadlessRecorder {
         &self.config.bg_color
     }
 
-    /// Get the configured wallpaper and padding (if any).
-    pub fn wallpaper_config(&self) -> Option<(&Wallpaper, u32)> {
-        self.config.wallpaper.as_ref().map(|(w, p)| (w, *p))
+    /// Get the configured wallpaper (if any).
+    pub fn wallpaper_config(&self) -> Option<&WallpaperConfig> {
+        self.config.wallpaper.as_ref()
     }
 }
 
@@ -858,9 +866,9 @@ mod tests {
     fn test_builder_wallpaper_ventura() {
         let builder = HeadlessRecorderBuilder::new().wallpaper(Wallpaper::Ventura, 50);
         assert!(builder.wallpaper.is_some());
-        let (wp, padding) = builder.wallpaper.unwrap();
-        assert_eq!(wp, Wallpaper::Ventura);
-        assert_eq!(padding, 50);
+        let wp_config = builder.wallpaper.unwrap();
+        assert_eq!(wp_config.wallpaper, Wallpaper::Ventura);
+        assert_eq!(wp_config.padding, 50);
     }
 
     #[test]
@@ -915,8 +923,8 @@ mod tests {
         assert_eq!(builder.fps, 15);
         assert_eq!(builder.decor, Decor::None);
         assert!(builder.wallpaper.is_some());
-        let (wp, padding) = builder.wallpaper.unwrap();
-        assert_eq!(wp, Wallpaper::Ventura);
-        assert_eq!(padding, 60);
+        let wp_config = builder.wallpaper.unwrap();
+        assert_eq!(wp_config.wallpaper, Wallpaper::Ventura);
+        assert_eq!(wp_config.padding, 60);
     }
 }

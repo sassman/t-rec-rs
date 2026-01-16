@@ -3,28 +3,80 @@ use std::path::Path;
 use anyhow::{bail, Context, Result};
 use image::{DynamicImage, GenericImageView, ImageReader};
 
+use super::types::Wallpaper;
+use super::ventura::get_ventura_wallpaper;
+
 /// Supported wallpaper formats
 const SUPPORTED_EXTENSIONS: &[&str] = &["png", "jpg", "jpeg", "tga"];
 
-/// Validate and load a custom wallpaper from a file path
+/// Validate that a wallpaper image has sufficient dimensions for the terminal size + padding.
+///
+/// This is the core validation logic used by both built-in and custom wallpapers.
+pub fn validate_wallpaper_dimensions(
+    image: &DynamicImage,
+    terminal_width: u32,
+    terminal_height: u32,
+    padding: u32,
+) -> Result<()> {
+    let (wp_width, wp_height) = image.dimensions();
+    let min_width = terminal_width + (padding * 2);
+    let min_height = terminal_height + (padding * 2);
+
+    if wp_width < min_width || wp_height < min_height {
+        bail!(
+            "Wallpaper resolution {}x{} is too small.\n\
+             Required: at least {}x{} (terminal {}x{} + {}px padding on each side).\n\
+             Please use a larger wallpaper image or reduce the terminal size/padding.",
+            wp_width,
+            wp_height,
+            min_width,
+            min_height,
+            terminal_width,
+            terminal_height,
+            padding
+        );
+    }
+
+    Ok(())
+}
+
+/// Resolve a wallpaper from a `Wallpaper` enum variant.
+///
+/// This is the main entry point for wallpaper loading and validation.
+/// It handles both built-in wallpapers and custom file paths.
+///
+/// # Arguments
+/// * `wallpaper` - The wallpaper variant to resolve
+/// * `terminal_width` - Width of the terminal in pixels
+/// * `terminal_height` - Height of the terminal in pixels
+/// * `padding` - Padding in pixels to add around the terminal
+///
+/// # Returns
+/// A validated `DynamicImage` ready for use as a wallpaper background.
+pub fn resolve_wallpaper(
+    wallpaper: &Wallpaper,
+    terminal_width: u32,
+    terminal_height: u32,
+    padding: u32,
+) -> Result<DynamicImage> {
+    let image = match wallpaper {
+        Wallpaper::Ventura => get_ventura_wallpaper().clone(),
+        Wallpaper::Custom(path) => load_wallpaper_from_path(path.as_path())?,
+    };
+
+    validate_wallpaper_dimensions(&image, terminal_width, terminal_height, padding)?;
+    Ok(image)
+}
+
+/// Load a wallpaper image from a file path.
 ///
 /// # Validation checks:
 /// 1. File exists and is readable
 /// 2. File extension is supported (png, jpg, jpeg, tga)
 /// 3. File is a valid image that can be decoded
-/// 4. Resolution is sufficient for the terminal size + padding
-///    (wallpaper must be at least terminal_size + 2*padding in each dimension)
 ///
-/// # Security considerations:
-/// - Path traversal: We only read the file, no writes
-/// - File size: image crate handles memory allocation
-/// - Format validation: Only decode known safe formats
-pub fn load_and_validate_wallpaper(
-    path: &Path,
-    terminal_width: u32,
-    terminal_height: u32,
-    padding: u32,
-) -> Result<DynamicImage> {
+/// Note: Dimension validation is NOT performed here - use `resolve_wallpaper` for full validation.
+fn load_wallpaper_from_path(path: &Path) -> Result<DynamicImage> {
     // 1. Check file exists
     if !path.exists() {
         bail!("Wallpaper file not found: {}", path.display());
@@ -50,41 +102,42 @@ pub fn load_and_validate_wallpaper(
     }
 
     // 3. Load and decode the image
-    let wallpaper = ImageReader::open(path)
+    ImageReader::open(path)
         .with_context(|| format!("Failed to open wallpaper file: {}", path.display()))?
         .with_guessed_format()
         .with_context(|| "Failed to detect wallpaper image format")?
         .decode()
-        .with_context(|| format!("Failed to decode wallpaper image: {}", path.display()))?;
-
-    // 4. Validate resolution
-    // Wallpaper must be at least terminal_size + 2*padding (padding on each side)
-    let (wp_width, wp_height) = wallpaper.dimensions();
-    let min_width = terminal_width + (padding * 2);
-    let min_height = terminal_height + (padding * 2);
-
-    if wp_width < min_width || wp_height < min_height {
-        bail!(
-            "Wallpaper resolution {}x{} is too small.\n\
-             Required: at least {}x{} (terminal {}x{} + {}px padding on each side).\n\
-             Please use a larger wallpaper image.",
-            wp_width,
-            wp_height,
-            min_width,
-            min_height,
-            terminal_width,
-            terminal_height,
-            padding
-        );
-    }
-
-    Ok(wallpaper)
+        .with_context(|| format!("Failed to decode wallpaper image: {}", path.display()))
 }
 
-/// Check if a wallpaper value is a built-in preset or a custom path
-#[allow(dead_code)]
+/// Check if a wallpaper value string is a built-in preset.
+///
+/// Uses `Wallpaper::builtin_values()` as the single source of truth.
 pub fn is_builtin_wallpaper(value: &str) -> bool {
-    matches!(value.to_lowercase().as_str(), "ventura")
+    Wallpaper::builtin_values()
+        .iter()
+        .any(|&builtin| builtin.eq_ignore_ascii_case(value))
+}
+
+/// Validate and load a custom wallpaper from a file path.
+///
+/// This is a convenience function that combines loading and dimension validation.
+/// Prefer using `resolve_wallpaper` with a `Wallpaper` enum when possible.
+///
+/// # Validation checks:
+/// 1. File exists and is readable
+/// 2. File extension is supported (png, jpg, jpeg, tga)
+/// 3. File is a valid image that can be decoded
+/// 4. Resolution is sufficient for the terminal size + padding
+pub fn load_and_validate_wallpaper(
+    path: &Path,
+    terminal_width: u32,
+    terminal_height: u32,
+    padding: u32,
+) -> Result<DynamicImage> {
+    let image = load_wallpaper_from_path(path)?;
+    validate_wallpaper_dimensions(&image, terminal_width, terminal_height, padding)?;
+    Ok(image)
 }
 
 #[cfg(test)]
@@ -99,5 +152,17 @@ mod tests {
         assert!(!is_builtin_wallpaper("/path/to/file.png"));
         assert!(!is_builtin_wallpaper("./wallpaper.jpg"));
         assert!(!is_builtin_wallpaper("custom"));
+    }
+
+    #[test]
+    fn test_is_builtin_uses_wallpaper_type() {
+        // Verify that is_builtin_wallpaper stays in sync with Wallpaper::builtin_values()
+        for &builtin in Wallpaper::builtin_values() {
+            assert!(
+                is_builtin_wallpaper(builtin),
+                "is_builtin_wallpaper should return true for '{}'",
+                builtin
+            );
+        }
     }
 }

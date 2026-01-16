@@ -14,7 +14,7 @@
 //!
 //! - [`types::Decor`] - Decoration style (None, Shadow)
 //! - [`types::BackgroundColor`] - Background color (Transparent, White, Black, or custom hex)
-//! - [`types::Wallpaper`] - Wallpaper source (Ventura, or custom path)
+//! - [`wallpapers::Wallpaper`] - Wallpaper source (Ventura, or custom path)
 //!
 //! Validation happens at enum construction time via factory methods:
 //! - `BackgroundColor::custom("#ff0000")` - Validates hex format
@@ -26,7 +26,8 @@
 //!
 //! ```ignore
 //! use t_rec::HeadlessRecorder;
-//! use t_rec::types::{Decor, BackgroundColor, Wallpaper};
+//! use t_rec::types::{Decor, BackgroundColor};
+//! use t_rec::wallpapers::Wallpaper;
 //!
 //! // Type-safe enum API (compile-time checked)
 //! let mut recorder = HeadlessRecorder::builder()
@@ -81,7 +82,7 @@ mod post_processing;
 mod screenshot;
 pub mod types;
 mod utils;
-mod wallpapers;
+pub mod wallpapers;
 
 // Headless recorder module (only with lib feature)
 #[cfg(feature = "lib")]
