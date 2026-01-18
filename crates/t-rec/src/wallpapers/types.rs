@@ -8,23 +8,20 @@ use std::str::FromStr;
 
 use serde::{Deserialize, Serialize};
 
+use crate::error::{Error, Result as LibResult};
+
 /// A validated path to a wallpaper image file.
 ///
 /// This newtype ensures that only existing file paths can be stored.
 /// Use [`Wallpaper::custom()`] to create a custom wallpaper with validation.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(transparent)]
-pub struct ValidatedPath(PathBuf);
+pub struct ValidatedPath(pub(crate) PathBuf);
 
 impl ValidatedPath {
     /// Returns the path as a reference.
     pub fn as_path(&self) -> &std::path::Path {
         &self.0
-    }
-
-    /// Returns the path as a PathBuf.
-    pub fn to_path_buf(&self) -> PathBuf {
-        self.0.clone()
     }
 }
 
@@ -39,25 +36,6 @@ impl fmt::Display for ValidatedPath {
         write!(f, "{}", self.0.display())
     }
 }
-
-/// Error returned when creating a wallpaper fails.
-#[derive(Debug, Clone)]
-pub enum WallpaperError {
-    /// The specified file path does not exist
-    PathNotFound(PathBuf),
-}
-
-impl fmt::Display for WallpaperError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            WallpaperError::PathNotFound(path) => {
-                write!(f, "Wallpaper file not found: {}", path.display())
-            }
-        }
-    }
-}
-
-impl std::error::Error for WallpaperError {}
 
 /// Wallpaper configuration for frame backgrounds.
 ///
@@ -113,11 +91,12 @@ impl Wallpaper {
     ///
     /// # Errors
     ///
-    /// Returns `WallpaperError::PathNotFound` if the file does not exist.
-    pub fn custom(path: impl AsRef<std::path::Path>) -> Result<Self, WallpaperError> {
+    /// Returns `Error::WallpaperNotFound` if the file does not exist.
+    #[allow(dead_code)] // Library-only API, used by HeadlessRecorder
+    pub fn custom(path: impl AsRef<std::path::Path>) -> LibResult<Self> {
         let path = path.as_ref();
         if !path.exists() {
-            return Err(WallpaperError::PathNotFound(path.to_path_buf()));
+            return Err(Error::WallpaperNotFound(path.to_path_buf()));
         }
         Ok(Wallpaper::Custom(ValidatedPath(path.to_path_buf())))
     }
@@ -134,16 +113,19 @@ impl Wallpaper {
     }
 
     /// Returns all built-in wallpaper names.
+    #[allow(dead_code)] // Library-only API
     pub fn builtin_values() -> &'static [&'static str] {
         &["ventura"]
     }
 
     /// Check if this is a built-in wallpaper.
+    #[allow(dead_code)] // Library-only API
     pub fn is_builtin(&self) -> bool {
         matches!(self, Wallpaper::Ventura)
     }
 
     /// Get the path for custom wallpapers, or None for built-in.
+    #[allow(dead_code)] // Library-only API
     pub fn custom_path(&self) -> Option<&std::path::Path> {
         match self {
             Wallpaper::Custom(path) => Some(path.as_path()),
@@ -170,52 +152,6 @@ impl FromStr for Wallpaper {
             // Path validation should happen at a higher level (e.g., in the builder).
             _ => Ok(Wallpaper::Custom(ValidatedPath(PathBuf::from(s)))),
         }
-    }
-}
-
-/// Wallpaper configuration with padding.
-///
-/// Combines a wallpaper source with the padding amount (in pixels)
-/// to use around the captured frame.
-///
-/// # Example
-///
-/// ```
-/// use t_rec::wallpapers::{Wallpaper, WallpaperConfig};
-///
-/// // Create config with built-in wallpaper and 60px padding
-/// let config = WallpaperConfig::new(Wallpaper::Ventura, 60);
-///
-/// // Parse from string
-/// let config2 = WallpaperConfig::from_string("ventura", 50);
-/// ```
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct WallpaperConfig {
-    /// The wallpaper source
-    pub wallpaper: Wallpaper,
-    /// Padding in pixels around the frame
-    pub padding: u32,
-}
-
-impl WallpaperConfig {
-    /// Create a new wallpaper configuration.
-    pub fn new(wallpaper: Wallpaper, padding: u32) -> Self {
-        Self { wallpaper, padding }
-    }
-
-    /// Create from a string wallpaper value and padding.
-    ///
-    /// The string can be a built-in name or a file path.
-    pub fn from_string(wallpaper: &str, padding: u32) -> Self {
-        Self {
-            wallpaper: wallpaper.parse().unwrap(), // Infallible
-            padding,
-        }
-    }
-
-    /// Create a Ventura wallpaper config with default padding.
-    pub fn ventura(padding: u32) -> Self {
-        Self::new(Wallpaper::Ventura, padding)
     }
 }
 
@@ -270,10 +206,7 @@ mod tests {
             // Non-existent path should fail
             let result = Wallpaper::custom("/nonexistent/path/wallpaper.png");
             assert!(result.is_err());
-            assert!(matches!(
-                result.unwrap_err(),
-                WallpaperError::PathNotFound(_)
-            ));
+            assert!(matches!(result.unwrap_err(), Error::WallpaperNotFound(_)));
         }
 
         #[test]
@@ -297,7 +230,6 @@ mod tests {
             let wallpaper = Wallpaper::custom(temp_file.path()).unwrap();
             if let Wallpaper::Custom(validated_path) = wallpaper {
                 assert_eq!(validated_path.as_path(), temp_file.path());
-                assert_eq!(validated_path.to_path_buf(), temp_file.path().to_path_buf());
                 // Display trait
                 assert!(format!("{}", validated_path)
                     .contains(temp_file.path().file_name().unwrap().to_str().unwrap()));
@@ -308,40 +240,10 @@ mod tests {
 
         #[test]
         fn test_wallpaper_error_display() {
-            let err = WallpaperError::PathNotFound(PathBuf::from("/some/path.png"));
+            let err = Error::WallpaperNotFound(PathBuf::from("/some/path.png"));
             let display = format!("{}", err);
             assert!(display.contains("Wallpaper file not found"));
             assert!(display.contains("/some/path.png"));
-        }
-    }
-
-    mod wallpaper_config_tests {
-        use super::*;
-
-        #[test]
-        fn test_new() {
-            let config = WallpaperConfig::new(Wallpaper::Ventura, 60);
-            assert_eq!(config.wallpaper, Wallpaper::Ventura);
-            assert_eq!(config.padding, 60);
-        }
-
-        #[test]
-        fn test_from_string() {
-            let config = WallpaperConfig::from_string("ventura", 50);
-            assert_eq!(config.wallpaper, Wallpaper::Ventura);
-            assert_eq!(config.padding, 50);
-
-            // Note: from_string does not validate path existence
-            let config = WallpaperConfig::from_string("/path/to/wp.png", 100);
-            assert_eq!(config.wallpaper.as_str(), "/path/to/wp.png");
-            assert_eq!(config.padding, 100);
-        }
-
-        #[test]
-        fn test_ventura_helper() {
-            let config = WallpaperConfig::ventura(80);
-            assert_eq!(config.wallpaper, Wallpaper::Ventura);
-            assert_eq!(config.padding, 80);
         }
     }
 }

@@ -60,10 +60,6 @@ x11rb = "0.13.1"
 default = []
 e2e_tests = []
 
-# Library feature for programmatic recording (headless mode)
-# Enables HeadlessRecorder for recording windows without PTY/shell
-lib = []
-
 [package.metadata.deb]
 section = "x11"
 depends = "imagemagick"

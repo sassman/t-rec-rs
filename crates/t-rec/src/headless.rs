@@ -42,7 +42,7 @@ use crate::post_processing::{post_process_effects, PostProcessingOptions};
 use crate::types::{BackgroundColor, Decor};
 use crate::utils::{file_name_for, DEFAULT_EXT, IMG_EXT, MOVIE_EXT};
 use crate::wallpapers::{
-    get_ventura_wallpaper, load_and_validate_wallpaper, Wallpaper, WallpaperConfig,
+    types::Wallpaper, validation::load_and_validate_wallpaper, ventura::get_ventura_wallpaper,
 };
 use crate::WindowId;
 
@@ -53,6 +53,25 @@ use std::sync::{Arc, Mutex};
 use std::thread::{self, JoinHandle};
 use std::time::Duration;
 use tempfile::TempDir;
+
+/// Wallpaper configuration with padding.
+///
+/// Combines a wallpaper source with the padding amount (in pixels)
+/// to use around the captured frame.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct WallpaperConfig {
+    /// The wallpaper source
+    pub wallpaper: Wallpaper,
+    /// Padding in pixels around the frame
+    pub padding: u32,
+}
+
+impl WallpaperConfig {
+    /// Create a new wallpaper configuration.
+    pub fn new(wallpaper: Wallpaper, padding: u32) -> Self {
+        Self { wallpaper, padding }
+    }
+}
 
 /// Configuration for the headless recorder.
 ///

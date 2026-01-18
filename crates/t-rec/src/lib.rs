@@ -76,17 +76,15 @@ mod assets;
 mod capture;
 mod common;
 mod decors;
+pub mod error;
 mod event_router;
 mod generators;
+mod headless;
 mod post_processing;
 mod screenshot;
 pub mod types;
 mod utils;
 pub mod wallpapers;
-
-// Headless recorder module (only with lib feature)
-#[cfg(feature = "lib")]
-pub mod headless;
 
 // Re-export common types
 use image::FlatSamples;
@@ -110,8 +108,6 @@ pub use crate::common::Margin;
 // Re-export platform API trait
 pub use crate::common::PlatformApi;
 
-// Re-export the main headless API
-#[cfg(feature = "lib")]
 pub use headless::{
     HeadlessRecorder, HeadlessRecorderBuilder, HeadlessRecorderConfig, RecordingOutput,
 };

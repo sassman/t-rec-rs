@@ -110,15 +110,6 @@ fn load_wallpaper_from_path(path: &Path) -> Result<DynamicImage> {
         .with_context(|| format!("Failed to decode wallpaper image: {}", path.display()))
 }
 
-/// Check if a wallpaper value string is a built-in preset.
-///
-/// Uses `Wallpaper::builtin_values()` as the single source of truth.
-pub fn is_builtin_wallpaper(value: &str) -> bool {
-    Wallpaper::builtin_values()
-        .iter()
-        .any(|&builtin| builtin.eq_ignore_ascii_case(value))
-}
-
 /// Validate and load a custom wallpaper from a file path.
 ///
 /// This is a convenience function that combines loading and dimension validation.
@@ -129,6 +120,7 @@ pub fn is_builtin_wallpaper(value: &str) -> bool {
 /// 2. File extension is supported (png, jpg, jpeg, tga)
 /// 3. File is a valid image that can be decoded
 /// 4. Resolution is sufficient for the terminal size + padding
+#[allow(dead_code)] // Library-only API, used by HeadlessRecorder
 pub fn load_and_validate_wallpaper(
     path: &Path,
     terminal_width: u32,
@@ -143,6 +135,13 @@ pub fn load_and_validate_wallpaper(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// Check if a wallpaper value string is a built-in preset.
+    fn is_builtin_wallpaper(value: &str) -> bool {
+        Wallpaper::builtin_values()
+            .iter()
+            .any(|&builtin| builtin.eq_ignore_ascii_case(value))
+    }
 
     #[test]
     fn test_is_builtin_wallpaper() {

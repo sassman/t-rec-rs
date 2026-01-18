@@ -7,6 +7,7 @@ mod cli;
 mod common;
 mod config;
 mod decors;
+mod error;
 mod event_router;
 mod generators;
 mod input;

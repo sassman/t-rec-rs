@@ -1,10 +1,11 @@
-mod types;
-mod validation;
-mod ventura;
+// Submodules are pub(crate) to allow headless module to import internal items
+pub(crate) mod types;
+pub(crate) mod validation;
+pub(crate) mod ventura;
 
-pub use types::{ValidatedPath, Wallpaper, WallpaperConfig, WallpaperError};
-pub use validation::{is_builtin_wallpaper, load_and_validate_wallpaper, resolve_wallpaper};
-pub use ventura::get_ventura_wallpaper;
+// Public API
+pub use types::Wallpaper;
+pub use validation::resolve_wallpaper;
 
 use image::{DynamicImage, GenericImageView, Rgba, RgbaImage};
 

@@ -94,7 +94,7 @@ mod tests {
         use image::save_buffer;
 
         let mut api = Platform::setup()?;
-        let win = 5308;
+        let win = 23421;
         let image = api.capture_window_screenshot(win)?;
         let (width, height) = (image.layout.width, image.layout.height);
         dbg!(width, height);
