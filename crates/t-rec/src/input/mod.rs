@@ -46,37 +46,17 @@ pub enum HotkeyAction {
 
 /// Key combination for hotkey configuration.
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub enum KeyCombo {
-    F1,
+pub enum HotKey {
     F2,
     F3,
-    F4,
-    F5,
-    F6,
-    F7,
-    F8,
-    F9,
-    F10,
-    F11,
-    F12,
 }
 
-impl KeyCombo {
+impl HotKey {
     /// Convert a crossterm KeyCode to a KeyCombo (if it's a function key).
     fn from_keycode(code: KeyCode) -> Option<Self> {
         match code {
-            KeyCode::F(1) => Some(KeyCombo::F1),
-            KeyCode::F(2) => Some(KeyCombo::F2),
-            KeyCode::F(3) => Some(KeyCombo::F3),
-            KeyCode::F(4) => Some(KeyCombo::F4),
-            KeyCode::F(5) => Some(KeyCombo::F5),
-            KeyCode::F(6) => Some(KeyCombo::F6),
-            KeyCode::F(7) => Some(KeyCombo::F7),
-            KeyCode::F(8) => Some(KeyCombo::F8),
-            KeyCode::F(9) => Some(KeyCombo::F9),
-            KeyCode::F(10) => Some(KeyCombo::F10),
-            KeyCode::F(11) => Some(KeyCombo::F11),
-            KeyCode::F(12) => Some(KeyCombo::F12),
+            KeyCode::F(2) => Some(HotKey::F2),
+            KeyCode::F(3) => Some(HotKey::F3),
             _ => None,
         }
     }
@@ -85,15 +65,16 @@ impl KeyCombo {
 /// Hotkey configuration.
 #[derive(Debug, Clone)]
 pub struct HotkeyConfig {
-    pub screenshot: Option<KeyCombo>,
-    pub toggle_keystroke_capturing: Option<KeyCombo>,
+    pub screenshot: Option<HotKey>,
+    pub toggle_keystroke_capturing: Option<HotKey>,
 }
 
 impl Default for HotkeyConfig {
     fn default() -> Self {
         Self {
-            screenshot: Some(KeyCombo::F2),
-            toggle_keystroke_capturing: Some(KeyCombo::F3),
+            screenshot: Some(HotKey::F2),
+            // todo: we don't support this feature yet
+            toggle_keystroke_capturing: None,
         }
     }
 }
@@ -114,6 +95,7 @@ pub enum InputEvent {
 }
 
 /// Shared state for keyboard-driven features.
+#[derive(Default)]
 pub struct InputState {
     /// Collected keystroke events for overlay.
     pub keystrokes: Mutex<Vec<InputEvent>>,
@@ -124,7 +106,7 @@ pub struct InputState {
 impl InputState {
     pub fn new() -> Self {
         Self {
-            keystrokes: Mutex::new(Vec::new()),
+            keystrokes: Mutex::default(),
             keystroke_capture_enabled: AtomicBool::new(false),
         }
     }
@@ -149,12 +131,6 @@ impl InputState {
             instant,
             timecode_ms,
         });
-    }
-}
-
-impl Default for InputState {
-    fn default() -> Self {
-        Self::new()
     }
 }
 
@@ -281,18 +257,19 @@ impl KeyboardMonitor {
         log::debug!("Key event: {:?} modifiers: {:?}", code, modifiers);
 
         // Check for hotkeys (function keys)
-        if let Some(key_combo) = KeyCombo::from_keycode(code) {
-            log::debug!("Function key detected: {:?}", key_combo);
+        if let Some(hot_key) = HotKey::from_keycode(code) {
+            log::debug!("Function key detected: {:?}", hot_key);
 
             // Screenshot hotkey
-            if self.hotkey_config.screenshot.as_ref() == Some(&key_combo) {
-                log::debug!("F2 screenshot hotkey detected");
+            if self.hotkey_config.screenshot.as_ref() == Some(&hot_key) {
+                log::debug!("Screenshot hotkey detected");
                 self.trigger_screenshot();
                 return KeyAction::Handled;
             }
 
             // Toggle keystroke capture hotkey
-            if self.hotkey_config.toggle_keystroke_capturing.as_ref() == Some(&key_combo) {
+            // todo: this is currenlty not enabled
+            if self.hotkey_config.toggle_keystroke_capturing.as_ref() == Some(&hot_key) {
                 let enabled = self.input_state.toggle_capture();
                 log::debug!("Keystroke capture: {}", if enabled { "ON" } else { "OFF" });
                 return KeyAction::Handled;
@@ -440,17 +417,16 @@ mod tests {
 
     #[test]
     fn test_keycombo_from_keycode() {
-        assert_eq!(KeyCombo::from_keycode(KeyCode::F(1)), Some(KeyCombo::F1));
-        assert_eq!(KeyCombo::from_keycode(KeyCode::F(2)), Some(KeyCombo::F2));
-        assert_eq!(KeyCombo::from_keycode(KeyCode::F(12)), Some(KeyCombo::F12));
-        assert_eq!(KeyCombo::from_keycode(KeyCode::Char('a')), None);
+        assert_eq!(HotKey::from_keycode(KeyCode::F(2)), Some(HotKey::F2));
+        assert_eq!(HotKey::from_keycode(KeyCode::F(12)), None);
+        assert_eq!(HotKey::from_keycode(KeyCode::Char('a')), None);
     }
 
     #[test]
     fn test_hotkey_config_default() {
         let config = HotkeyConfig::default();
-        assert_eq!(config.screenshot, Some(KeyCombo::F2));
-        assert_eq!(config.toggle_keystroke_capturing, Some(KeyCombo::F3));
+        assert_eq!(config.screenshot, Some(HotKey::F2));
+        assert_eq!(config.toggle_keystroke_capturing, None);
     }
 
     #[test]
