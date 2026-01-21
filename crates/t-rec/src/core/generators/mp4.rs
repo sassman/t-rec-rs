@@ -3,7 +3,7 @@ use std::process::Command;
 use anyhow::{Context, Result};
 use tempfile::TempDir;
 
-use super::super::utils::IMG_EXT;
+use crate::core::utils::IMG_EXT;
 
 const FFMPEG_BINARY: &str = "ffmpeg";
 

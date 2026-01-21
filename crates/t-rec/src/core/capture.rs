@@ -19,7 +19,7 @@ use super::screenshot::ScreenshotInfo;
 #[cfg(feature = "cli")]
 use super::screenshot::screenshot_file_name;
 use super::utils::{file_name_for, IMG_EXT};
-use crate::{ImageOnHeap, PlatformApi, WindowId};
+use super::{ImageOnHeap, PlatformApi, WindowId};
 
 /// Configuration and shared state for the capture thread.
 ///

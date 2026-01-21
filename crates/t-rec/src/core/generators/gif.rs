@@ -1,4 +1,4 @@
-use super::super::utils::{file_name_for, IMG_EXT};
+use crate::core::utils::{file_name_for, IMG_EXT};
 
 use anyhow::{Context, Result};
 use std::ops::Div;

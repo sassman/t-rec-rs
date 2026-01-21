@@ -19,7 +19,7 @@ use super::decors::{apply_corner_to_file, apply_shadow_to_file};
 use super::screenshot::ScreenshotInfo;
 use super::types::{BackgroundColor, Decor};
 use super::wallpapers::composite_frame;
-use crate::Result;
+use super::Result;
 
 /// Options for post-processing effects.
 ///

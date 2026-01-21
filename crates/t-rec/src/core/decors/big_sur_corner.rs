@@ -3,7 +3,7 @@ use std::process::Command;
 
 use anyhow::Context;
 
-use crate::Result;
+use crate::core::Result;
 
 /// Apply corner radius effect to a single file.
 ///

@@ -1,4 +1,4 @@
-use crate::{ImageOnHeap, Result, WindowId, WindowList};
+use crate::core::{ImageOnHeap, Result, WindowId, WindowList};
 
 pub struct Platform;
 

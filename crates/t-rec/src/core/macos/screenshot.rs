@@ -4,7 +4,7 @@ use super::cg_window_constants::{
     K_CG_WINDOW_LIST_OPTION_INCLUDING_WINDOW,
 };
 use crate::core::common::image::convert_bgra_to_rgba;
-use crate::ImageOnHeap;
+use crate::core::ImageOnHeap;
 
 use anyhow::{ensure, Context, Result};
 use image::flat::SampleLayout;

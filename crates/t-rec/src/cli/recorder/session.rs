@@ -5,10 +5,10 @@
 //! - Coordinates startup and shutdown
 //! - Collects results for post-processing
 
-use super::super::config::defaults::FPS;
-use super::super::config::ProfileSettings;
-use super::super::input::{HotkeyConfig, InputState, KeyboardMonitor};
-use super::super::output::OutputConfig;
+use crate::cli::config::defaults::FPS;
+use crate::cli::config::ProfileSettings;
+use crate::cli::input::{HotkeyConfig, InputState, KeyboardMonitor};
+use crate::cli::output::OutputConfig;
 use crate::core::capture::{capture_thread, CaptureContext};
 use crate::core::common::PlatformApi;
 use crate::core::event_router::*;
@@ -27,10 +27,10 @@ use tokio::sync::broadcast::Receiver;
 
 use super::presenter::{create_presenter, Presenter};
 use super::runtime::{Actor, Runtime};
-use crate::{Result, WindowId};
+use crate::core::{Result, WindowId};
 
 #[cfg(unix)]
-use super::super::pty::PtyShell;
+use crate::cli::pty::PtyShell;
 
 /// Configuration for post-processing effects.
 ///
@@ -392,7 +392,7 @@ impl RecordingSession {
     }
 
     /// Build the output configuration from the session configuration.
-    pub(crate) fn output_config(&self) -> super::super::output::OutputConfig {
+    pub(crate) fn output_config(&self) -> crate::cli::output::OutputConfig {
         OutputConfig {
             output_path: self.config.output_path.clone(),
             generate_gif: self.config.generate_gif,

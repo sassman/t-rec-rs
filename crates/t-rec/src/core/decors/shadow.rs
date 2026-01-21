@@ -3,7 +3,7 @@ use std::process::Command;
 
 use anyhow::Context;
 
-use crate::Result;
+use crate::core::Result;
 
 /// apply a border decor effect via a chain of convert commands
 ///

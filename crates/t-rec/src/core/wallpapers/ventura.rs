@@ -3,7 +3,7 @@ use std::sync::OnceLock;
 
 use image::{DynamicImage, ImageReader};
 
-use super::super::assets::VENTURA_WALLPAPER;
+use crate::core::assets::VENTURA_WALLPAPER;
 
 /// Lazily loaded and cached Ventura wallpaper image
 static WALLPAPER: OnceLock<DynamicImage> = OnceLock::new();

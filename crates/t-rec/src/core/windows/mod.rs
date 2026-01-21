@@ -1,4 +1,4 @@
-use crate::{ImageOnHeap, WindowList};
+use crate::core::{ImageOnHeap, WindowList};
 
 pub const DEFAULT_SHELL: &str = "cmd.exe";
 

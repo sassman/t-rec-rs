@@ -2,7 +2,7 @@ use super::cg_window_constants::{
     K_CG_NULL_WINDOW_ID, K_CG_WINDOW_LIST_EXCLUDE_DESKTOP_ELEMENTS,
     K_CG_WINDOW_LIST_OPTION_INCLUDING_WINDOW, K_CG_WINDOW_LIST_OPTION_ON_SCREEN_ONLY,
 };
-use crate::WindowList;
+use crate::core::WindowList;
 use anyhow::{anyhow, Result};
 use objc2_core_foundation::{
     CFArray, CFBoolean, CFDictionary, CFGetTypeID, CFNumber, CFRetained, CFString, CFType,

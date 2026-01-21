@@ -1,6 +1,6 @@
-use crate::common::identify_transparency::identify_transparency;
-use crate::common::image::convert_bgra_to_rgba;
-use crate::{ImageOnHeap, Margin, PlatformApi, Result, WindowId, WindowList};
+use crate::core::common::identify_transparency::identify_transparency;
+use crate::core::common::image::convert_bgra_to_rgba;
+use crate::core::{ImageOnHeap, Margin, PlatformApi, Result, WindowId, WindowList};
 
 use anyhow::Context;
 use image::flat::SampleLayout;
@@ -261,7 +261,7 @@ impl PlatformApi for X11Api {
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::utils::IMG_EXT;
+    use crate::core::utils::IMG_EXT;
     use image::flat::View;
     use image::{save_buffer, GenericImageView, Rgba};
 

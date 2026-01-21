@@ -1,7 +1,7 @@
 mod x11_api;
 
-use super::super::common::{Platform, PlatformApiFactory};
-use super::common::{PlatformApi, Result};
+use crate::core::common::{Platform, PlatformApi, PlatformApiFactory};
+use crate::core::Result;
 use x11_api::X11Api;
 
 impl PlatformApiFactory for Platform {
