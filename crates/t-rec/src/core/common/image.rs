@@ -1,5 +1,5 @@
-use crate::core::{Image, ImageOnHeap, Result};
 use super::Margin;
+use crate::core::{Image, ImageOnHeap, Result};
 use image::flat::View;
 use image::{imageops, GenericImageView, ImageBuffer, Rgba};
 

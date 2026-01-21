@@ -1,5 +1,5 @@
-use crate::cli::utils::print_tree_list;
 use super::config::ProfileSettings;
+use crate::cli::utils::print_tree_list;
 
 /// Prints a visual summary of the recording settings.
 ///

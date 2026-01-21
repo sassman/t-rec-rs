@@ -72,16 +72,18 @@ pub mod core;
 mod api;
 
 // Re-export core types
-pub use core::{Image, ImageOnHeap, Margin, PlatformApi, Result, WindowId, WindowList, WindowListEntry};
+pub use core::{
+    Image, ImageOnHeap, Margin, PlatformApi, Result, WindowId, WindowList, WindowListEntry,
+};
 
 // Re-export public modules
 pub use core::error;
 pub use core::types;
 pub use core::types::{BackgroundColor, Decor};
 pub use core::wallpapers;
-pub use core::wallpapers::{resolve_wallpaper, Wallpaper};
 #[cfg(not(feature = "cli"))]
 pub use core::wallpapers::load_and_validate_wallpaper;
+pub use core::wallpapers::{resolve_wallpaper, Wallpaper};
 
 // Re-export headless recorder API (only when not building CLI)
 #[cfg(not(feature = "cli"))]
@@ -94,12 +96,12 @@ pub use core::common::{Platform, PlatformApiFactory};
 #[cfg(feature = "cli")]
 pub use core::event_router::{CaptureEvent, Event, EventRouter, FlashEvent, LifecycleEvent};
 #[cfg(feature = "cli")]
-pub use core::post_processing::post_process_screenshots;
-#[cfg(feature = "cli")]
-pub use core::screenshot::{screenshot_file_name, screenshot_output_name, ScreenshotInfo};
+#[cfg(target_os = "linux")]
+pub use core::linux::DEFAULT_SHELL;
 #[cfg(feature = "cli")]
 #[cfg(target_os = "macos")]
 pub use core::macos::DEFAULT_SHELL;
 #[cfg(feature = "cli")]
-#[cfg(target_os = "linux")]
-pub use core::linux::DEFAULT_SHELL;
+pub use core::post_processing::post_process_screenshots;
+#[cfg(feature = "cli")]
+pub use core::screenshot::{screenshot_file_name, screenshot_output_name, ScreenshotInfo};

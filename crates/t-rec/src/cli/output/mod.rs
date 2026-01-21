@@ -8,12 +8,12 @@
 
 use super::prompt::{start_background_prompt, PromptResult};
 use super::recorder::{PostProcessConfig, RecordingResult};
+use crate::cli::utils::target_file;
 use crate::cli::utils::{print_tree_list, HumanReadable};
 use crate::core::generators::{check_for_mp4, generate_gif, generate_mp4};
 use crate::core::post_processing::{
     post_process_effects, post_process_screenshots, PostProcessingOptions,
 };
-use crate::cli::utils::target_file;
 use crate::core::utils::{DEFAULT_EXT, MOVIE_EXT};
 use crate::Result;
 use std::borrow::Borrow;

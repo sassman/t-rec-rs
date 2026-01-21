@@ -11,13 +11,13 @@ use tempfile::TempDir;
 use tokio::sync::broadcast::error::TryRecvError;
 use tokio::sync::broadcast::Receiver;
 
-use super::event_router::{CaptureEvent, Event};
 #[cfg(feature = "cli")]
 use super::event_router::LifecycleEvent;
-#[cfg(feature = "cli")]
-use super::screenshot::ScreenshotInfo;
+use super::event_router::{CaptureEvent, Event};
 #[cfg(feature = "cli")]
 use super::screenshot::screenshot_file_name;
+#[cfg(feature = "cli")]
+use super::screenshot::ScreenshotInfo;
 use super::utils::{file_name_for, IMG_EXT};
 use super::{ImageOnHeap, PlatformApi, WindowId};
 

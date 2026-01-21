@@ -6,7 +6,9 @@ pub enum CaptureEvent {
     Start,
     /// Manual screenshot request (CLI only).
     #[cfg(feature = "cli")]
-    Screenshot { timecode_ms: u128 },
+    Screenshot {
+        timecode_ms: u128,
+    },
     Stop,
 }
 

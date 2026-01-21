@@ -2,4 +2,6 @@
 
 mod headless;
 
-pub use headless::{HeadlessRecorder, HeadlessRecorderBuilder, HeadlessRecorderConfig, RecordingOutput};
+pub use headless::{
+    HeadlessRecorder, HeadlessRecorderBuilder, HeadlessRecorderConfig, RecordingOutput,
+};

@@ -16,15 +16,15 @@ use core::macos::*;
 #[cfg(target_os = "windows")]
 use core::windows::*;
 
+use crate::cli::utils::parse_delay;
 use crate::cli::{
     expand_home, handle_init_config, handle_list_profiles, init_logging, launch,
     print_recording_summary, resolve_profiled_settings, CliArgs, OutputGenerator, ProfileSettings,
     RecordingSession, SessionConfig,
 };
-use crate::cli::utils::parse_delay;
+use core::common::{Platform, PlatformApiFactory};
 use core::generators::{check_for_gif, check_for_mp4};
 use core::wallpapers::{resolve_wallpaper, Wallpaper};
-use core::common::{Platform, PlatformApiFactory};
 use core::PlatformApi;
 
 use anyhow::{bail, Context};
@@ -93,7 +93,11 @@ fn main() -> Result<()> {
     // TODO: 1. ending (start see above)
 
     // Run recording session
-    let session = RecordingSession::new(session_config, Box::new(api), cli::recorder::runtime::Runtime::new())?;
+    let session = RecordingSession::new(
+        session_config,
+        Box::new(api),
+        cli::recorder::runtime::Runtime::new(),
+    )?;
     let output_config = session.output_config();
     let result = session.run()?;
 
