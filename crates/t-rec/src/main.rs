@@ -2,71 +2,38 @@
 //!
 //! A blazingly fast terminal recorder that generates GIFs and MP4s.
 
-mod assets;
+// CLI-specific modules
 mod cli;
-mod common;
-mod config;
-mod decors;
-mod error;
-mod event_router;
-mod generators;
-mod input;
-mod logging;
-mod output;
-mod post_processing;
-mod prompt;
-mod recorder;
-mod screenshot;
-mod summary;
-mod tips;
-pub mod types;
-mod wallpapers;
 
-mod capture;
+// Use the library's core module
+use t_rec::core;
+
+// Platform-specific imports
 #[cfg(any(target_os = "linux", target_os = "netbsd"))]
-mod linux;
+use core::linux::*;
 #[cfg(target_os = "macos")]
-mod macos;
-#[cfg(unix)]
-mod pty;
-mod utils;
+use core::macos::*;
 #[cfg(target_os = "windows")]
-mod windows;
+use core::windows::*;
 
-use crate::generators::{check_for_gif, check_for_mp4};
-#[cfg(any(target_os = "linux", target_os = "netbsd"))]
-use crate::linux::*;
-use crate::logging::init_logging;
-#[cfg(target_os = "macos")]
-use crate::macos::*;
-use crate::recorder::runtime::Runtime;
-#[cfg(target_os = "windows")]
-use crate::windows::*;
-
-use crate::cli::{launch, resolve_profiled_settings, CliArgs};
-use crate::common::utils::parse_delay;
-use crate::common::{Platform, PlatformApi, PlatformApiFactory};
-use crate::config::{expand_home, handle_init_config, handle_list_profiles, ProfileSettings};
-use crate::output::OutputGenerator;
-use crate::recorder::{RecordingSession, SessionConfig};
-use crate::summary::print_recording_summary;
-use crate::wallpapers::{resolve_wallpaper, Wallpaper};
+use crate::cli::{
+    expand_home, handle_init_config, handle_list_profiles, init_logging, launch,
+    print_recording_summary, resolve_profiled_settings, CliArgs, OutputGenerator, ProfileSettings,
+    RecordingSession, SessionConfig,
+};
+use crate::cli::utils::parse_delay;
+use core::generators::{check_for_gif, check_for_mp4};
+use core::wallpapers::{resolve_wallpaper, Wallpaper};
+use core::common::{Platform, PlatformApiFactory};
+use core::PlatformApi;
 
 use anyhow::{bail, Context};
-use image::{DynamicImage, FlatSamples};
+use image::DynamicImage;
 use std::env;
 use std::time::Duration;
 
-// Re-export common types
-pub type Image = FlatSamples<Vec<u8>>;
-pub type ImageOnHeap = Box<Image>;
-pub type WindowId = u64;
-pub type WindowList = Vec<WindowListEntry>;
-pub type WindowListEntry = (Option<String>, WindowId);
-pub type Result<T> = anyhow::Result<T>;
-
-// Re-export Margin for other modules
-pub use crate::common::Margin;
+// Re-export core types for use in this crate
+pub use core::{Image, ImageOnHeap, Result, WindowId, WindowList, WindowListEntry};
 
 fn main() -> Result<()> {
     init_logging();
@@ -126,7 +93,7 @@ fn main() -> Result<()> {
     // TODO: 1. ending (start see above)
 
     // Run recording session
-    let session = RecordingSession::new(session_config, Box::new(api), Runtime::new())?;
+    let session = RecordingSession::new(session_config, Box::new(api), cli::recorder::runtime::Runtime::new())?;
     let output_config = session.output_config();
     let result = session.run()?;
 
@@ -156,7 +123,7 @@ fn validate_prerequisites(settings: &ProfileSettings) -> Result<()> {
 /// Returns `Some((wallpaper, padding))` if wallpaper is configured, `None` otherwise.
 /// Fails early with a clear error message if the wallpaper is invalid or too small.
 fn validate_wallpaper_config(
-    settings: &config::ProfileSettings,
+    settings: &ProfileSettings,
     api: &impl PlatformApi,
     win_id: WindowId,
 ) -> Result<Option<(DynamicImage, u32)>> {

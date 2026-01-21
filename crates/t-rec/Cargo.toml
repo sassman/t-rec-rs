@@ -59,6 +59,14 @@ x11rb = "0.13.1"
 [features]
 default = []
 e2e_tests = []
+# Feature flag for CLI functionality - required for binary builds.
+# Library users get a minimal lib without CLI-only code by default.
+cli = []
+
+[[bin]]
+name = "t-rec"
+path = "src/main.rs"
+required-features = ["cli"]
 
 [package.metadata.deb]
 section = "x11"

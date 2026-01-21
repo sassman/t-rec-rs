@@ -63,51 +63,43 @@
 //! }
 //! ```
 
-// Platform-specific modules
-#[cfg(any(target_os = "linux", target_os = "netbsd"))]
-mod linux;
+// Core shared modules - made public so binary can use it directly
+// This avoids code duplication between lib and bin targets
+pub mod core;
+
+// Library API (only compiled when not building CLI binary)
+#[cfg(not(feature = "cli"))]
+mod api;
+
+// Re-export core types
+pub use core::{Image, ImageOnHeap, Margin, PlatformApi, Result, WindowId, WindowList, WindowListEntry};
+
+// Re-export public modules
+pub use core::error;
+pub use core::types;
+pub use core::types::{BackgroundColor, Decor};
+pub use core::wallpapers;
+pub use core::wallpapers::{resolve_wallpaper, Wallpaper};
+#[cfg(not(feature = "cli"))]
+pub use core::wallpapers::load_and_validate_wallpaper;
+
+// Re-export headless recorder API (only when not building CLI)
+#[cfg(not(feature = "cli"))]
+pub use api::{HeadlessRecorder, HeadlessRecorderBuilder, HeadlessRecorderConfig, RecordingOutput};
+
+// Re-export CLI-only items when cli feature is enabled
+// These are used by the binary but need to be exported to avoid dead code warnings
+#[cfg(feature = "cli")]
+pub use core::common::{Platform, PlatformApiFactory};
+#[cfg(feature = "cli")]
+pub use core::event_router::{CaptureEvent, Event, EventRouter, FlashEvent, LifecycleEvent};
+#[cfg(feature = "cli")]
+pub use core::post_processing::post_process_screenshots;
+#[cfg(feature = "cli")]
+pub use core::screenshot::{screenshot_file_name, screenshot_output_name, ScreenshotInfo};
+#[cfg(feature = "cli")]
 #[cfg(target_os = "macos")]
-mod macos;
-#[cfg(target_os = "windows")]
-mod windows;
-
-// Core modules needed for headless recording
-mod assets;
-mod capture;
-mod common;
-mod decors;
-pub mod error;
-mod event_router;
-mod generators;
-mod headless;
-mod post_processing;
-mod screenshot;
-pub mod types;
-mod utils;
-pub mod wallpapers;
-
-// Re-export common types
-use image::FlatSamples;
-
-/// A captured image stored on the heap.
-pub type Image = FlatSamples<Vec<u8>>;
-/// Boxed image type for efficient passing.
-pub type ImageOnHeap = Box<Image>;
-/// Window identifier (platform-specific).
-pub type WindowId = u64;
-/// List of windows with optional names.
-pub type WindowList = Vec<WindowListEntry>;
-/// A window entry: optional name and ID.
-pub type WindowListEntry = (Option<String>, WindowId);
-/// Result type using anyhow for error handling.
-pub type Result<T> = anyhow::Result<T>;
-
-// Re-export Margin for other modules
-pub use crate::common::Margin;
-
-// Re-export platform API trait
-pub use crate::common::PlatformApi;
-
-pub use headless::{
-    HeadlessRecorder, HeadlessRecorderBuilder, HeadlessRecorderConfig, RecordingOutput,
-};
+pub use core::macos::DEFAULT_SHELL;
+#[cfg(feature = "cli")]
+#[cfg(target_os = "linux")]
+pub use core::linux::DEFAULT_SHELL;
