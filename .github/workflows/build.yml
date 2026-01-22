@@ -34,7 +34,7 @@ jobs:
           default: true
           profile: minimal
           components: clippy, rustfmt
-      - run: cargo check
+      - run: cargo check --all-targets --all-features
 
   lint:
     name: lint
@@ -81,6 +81,8 @@ jobs:
           sudo apt-get install -y libx11-dev
       - name: cargo test
         run: cargo test --all --locked
+      - name: cargo test (no default features)
+        run: cargo test --all --locked --no-default-features
 
   pkg-deb:
     name: binary package .deb
@@ -90,6 +92,9 @@ jobs:
       - uses: actions/checkout@v4
       - name: build .deb file
         uses: sassman/rust-deb-builder@v1
+        with:
+          package: t-rec
+          features: cli
       - name: Archive deb artifact
         uses: actions/upload-artifact@v4
         with:

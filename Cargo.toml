@@ -1,80 +1,31 @@
-[package]
-name = "t-rec"
+[workspace]
+resolver = "3"
+members = [
+    "crates/t-rec",
+]
+
+[workspace.package]
 version = "0.8.2"
 authors = ["Sven Kanoldt <sven@d34dl0ck.me>"]
-edition = "2018"
+edition = "2021"
 license = "GPL-3.0-only"
-description = "Blazingly fast terminal recorder that generates animated gif images for the web written in rust."
-homepage = "https://github.com/sassman/t-rec-rs"
-readme = "README.md"
-keywords = ["recorder", "image", "terminal", "gif", "commandline"]
-categories = ["multimedia::images", "command-line-utilities"]
 repository = "https://github.com/sassman/t-rec-rs"
-links = "X11"
-build = "build.rs"
-include = ["src/**/*", "resources/**/*", "LICENSE", "*.md", "build.rs"]
 
-[badges]
-github-actions = { repository = "sassman/t-rec-rs", branch = "main", workflow = "Build" }
-maintenance = { status = "actively-developed" }
+[workspace.dependencies]
 
-[dependencies]
 anyhow = "1.0"
-tempfile = "3.23"
-rayon = "1.11"
 log = "0.4"
-env_logger = "0.11"
-humantime = "2.3"
-simplerand = "1.6"
-serde = { version = "1.0", features = ["derive"] }
-toml = "0.9"
-dirs = "6.0"
-dialoguer = { version = "0.12", default-features = false }
 
-[dependencies.clap]
-version = "4.5"
-features = ["cargo", "derive", "help", "color", "std"]
-default-features = false
-
-[dependencies.image]
-version = "0.25"
-default-features = false
-features = ["bmp", "tga", "jpeg", "png"]
-
-[target.'cfg(target_os = "macos")'.dependencies]
-objc_id = "0.1.1"
-objc-foundation = "0.1.1"
-core-graphics = "0.24.0"
-core-foundation = "0.10.1"
-core-foundation-sys = "0.8.3"
-
-[target.'cfg(any(target_os = "linux", target_os = "netbsd"))'.dependencies]
-x11rb = "0.13.1"
-
-[features]
-e2e_tests = []
-
-[package.metadata.deb]
-section = "x11"
-depends = "imagemagick"
-extended-description = """## Features
-- Screenshotting your terminal with 4 frames per second (every 250ms)
-- Generates high quality small sized animated gif images
-- **built-in idle frames detection and optimization** (for super fluid
-presentations)
-- Applies (can be disabled) border decor effects like drop shadow
-- Runs on MacOS and Linux
-- Uses native efficient APIs
-- Runs without any cloud service and entirely offline
-- No issues with terminal sizes larger than 80x24
-- No issues with fonts or colors
-- No issues with curses based programs
-- No issues with escape sequences
-- No record and replay - just one simple command to rule them all
-- Hidden feature: Record every window you want
-- Written in Rust 🦀
-"""
-
-[package.metadata.rpm.targets]
-buildflags = ["--release"]
-t-rec = { path = "/usr/bin/t-rec" }
+# Modern objc2-* crates (preferred)
+objc2 = "0.6.3"
+objc2-foundation = "0.3.2"
+objc2-app-kit = "0.3.2"
+# objc2-quartz-core = "0.3.2"
+objc2-core-graphics = { version = "0.3", features = [
+    "CGColor", "CGColorSpace", "CGPath", "CGContext", "CGAffineTransform",
+    "CGWindow", "CGDirectDisplay", "CGImage", "CGDataProvider", "CGBitmapContext"
+] }
+objc2-core-foundation = { version = "0.3", features = [
+    "CFRunLoop", "CFDate", "CFArray", "CFDictionary", "CFString", "CFNumber", "CFAttributedString", "CFBase"
+] }
+# objc2-core-text = { version = "0.3", features = ["CTFont", "CTLine", "CTStringAttributes", "objc2-core-graphics"] }
