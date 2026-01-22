@@ -63,13 +63,13 @@ e2e_tests = []
 # Library users get a minimal lib without CLI-only code by default.
 cli = []
 
+# Experimental: Use native Rust image operations instead of ImageMagick
+x-native-imgops = []
+
 [[bin]]
 name = "t-rec"
 path = "src/main.rs"
 required-features = ["cli"]
-
-# Experimental: Use native Rust image operations instead of ImageMagick
-x-native-imgops = []
 
 [dev-dependencies]
 criterion = { version = "0.5", features = ["html_reports"] }
