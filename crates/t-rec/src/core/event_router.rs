@@ -107,6 +107,23 @@ mod tests {
     }
 
     #[test]
+    fn test_event_broadcast() {
+        let router = EventRouter::new();
+        let mut receiver1 = router.subscribe();
+        let mut receiver2 = router.subscribe();
+
+        router.send(Event::Capture(CaptureEvent::Start));
+        assert!(matches!(
+            receiver1.blocking_recv(),
+            Ok(Event::Capture(CaptureEvent::Start))
+        ));
+        assert!(matches!(
+            receiver2.blocking_recv(),
+            Ok(Event::Capture(CaptureEvent::Start))
+        ));
+    }
+
+    #[test]
     fn test_event_router_shutdown() {
         let router = EventRouter::new();
         let mut receiver = router.subscribe();
