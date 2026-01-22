@@ -216,7 +216,6 @@ mod native {
                 half_out
             );
         }
-
     }
 }
 
