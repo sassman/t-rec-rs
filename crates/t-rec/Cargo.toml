@@ -92,3 +92,6 @@ presentations)
 [package.metadata.rpm.targets]
 buildflags = ["--release"]
 t-rec = { path = "/usr/bin/t-rec" }
+
+[package.metadata.docs.rs]
+features = ["lib"]
