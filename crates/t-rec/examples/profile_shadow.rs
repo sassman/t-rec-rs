@@ -1,5 +1,5 @@
 //! Profiling helper for shadow effect
-//! Run with: cargo flamegraph --example profile_shadow -p t-rec
+//! Run with: cargo flamegraph --example profile_shadow -p t-rec --features x-native-imgops
 
 use image::{ColorType, Rgba, RgbaImage};
 use tempfile::TempDir;
@@ -14,7 +14,7 @@ fn main() {
     // Run multiple iterations for better sampling
     for i in 0..50 {
         image::save_buffer(&path, img.as_raw(), 400, 400, ColorType::Rgba8).unwrap();
-        t_rec::decors::apply_shadow_to_file_native(&path, "white").unwrap();
+        t_rec::core::decors::apply_shadow_to_file_native(&path, "white").unwrap();
         if i % 10 == 0 {
             eprintln!("Iteration {}/50", i);
         }

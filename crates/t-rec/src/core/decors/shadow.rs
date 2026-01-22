@@ -156,10 +156,10 @@ mod native {
         let mut kernel = vec![0.0; size];
         let mut sum = 0.0;
 
-        for i in 0..size {
+        for (i, item) in kernel.iter_mut().enumerate().take(size) {
             let x = (i as i32 - radius) as f32;
             let val = (-x * x / (2.0 * sigma * sigma)).exp();
-            kernel[i] = val;
+            *item = val;
             sum += val;
         }
 
@@ -204,13 +204,13 @@ mod native {
         // Horizontal pass - parallelize over rows
         let mut temp = vec![0.0; input.len()];
         temp.par_chunks_mut(w).enumerate().for_each(|(y, row)| {
-            for x in 0..w {
+            for (x, px) in row.iter_mut().enumerate().take(w) {
                 let mut sum = 0.0;
                 for (i, &k) in kernel.iter().enumerate() {
                     let sx = (x as i32 + i as i32 - radius).clamp(0, wi - 1) as usize;
                     sum += input[y * w + sx] * k;
                 }
-                row[x] = sum;
+                *px = sum;
             }
         });
 

@@ -50,7 +50,8 @@ fn bench_shadow_effects(c: &mut Criterion) {
             let path = temp_dir.path().join(format!("native_{}.bmp", size));
             b.iter(|| {
                 create_test_image(&path, size, size);
-                t_rec::core::decors::apply_shadow_to_file_native(black_box(&path), "white").unwrap();
+                t_rec::core::decors::apply_shadow_to_file_native(black_box(&path), "white")
+                    .unwrap();
             });
         });
 
@@ -59,7 +60,8 @@ fn bench_shadow_effects(c: &mut Criterion) {
             let path = temp_dir.path().join(format!("magick_{}.bmp", size));
             b.iter(|| {
                 create_test_image(&path, size, size);
-                t_rec::core::decors::apply_shadow_to_file_imagemagick(black_box(&path), "white").unwrap();
+                t_rec::core::decors::apply_shadow_to_file_imagemagick(black_box(&path), "white")
+                    .unwrap();
             });
         });
     }
