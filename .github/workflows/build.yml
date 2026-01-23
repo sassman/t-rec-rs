@@ -7,17 +7,18 @@ name: Build
 on:
   push:
     branches: ["*"]
-    paths-ignore:
-      - "**/docs/**"
-      - "**.md"
   pull_request:
     branches: [main]
-    paths-ignore:
-      - "**/docs/**"
-      - "**.md"
   workflow_call:
 
 jobs:
+  spellcheck:
+    name: spellcheck
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: crate-ci/typos@master
+
   check:
     name: check
     strategy:

@@ -214,7 +214,7 @@ pub struct RecordingSession {
     config: SessionConfig,
     api: Box<dyn PlatformApi>,
     runtime: Runtime,
-    // todo: introdcue the `CatpureContext` on this level
+    // todo: introduce the `CaptureContext` on this level
 }
 
 impl RecordingSession {

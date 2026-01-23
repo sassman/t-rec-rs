@@ -254,7 +254,7 @@ impl KeyboardMonitor {
             }
 
             // Toggle keystroke capture hotkey
-            // todo: this is currenlty not enabled
+            // todo: this is currently not enabled
             if self.hotkey_config.toggle_keystroke_capturing.as_ref() == Some(&hot_key) {
                 let enabled = self.input_state.toggle_capture();
                 log::debug!("Keystroke capture: {}", if enabled { "ON" } else { "OFF" });
