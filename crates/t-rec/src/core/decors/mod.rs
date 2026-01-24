@@ -3,3 +3,7 @@ mod shadow;
 
 pub use big_sur_corner::apply_corner_to_file;
 pub use shadow::apply_shadow_to_file;
+
+// Benchmark exports
+pub use big_sur_corner::{apply_corner_to_file_imagemagick, apply_corner_to_file_native};
+pub use shadow::{apply_shadow_to_file_imagemagick, apply_shadow_to_file_native};
