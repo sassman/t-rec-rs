@@ -50,7 +50,7 @@ objc2-core-graphics.workspace = true
 objc2-core-foundation.workspace = true
 
 [target.'cfg(unix)'.dependencies]
-nix = { version = "0.29", features = ["term", "fs", "signal"] }
+nix = { version = "0.31", features = ["term", "fs", "signal"] }
 libc = "0.2"
 
 [target.'cfg(any(target_os = "linux", target_os = "netbsd"))'.dependencies]
