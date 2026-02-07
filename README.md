@@ -1,5 +1,5 @@
 <div align="center">
- <img src="https://github.com/sassman/t-rec-rs/blob/main/resources/logo.png?raw=true" width="250" height="250">
+ <img src="https://github.com/sassman/t-rec-rs/blob/main/crates/t-rec/resources/logo.png?raw=true" width="250" height="250">
  <h1><strong>t-rec: Terminal Recorder</strong></h1>
 
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
