@@ -17,7 +17,7 @@ anyhow = "1.0"
 log = "0.4"
 
 # Modern objc2-* crates (preferred)
-objc2 = "0.6.3"
+objc2 = "0.6.4"
 objc2-foundation = "0.3.2"
 objc2-app-kit = "0.3.2"
 # objc2-quartz-core = "0.3.2"
