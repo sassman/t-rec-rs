@@ -54,7 +54,7 @@ nix = { version = "0.29", features = ["term", "fs", "signal"] }
 libc = "0.2"
 
 [target.'cfg(any(target_os = "linux", target_os = "netbsd"))'.dependencies]
-x11rb = "0.13.1"
+x11rb = "0.13"
 
 [target.'cfg(target_os = "windows")'.dependencies]
 win-screenshot = "4.0"
