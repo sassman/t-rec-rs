@@ -6,7 +6,6 @@
 [![crates.io](https://img.shields.io/crates/v/t-rec.svg)](https://crates.io/crates/t-rec)
 [![dependency status](https://deps.rs/repo/github/sassman/t-rec-rs/status.svg)](https://deps.rs/repo/github/sassman/t-rec-rs)
 [![Build Status](https://github.com/sassman/t-rec-rs/workflows/Build/badge.svg)](https://github.com/sassman/t-rec-rs/actions?query=branch%3Amain+workflow%3ABuild+)
-[![LOC](https://tokei.rs/b1/github/sassman/t-rec-rs?category=code)](https://github.com/Aaronepower/tokei)
 
 Blazingly fast terminal recorder that generates animated gif images for the web written in rust.
 
