@@ -49,6 +49,40 @@ pub struct PtyShell {
 // Windows handles can be used from any thread.
 unsafe impl Send for PtyShell {}
 
+/// RAII guard for a Windows pipe HANDLE used during ConPTY init.
+///
+/// Closes the handle on Drop unless `take()` transfers ownership out. The
+/// guards live in `spawn_impl` so any early `?` bail-out reliably releases the
+/// pipe handles that have already been created.
+struct OwnedHandle(HANDLE);
+
+impl OwnedHandle {
+    fn new(handle: HANDLE) -> Self {
+        Self(handle)
+    }
+
+    fn as_raw(&self) -> HANDLE {
+        self.0
+    }
+
+    /// Surrender the handle without closing it.
+    fn take(mut self) -> HANDLE {
+        let handle = self.0;
+        self.0 = INVALID_HANDLE_VALUE;
+        handle
+    }
+}
+
+impl Drop for OwnedHandle {
+    fn drop(&mut self) {
+        if self.0 != INVALID_HANDLE_VALUE {
+            unsafe {
+                let _ = CloseHandle(self.0);
+            }
+        }
+    }
+}
+
 impl Drop for PtyShell {
     fn drop(&mut self) {
         unsafe {
@@ -95,16 +129,29 @@ impl PtyShell {
 
         CreatePipe(&mut pipe_in_read, &mut pipe_in_write, Some(&sa), 0)
             .context("Failed to create input pipe")?;
+        // Take ownership immediately so a failure further down releases them.
+        let pipe_in_read = OwnedHandle::new(pipe_in_read);
+        let pipe_in_write = OwnedHandle::new(pipe_in_write);
 
         CreatePipe(&mut pipe_out_read, &mut pipe_out_write, Some(&sa), 0)
             .context("Failed to create output pipe")?;
+        let pipe_out_read = OwnedHandle::new(pipe_out_read);
+        let pipe_out_write = OwnedHandle::new(pipe_out_write);
 
         // IMPORTANT: Clear the inherit flag on handles we're keeping
         // Only the handles passed to CreatePseudoConsole should be inheritable
-        SetHandleInformation(pipe_in_write, HANDLE_FLAG_INHERIT.0, HANDLE_FLAGS(0))
-            .context("Failed to clear inherit on pipe_in_write")?;
-        SetHandleInformation(pipe_out_read, HANDLE_FLAG_INHERIT.0, HANDLE_FLAGS(0))
-            .context("Failed to clear inherit on pipe_out_read")?;
+        SetHandleInformation(
+            pipe_in_write.as_raw(),
+            HANDLE_FLAG_INHERIT.0,
+            HANDLE_FLAGS(0),
+        )
+        .context("Failed to clear inherit on pipe_in_write")?;
+        SetHandleInformation(
+            pipe_out_read.as_raw(),
+            HANDLE_FLAG_INHERIT.0,
+            HANDLE_FLAGS(0),
+        )
+        .context("Failed to clear inherit on pipe_out_read")?;
 
         // Get console size (default to 120x30 if we can't determine)
         let size = COORD { X: 120, Y: 30 };
@@ -112,16 +159,16 @@ impl PtyShell {
         // Create the pseudo-console
         let hpc = CreatePseudoConsole(
             size,
-            pipe_in_read,   // PTY reads input from this pipe
-            pipe_out_write, // PTY writes output to this pipe
+            pipe_in_read.as_raw(),   // PTY reads input from this pipe
+            pipe_out_write.as_raw(), // PTY writes output to this pipe
             PSEUDOCONSOLE_INHERIT_CURSOR,
         )
         .context("Failed to create pseudo-console")?;
 
-        // Close the handles that the pseudo-console now owns
-        // (ConPTY duplicates them internally)
-        let _ = CloseHandle(pipe_in_read);
-        let _ = CloseHandle(pipe_out_write);
+        // ConPTY duplicates the read/write ends it received; the originals are
+        // closed by dropping the guards here.
+        drop(pipe_in_read);
+        drop(pipe_out_write);
 
         // Prepare startup info with pseudo-console attribute
         let mut attr_list_size: usize = 0;
@@ -191,15 +238,15 @@ impl PtyShell {
             "ConPTY spawned: hpc={:?}, pid={}, pipe_in={:?}, pipe_out={:?}",
             hpc.0,
             process_info.dwProcessId,
-            pipe_in_write.0,
-            pipe_out_read.0
+            pipe_in_write.as_raw().0,
+            pipe_out_read.as_raw().0
         );
 
         Ok(Self {
             hpc,
             process_info,
-            pipe_pty_out: pipe_out_read,
-            pipe_pty_in: pipe_in_write,
+            pipe_pty_out: pipe_out_read.take(),
+            pipe_pty_in: pipe_in_write.take(),
             _attr_list: attr_list,
         })
     }
