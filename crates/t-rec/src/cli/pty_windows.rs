@@ -24,9 +24,9 @@ use windows::Win32::System::Console::{
 use windows::Win32::System::Pipes::CreatePipe;
 use windows::Win32::System::Threading::{
     CreateProcessW, InitializeProcThreadAttributeList, UpdateProcThreadAttribute,
-    WaitForSingleObject, EXTENDED_STARTUPINFO_PRESENT,
-    LPPROC_THREAD_ATTRIBUTE_LIST, PROCESS_CREATION_FLAGS, PROCESS_INFORMATION,
-    PROC_THREAD_ATTRIBUTE_PSEUDOCONSOLE, STARTUPINFOEXW,
+    WaitForSingleObject, EXTENDED_STARTUPINFO_PRESENT, LPPROC_THREAD_ATTRIBUTE_LIST,
+    PROCESS_CREATION_FLAGS, PROCESS_INFORMATION, PROC_THREAD_ATTRIBUTE_PSEUDOCONSOLE,
+    STARTUPINFOEXW,
 };
 
 use crate::core::event_router::{Event, LifecycleEvent};
@@ -456,7 +456,9 @@ mod tests {
                         let output_str = String::from_utf8_lossy(&all_output);
                         if output_str.contains("\x1b[6n") {
                             println!("\nResponding to cursor position query...");
-                            let written = writer.write(b"\x1b[1;1R").expect("Failed to write cursor pos");
+                            let written = writer
+                                .write(b"\x1b[1;1R")
+                                .expect("Failed to write cursor pos");
                             println!("Wrote {} bytes for cursor position response", written);
                             writer.flush().expect("Failed to flush");
                             responded_to_cpr = true;
@@ -487,7 +489,9 @@ mod tests {
 
         // Send echo command
         println!("\nSending: echo TEST_OUTPUT_12345");
-        let written = writer.write(b"echo TEST_OUTPUT_12345\r\n").expect("Failed to write");
+        let written = writer
+            .write(b"echo TEST_OUTPUT_12345\r\n")
+            .expect("Failed to write");
         println!("Wrote {} bytes for echo command", written);
         writer.flush().expect("Failed to flush");
 

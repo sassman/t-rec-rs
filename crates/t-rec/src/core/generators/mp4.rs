@@ -58,8 +58,7 @@ pub fn generate_mp4_with_ffmpeg(
     for tc in time_codes {
         let frame_name = file_name_for(tc, IMG_EXT);
         let frame_path = format!("{temp_path}/{frame_name}");
-        writeln!(concat_file, "file '{}'", frame_path)
-            .context("Failed to write to concat file")?;
+        writeln!(concat_file, "file '{}'", frame_path).context("Failed to write to concat file")?;
     }
     concat_file.flush().context("Failed to flush concat file")?;
     drop(concat_file);
