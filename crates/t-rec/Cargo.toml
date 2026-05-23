@@ -1,15 +1,15 @@
 [package]
 name = "t-rec"
-version = "0.8.1"
-authors = ["Sven Kanoldt <sven@d34dl0ck.me>"]
+version.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
 edition = "2018"
-license = "GPL-3.0-only"
 description = "Blazingly fast terminal recorder that generates animated gif images for the web written in rust."
 homepage = "https://github.com/sassman/t-rec-rs"
 readme = "../../README.md"
 keywords = ["recorder", "image", "terminal", "gif", "commandline"]
 categories = ["multimedia::images", "command-line-utilities"]
-repository = "https://github.com/sassman/t-rec-rs"
 links = "X11"
 build = "build.rs"
 include = ["src/**/*", "resources/**/*", "../../LICENSE", "../../*.md", "build.rs"]
