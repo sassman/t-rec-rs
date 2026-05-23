@@ -16,7 +16,7 @@ jobs:
     name: spellcheck
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - uses: crate-ci/typos@master
 
   check:
@@ -24,10 +24,10 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        version: ["macos-latest", "ubuntu-latest"]
+        version: ["macos-latest", "ubuntu-latest", "windows-latest"]
     runs-on: ${{ matrix.version }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: setup | rust
         uses: dtolnay/rust-toolchain@stable
         with:
@@ -42,13 +42,13 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        version: ["macos-latest", "ubuntu-latest"]
+        version: ["macos-latest", "ubuntu-latest", "windows-latest"]
         cargo-cmd:
           - fmt --all -- --check
           - clippy --all-targets --all-features -- -D warnings
     runs-on: ${{ matrix.version }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: setup | rust
         uses: dtolnay/rust-toolchain@stable
         with:
@@ -63,12 +63,12 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        version: ["macos-latest", "ubuntu-latest"]
+        version: ["macos-latest", "ubuntu-latest", "windows-latest"]
         rust: [nightly, stable]
     runs-on: ${{ matrix.version }}
     continue-on-error: ${{ matrix.rust == 'nightly' }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: setup | rust
         uses: dtolnay/rust-toolchain@stable
         with:
@@ -80,6 +80,11 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y libx11-dev
+      - if: ${{ matrix.version == 'windows-latest' }}
+        name: install ImageMagick and ffmpeg for Windows
+        run: |
+          winget install --id ImageMagick.ImageMagick --silent --accept-source-agreements --accept-package-agreements
+          winget install --id Gyan.FFmpeg --silent --accept-source-agreements --accept-package-agreements
       - name: cargo test
         run: cargo test --all --locked
       - name: cargo test (no default features)
@@ -90,7 +95,7 @@ jobs:
     needs: tests
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: build .deb file
         uses: sassman/rust-deb-builder@v1
         with:
@@ -106,7 +111,7 @@ jobs:
     name: security audit
     runs-on: macos-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: setup | rust
         uses: dtolnay/rust-toolchain@stable
         with:

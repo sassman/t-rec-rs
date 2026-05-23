@@ -19,8 +19,6 @@ pub mod linux;
 #[cfg(target_os = "macos")]
 pub mod macos;
 #[cfg(target_os = "windows")]
-pub mod win;
-#[cfg(target_os = "windows")]
 pub mod windows;
 
 // Re-export common types used throughout
