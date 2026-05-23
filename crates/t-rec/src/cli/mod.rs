@@ -14,6 +14,9 @@ pub mod utils;
 #[cfg(unix)]
 pub mod pty;
 
+#[cfg(target_os = "windows")]
+pub mod pty_windows;
+
 // Re-export commonly used items
 pub use args::{launch, resolve_profiled_settings, CliArgs};
 pub use config::{expand_home, handle_init_config, handle_list_profiles, ProfileSettings};
