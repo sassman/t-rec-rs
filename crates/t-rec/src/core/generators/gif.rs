@@ -6,10 +6,16 @@ use std::process::{Command, Output};
 use std::time::Duration;
 use tempfile::TempDir;
 
+#[cfg(target_os = "windows")]
+const PROGRAM: &str = "magick";
+#[cfg(not(target_os = "windows"))]
 const PROGRAM: &str = "convert";
+
 #[cfg(target_os = "macos")]
 const INST_CMD: &str = "brew install imagemagick";
-#[cfg(not(target_os = "macos"))]
+#[cfg(target_os = "windows")]
+const INST_CMD: &str = "winget install ImageMagick.ImageMagick";
+#[cfg(not(any(target_os = "macos", target_os = "windows")))]
 const INST_CMD: &str = "apt-get install imagemagick";
 
 ///
