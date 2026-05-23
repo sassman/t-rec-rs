@@ -22,7 +22,7 @@ Blazingly fast terminal recorder that generates animated gif images for the web 
 - Generates high quality small sized animated gif images or mp4 videos
 - **built-in idle frames detection and optimization** (for super fluid presentations)
 - Applies (can be disabled) border decor effects like drop shadow
-- Runs on MacOS, Linux and NetBSD
+- Runs on Windows, MacOS, Linux and NetBSD
 - Uses native efficient APIs
 - Runs without any cloud service and entirely offline
 - No issues with terminal sizes larger than 80x24
@@ -54,6 +54,12 @@ cargo install -f t-rec
 **NOTE** `-f` just makes sure the latest version is installed
 
 ## Installation on Linux
+### with cargo
+```sh
+sudo apt-get install libx11-dev imagemagick
+cargo install -f t-rec
+```
+
 ### as .deb
 
 ```sh
@@ -103,10 +109,39 @@ cd /usr/pkgsrc/multimedia/t-rec
 make install
 ```
 
+## Installation on Windows
+
+![demo-windows](https://github.com/user-attachments/assets/f3c56aeb-4b56-466d-aa2b-31a4be456ad3)
+
+### System requirements
+
+t-rec uses [ConPTY](https://devblogs.microsoft.com/commandline/windows-command-line-introducing-the-windows-pseudo-console-conpty/) (`CreatePseudoConsole`) which is available from **Windows 10 v1809 (build 17763)** onwards. Earlier Windows versions are not supported.
+
+### Prerequisites
+
+t-rec requires ImageMagick for GIF generation and decor effects, and optionally ffmpeg for MP4 video. Install them with winget:
+
+```powershell
+winget install ImageMagick.ImageMagick
+winget install ffmpeg
+```
+
+Make sure both binaries are on your `PATH` after install — restart your terminal if needed.
+
 ### with cargo
-```sh
-sudo apt-get install libx11-dev imagemagick
+
+```powershell
 cargo install -f t-rec
+```
+
+### Shells
+
+By default t-rec spawns `cmd.exe`. To record a different shell, pass it as an argument or set `$env:SHELL`:
+
+```powershell
+t-rec powershell.exe
+t-rec pwsh.exe
+$env:SHELL = "pwsh.exe"; t-rec
 ```
 
 | tested on those distros |
@@ -379,7 +414,7 @@ this is how it looks then:
 ## Contribute
 
 To contribute to t-rec you can either checkout existing issues [labeled with `good first issue`][4] or [open a new issue][5] and describe your problem.
-Also every PR is welcome. Support for Linux and Windows needs to be done.
+Also every PR is welcome.
 
 ## On the web & social media
 
