@@ -37,8 +37,9 @@ jobs:
       - name: Publish via Komac
         uses: vedantmgoyal9/winget-releaser@main
         with:
-          # Sticking with PascalCase as the winget convention.
-          identifier: Sassman.TRec
+          # winget identifiers allow ASCII letters, digits, hyphens, dots, and
+          # underscores. Hyphenated form keeps the package name recognisable.
+          identifier: Sassman.T-Rec
           # Matches `t-rec.exe-vX.Y.Z-x86_64-pc-windows-msvc.zip` produced by
           # release-binary-assets.yml.
           installers-regex: 'x86_64-pc-windows-msvc\.zip$'
