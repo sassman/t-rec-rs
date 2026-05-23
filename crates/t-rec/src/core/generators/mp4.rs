@@ -53,8 +53,14 @@ pub fn generate_mp4_with_ffmpeg(
     let mut concat_file =
         File::create(&concat_file_path).context("Failed to create concat file for ffmpeg")?;
 
-    // Forward slashes work on Windows ffmpeg too and avoid backslash-escaping.
-    let temp_path = tempdir.path().to_string_lossy().replace('\\', "/");
+    // ffmpeg's concat demuxer wants UTF-8 string paths; fail early rather than
+    // silently lossy-converting (the replacement chars would surface later as
+    // a confusing "file not found" from ffmpeg).
+    let temp_path = tempdir
+        .path()
+        .to_str()
+        .with_context(|| format!("Temp dir path is not valid UTF-8: {:?}", tempdir.path()))?
+        .replace('\\', "/");
     for tc in time_codes {
         let frame_name = file_name_for(tc, IMG_EXT);
         let frame_path = format!("{temp_path}/{frame_name}");
@@ -63,7 +69,15 @@ pub fn generate_mp4_with_ffmpeg(
     concat_file.flush().context("Failed to flush concat file")?;
     drop(concat_file);
 
-    let concat_file_str = concat_file_path.to_string_lossy().replace('\\', "/");
+    let concat_file_str = concat_file_path
+        .to_str()
+        .with_context(|| {
+            format!(
+                "Concat file path is not valid UTF-8: {:?}",
+                concat_file_path
+            )
+        })?
+        .replace('\\', "/");
 
     let output = Command::new(FFMPEG_BINARY)
         .arg("-y")
