@@ -2,6 +2,14 @@ use crate::core::WindowList;
 use anyhow::{anyhow, Result};
 use windows::Win32::UI::WindowsAndMessaging::GetForegroundWindow;
 
+// HWND is an `isize` pointer on Windows. Casting it to `u64` reinterprets the
+// bit pattern unchanged on 64-bit Windows (the only supported target) and the
+// reverse cast (`u64 as isize`) round-trips it back. Window handles live in
+// user-mode address space, so the high bit is never set in practice.
+fn hwnd_to_u64(hwnd: isize) -> u64 {
+    hwnd as u64
+}
+
 /// Returns a list of all visible windows with their names and IDs.
 ///
 /// Uses the win-screenshot crate to enumerate windows.
@@ -11,7 +19,7 @@ pub fn window_list() -> Result<WindowList> {
 
     let win_list = windows
         .into_iter()
-        .map(|w| (Some(w.window_name), w.hwnd as u64))
+        .map(|w| (Some(w.window_name), hwnd_to_u64(w.hwnd)))
         .collect();
 
     Ok(win_list)
@@ -33,5 +41,5 @@ pub fn get_foreground_window() -> Result<u64> {
         ));
     }
 
-    Ok(hwnd.0 as u64)
+    Ok(hwnd_to_u64(hwnd.0 as isize))
 }
