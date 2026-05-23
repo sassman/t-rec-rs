@@ -17,6 +17,9 @@ Blazingly fast terminal recorder that generates animated gif images for the web 
 
 ![demo](./docs/demo.gif)
 
+> [!IMPORTANT]
+> **Windows support is in preview.** The first Windows-capable release is shipped as a pre-release (`v0.9.0-preview1`) so it does **not** auto-install via `cargo install t-rec` or distro packages — you have to opt in. If you are on Windows, please try it and report what you find on the [issue tracker](https://github.com/sassman/t-rec-rs/issues). See [Installation on Windows](#installation-on-windows) for the exact install command.
+
 ## Features
 - Screenshotting your terminal with configurable framerate (4-15 fps)
 - Generates high quality small sized animated gif images or mp4 videos
@@ -113,6 +116,12 @@ make install
 
 ![demo-windows](https://github.com/user-attachments/assets/f3c56aeb-4b56-466d-aa2b-31a4be456ad3)
 
+> [!NOTE]
+> Windows support ships as the `v0.9.0-preview1` pre-release. Cargo and distro
+> package managers do **not** pick up pre-releases by default, so the install
+> command below pins the version explicitly. Once Windows support graduates to
+> stable, the regular `cargo install -f t-rec` will work.
+
 ### System requirements
 
 t-rec uses [ConPTY](https://devblogs.microsoft.com/commandline/windows-command-line-introducing-the-windows-pseudo-console-conpty/) (`CreatePseudoConsole`) which is available from **Windows 10 v1809 (build 17763)** onwards. Earlier Windows versions are not supported.
@@ -128,11 +137,15 @@ winget install ffmpeg
 
 Make sure both binaries are on your `PATH` after install — restart your terminal if needed.
 
-### with cargo
+### with cargo (pre-release)
 
 ```powershell
-cargo install -f t-rec
+cargo install -f t-rec --version 0.9.0-preview1
 ```
+
+### Pre-built binary (pre-release)
+
+Grab the Windows zip attached to the [`v0.9.0-preview1` release](https://github.com/sassman/t-rec-rs/releases/tag/v0.9.0-preview1), unpack it, and drop `t-rec.exe` somewhere on your `PATH`.
 
 ### Shells
 
