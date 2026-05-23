@@ -309,11 +309,8 @@ impl Write for PtyWriter {
     fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
         let mut bytes_written: u32 = 0;
         unsafe {
-            WriteFile(self.handle, Some(buf), Some(&mut bytes_written), None).map_err(
-                |e: windows::core::Error| {
-                    std::io::Error::new(std::io::ErrorKind::Other, e.to_string())
-                },
-            )?;
+            WriteFile(self.handle, Some(buf), Some(&mut bytes_written), None)
+                .map_err(|e: windows::core::Error| std::io::Error::other(e.to_string()))?;
         }
         log::debug!(
             "PtyWriter::write: requested {} bytes, wrote {} bytes",
@@ -390,7 +387,7 @@ impl PtyReader {
             )
             .map_err(|e: windows::core::Error| {
                 log::debug!("ReadFile error: {}", e);
-                std::io::Error::new(std::io::ErrorKind::Other, e.to_string())
+                std::io::Error::other(e.to_string())
             })?;
         }
 
