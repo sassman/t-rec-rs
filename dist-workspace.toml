@@ -16,6 +16,9 @@ installers = ["shell", "powershell", "homebrew"]
 tap = "sassman/homebrew-tap"
 # How the formula installs from a tap (vs. publishing as a separate package).
 publish-jobs = ["homebrew"]
+# We manually swap dist's default tokens for a 5422m4n-bot GitHub App in
+# `release.yml`, so the workflow intentionally diverges from `dist generate`.
+allow-dirty = ["ci"]
 # Target platforms to build apps for (Rust target-triple syntax)
 targets = ["aarch64-apple-darwin", "aarch64-unknown-linux-gnu", "x86_64-apple-darwin", "x86_64-unknown-linux-gnu", "x86_64-pc-windows-msvc"]
 # The t-rec binary requires the `cli` feature (see crates/t-rec/Cargo.toml).
