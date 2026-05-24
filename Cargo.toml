@@ -29,3 +29,8 @@ objc2-core-foundation = { version = "0.3", features = [
     "CFRunLoop", "CFDate", "CFArray", "CFDictionary", "CFString", "CFNumber", "CFAttributedString", "CFBase"
 ] }
 # objc2-core-text = { version = "0.3", features = ["CTFont", "CTLine", "CTStringAttributes", "objc2-core-graphics"] }
+
+# The profile that 'dist' will build with
+[profile.dist]
+inherits = "release"
+lto = "thin"
