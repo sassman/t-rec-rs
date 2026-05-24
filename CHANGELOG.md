@@ -6,6 +6,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.9.0-preview1](https://github.com/sassman/t-rec-rs/compare/v0.8.2...v0.9.0-preview1) - 2026-05-23
+
+This is a preview release that ships Windows support for the first time.
+It is not picked up by `cargo install t-rec` or distro packages; install
+it explicitly with `cargo install -f t-rec --version 0.9.0-preview1` or
+download the platform zip from the GitHub release page.
+
+### Added
+
+- feat(windows) implement windows support ([#320](https://github.com/sassman/t-rec-rs/pull/320))
+- interactive Recording with PTY and Hotkeys ([#316](https://github.com/sassman/t-rec-rs/pull/316))
+
+### Fixed
+
+- *(docs)* fix broken logo url
+
+### Other
+
+- add typos spell check ([#324](https://github.com/sassman/t-rec-rs/pull/324))
+- *(deps)* bump crossterm from 0.28 to 0.29 ([#325](https://github.com/sassman/t-rec-rs/pull/325))
+- *(deps)* bump nix from 0.29 to 0.31 ([#326](https://github.com/sassman/t-rec-rs/pull/326))
+- *(deps)* bump toml from 0.9 to 1.0 ([#338](https://github.com/sassman/t-rec-rs/pull/338))
+- ci: trigger the deploy workflow on SemVer pre-release tags too
+
 ## [0.8.2](https://github.com/sassman/t-rec-rs/compare/v0.8.1...v0.8.2) - 2025-12-19
 
 ### Fixed

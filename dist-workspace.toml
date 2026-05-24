@@ -1,0 +1,32 @@
+[workspace]
+members = ["cargo:."]
+
+# Config for 'dist'
+[dist]
+# The preferred dist version to use in CI (Cargo.toml SemVer syntax)
+cargo-dist-version = "0.31.0"
+# CI backends to support
+ci = "github"
+# Shell + PowerShell one-liner installers (curl | sh, iwr | iex), plus a
+# Homebrew formula published to the personal tap below. The PR-based update
+# of the homebrew-core formula is handled separately by
+# `.github/workflows/release-to-homebrew.yml`.
+installers = ["shell", "powershell", "homebrew"]
+# Personal tap that receives the generated Formula on each release.
+tap = "sassman/homebrew-tap"
+# How the formula installs from a tap (vs. publishing as a separate package).
+publish-jobs = ["homebrew"]
+# We manually swap dist's default tokens for a 5422m4n-bot GitHub App in
+# `release.yml`, so the workflow intentionally diverges from `dist generate`.
+allow-dirty = ["ci"]
+# Target platforms to build apps for (Rust target-triple syntax)
+targets = ["aarch64-apple-darwin", "aarch64-unknown-linux-gnu", "x86_64-apple-darwin", "x86_64-unknown-linux-gnu", "x86_64-pc-windows-msvc"]
+# The t-rec binary requires the `cli` feature (see crates/t-rec/Cargo.toml).
+features = ["cli"]
+# Defensive: don't pull in default features (currently empty anyway).
+default-features = false
+
+# Build-time system dependency: t-rec links against libX11 on Linux
+# (see crates/t-rec/build.rs).
+[dist.dependencies.apt]
+libx11-dev = "*"

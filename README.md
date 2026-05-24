@@ -1,12 +1,11 @@
 <div align="center">
- <img src="https://github.com/sassman/t-rec-rs/blob/main/resources/logo.png?raw=true" width="250" height="250">
+ <img src="https://github.com/sassman/t-rec-rs/blob/main/crates/t-rec/resources/logo.png?raw=true" width="250" height="250">
  <h1><strong>t-rec: Terminal Recorder</strong></h1>
 
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 [![crates.io](https://img.shields.io/crates/v/t-rec.svg)](https://crates.io/crates/t-rec)
 [![dependency status](https://deps.rs/repo/github/sassman/t-rec-rs/status.svg)](https://deps.rs/repo/github/sassman/t-rec-rs)
 [![Build Status](https://github.com/sassman/t-rec-rs/workflows/Build/badge.svg)](https://github.com/sassman/t-rec-rs/actions?query=branch%3Amain+workflow%3ABuild+)
-[![LOC](https://tokei.rs/b1/github/sassman/t-rec-rs?category=code)](https://github.com/Aaronepower/tokei)
 
 Blazingly fast terminal recorder that generates animated gif images for the web written in rust.
 
@@ -17,12 +16,15 @@ Blazingly fast terminal recorder that generates animated gif images for the web 
 
 ![demo](./docs/demo.gif)
 
+> [!IMPORTANT]
+> **Windows support is in preview.** The first Windows-capable release is shipped as a pre-release (`v0.9.0-preview1`) so it does **not** auto-install via `cargo install t-rec` or distro packages — you have to opt in. If you are on Windows, please try it and report what you find on the [issue tracker](https://github.com/sassman/t-rec-rs/issues). See [Installation on Windows](#installation-on-windows) for the exact install command.
+
 ## Features
 - Screenshotting your terminal with configurable framerate (4-15 fps)
 - Generates high quality small sized animated gif images or mp4 videos
 - **built-in idle frames detection and optimization** (for super fluid presentations)
 - Applies (can be disabled) border decor effects like drop shadow
-- Runs on MacOS, Linux and NetBSD
+- Runs on Windows, MacOS, Linux and NetBSD
 - Uses native efficient APIs
 - Runs without any cloud service and entirely offline
 - No issues with terminal sizes larger than 80x24
@@ -54,6 +56,12 @@ cargo install -f t-rec
 **NOTE** `-f` just makes sure the latest version is installed
 
 ## Installation on Linux
+### with cargo
+```sh
+sudo apt-get install libx11-dev imagemagick
+cargo install -f t-rec
+```
+
 ### as .deb
 
 ```sh
@@ -103,10 +111,49 @@ cd /usr/pkgsrc/multimedia/t-rec
 make install
 ```
 
-### with cargo
-```sh
-sudo apt-get install libx11-dev imagemagick
-cargo install -f t-rec
+## Installation on Windows
+
+![demo-windows](https://github.com/user-attachments/assets/f3c56aeb-4b56-466d-aa2b-31a4be456ad3)
+
+> [!NOTE]
+> Windows support ships as the `v0.9.0-preview1` pre-release. Cargo and distro
+> package managers do **not** pick up pre-releases by default, so the install
+> command below pins the version explicitly. Once Windows support graduates to
+> stable, the regular `cargo install -f t-rec` will work.
+
+### System requirements
+
+t-rec uses [ConPTY](https://devblogs.microsoft.com/commandline/windows-command-line-introducing-the-windows-pseudo-console-conpty/) (`CreatePseudoConsole`) which is available from **Windows 10 v1809 (build 17763)** onwards. Earlier Windows versions are not supported.
+
+### Prerequisites
+
+t-rec requires ImageMagick for GIF generation and decor effects, and optionally ffmpeg for MP4 video. Install them with winget:
+
+```powershell
+winget install ImageMagick.ImageMagick
+winget install ffmpeg
+```
+
+Make sure both binaries are on your `PATH` after install — restart your terminal if needed.
+
+### with cargo (pre-release)
+
+```powershell
+cargo install -f t-rec --version 0.9.0-preview1
+```
+
+### Pre-built binary (pre-release)
+
+Grab the Windows zip attached to the [`v0.9.0-preview1` release](https://github.com/sassman/t-rec-rs/releases/tag/v0.9.0-preview1), unpack it, and drop `t-rec.exe` somewhere on your `PATH`.
+
+### Shells
+
+By default t-rec spawns `cmd.exe`. To record a different shell, pass it as an argument or set `$env:SHELL`:
+
+```powershell
+t-rec powershell.exe
+t-rec pwsh.exe
+$env:SHELL = "pwsh.exe"; t-rec
 ```
 
 | tested on those distros |
@@ -379,7 +426,7 @@ this is how it looks then:
 ## Contribute
 
 To contribute to t-rec you can either checkout existing issues [labeled with `good first issue`][4] or [open a new issue][5] and describe your problem.
-Also every PR is welcome. Support for Linux and Windows needs to be done.
+Also every PR is welcome.
 
 ## On the web & social media
 
