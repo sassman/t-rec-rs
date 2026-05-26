@@ -6,7 +6,6 @@
 
 use anyhow::{Context, Result};
 use nix::pty::{openpty, OpenptyResult, Winsize};
-use nix::sys::termios::tcgetattr;
 use std::fs::File;
 use std::io::{Read, Write};
 use std::os::fd::{AsRawFd, FromRawFd, IntoRawFd};
@@ -86,17 +85,17 @@ impl PtyShell {
     /// This creates a pseudo-terminal pair and spawns the given program
     /// with the slave side as its controlling terminal.
     pub fn spawn(program: &str) -> Result<Self> {
-        // Get current terminal settings to copy to the PTY
-        let termios = tcgetattr(std::io::stdin()).context("Failed to get terminal attributes")?;
-
         // Inherit the parent terminal's geometry. Without this, the slave defaults to
         // 0x0 and TUI apps (gitui, vim, htop, …) render to an empty canvas — the visible
         // terminal stays black. See issue #346.
         let winsize = parent_winsize();
 
-        // Create PTY pair
+        // Pass None for termios: let the kernel apply its default line discipline
+        // (cooked, echo on). Copying parent termios is fragile — if spawn ever happens
+        // after we've enabled raw mode, the slave inherits raw and breaks the child's
+        // line editing. Mirrors wezterm's approach.
         let OpenptyResult { master, slave } =
-            openpty(&winsize, &termios).context("Failed to create PTY")?;
+            openpty(&winsize, None).context("Failed to create PTY")?;
 
         let slave_fd = slave.as_raw_fd();
 
