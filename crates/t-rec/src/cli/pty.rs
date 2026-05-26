@@ -5,7 +5,7 @@
 //! allowing proper interactive shell behavior with stdin/stdout forwarding.
 
 use anyhow::{Context, Result};
-use nix::pty::{openpty, OpenptyResult};
+use nix::pty::{openpty, OpenptyResult, Winsize};
 use nix::sys::termios::tcgetattr;
 use std::fs::File;
 use std::io::{Read, Write};
@@ -16,6 +16,31 @@ use std::thread;
 use tokio::sync::broadcast;
 
 use crate::core::event_router::{Event, LifecycleEvent};
+
+/// Query the controlling terminal for its current geometry.
+///
+/// Falls back to 80x24 if stdin isn't a TTY (the slave must have a non-zero size
+/// or TUIs render to nothing).
+fn parent_winsize() -> Winsize {
+    let mut ws: libc::winsize = unsafe { std::mem::zeroed() };
+    let ok = unsafe { libc::ioctl(libc::STDIN_FILENO, libc::TIOCGWINSZ, &mut ws) } == 0;
+
+    if ok && ws.ws_row > 0 && ws.ws_col > 0 {
+        Winsize {
+            ws_row: ws.ws_row,
+            ws_col: ws.ws_col,
+            ws_xpixel: ws.ws_xpixel,
+            ws_ypixel: ws.ws_ypixel,
+        }
+    } else {
+        Winsize {
+            ws_row: 24,
+            ws_col: 80,
+            ws_xpixel: 0,
+            ws_ypixel: 0,
+        }
+    }
+}
 
 /// A PTY-connected shell process.
 pub struct PtyShell {
@@ -36,9 +61,14 @@ impl PtyShell {
         // Get current terminal settings to copy to the PTY
         let termios = tcgetattr(std::io::stdin()).context("Failed to get terminal attributes")?;
 
+        // Inherit the parent terminal's geometry. Without this, the slave defaults to
+        // 0x0 and TUI apps (gitui, vim, htop, …) render to an empty canvas — the visible
+        // terminal stays black. See issue #346.
+        let winsize = parent_winsize();
+
         // Create PTY pair
         let OpenptyResult { master, slave } =
-            openpty(None, Some(&termios)).context("Failed to create PTY")?;
+            openpty(&winsize, &termios).context("Failed to create PTY")?;
 
         let slave_fd = slave.as_raw_fd();
 
