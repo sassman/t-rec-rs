@@ -29,7 +29,7 @@ use windows::Win32::System::Threading::{
     STARTUPINFOEXW,
 };
 
-use crate::core::event_router::{Event, LifecycleEvent};
+use crate::core::event_router::{CaptureEvent, Event, EventRouter, LifecycleEvent};
 
 /// A ConPTY-connected shell process for Windows.
 pub struct PtyShell {
@@ -276,21 +276,27 @@ impl PtyShell {
 
     /// Run the output forwarding loop.
     ///
-    /// Reads from the PTY and writes to stdout.
-    /// Returns when the shell exits, a shutdown signal is received, or an error occurs.
-    pub fn forward_output(&mut self, mut event_rx: broadcast::Receiver<Event>) -> Result<()> {
+    /// Reads from the PTY and writes to stdout. When the shell exits, broadcasts
+    /// `CaptureEvent::Stop` so the session unwinds — same lifecycle path as Ctrl+D.
+    pub fn forward_output(
+        &mut self,
+        mut event_rx: broadcast::Receiver<Event>,
+        router: EventRouter,
+    ) -> Result<()> {
         let reader = self.get_reader()?;
         let mut writer = self.get_writer()?;
         let mut stdout = std::io::stdout();
         let mut buf = [0u8; 4096];
         let mut pending_data = Vec::new();
         let mut responded_to_cpr = false;
+        let mut shutdown_received = false;
 
         loop {
             // Check for lifecycle events (non-blocking)
             match event_rx.try_recv() {
                 Ok(Event::Lifecycle(LifecycleEvent::Shutdown)) => {
                     log::debug!("Shell forwarder received shutdown signal");
+                    shutdown_received = true;
                     break;
                 }
                 Ok(_) => {} // Ignore non-lifecycle events
@@ -346,6 +352,12 @@ impl PtyShell {
                     thread::sleep(std::time::Duration::from_millis(10));
                 }
             }
+        }
+
+        // If we exited because the shell died (not because shutdown was already
+        // initiated), tell the session to stop. Mirrors the Ctrl+D path.
+        if !shutdown_received {
+            router.send(Event::Capture(CaptureEvent::Stop));
         }
 
         Ok(())

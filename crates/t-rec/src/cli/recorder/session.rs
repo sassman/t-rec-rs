@@ -352,7 +352,8 @@ impl RecordingSession {
         // Spawn shell forwarder actor
         runtime.spawn(Actor::ShellForwarder, {
             let event_rx = router.subscribe();
-            move || pty_shell.forward_output(event_rx)
+            let router = router.clone();
+            move || pty_shell.forward_output(event_rx, router)
         });
 
         // Create keyboard monitor

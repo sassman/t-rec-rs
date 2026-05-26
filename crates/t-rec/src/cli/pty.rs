@@ -8,13 +8,25 @@ use anyhow::{Context, Result};
 use nix::pty::{openpty, OpenptyResult, Winsize};
 use std::fs::File;
 use std::io::{Read, Write};
-use std::os::fd::{AsRawFd, FromRawFd, IntoRawFd};
+use std::os::fd::{AsRawFd, FromRawFd, IntoRawFd, RawFd};
 use std::os::unix::process::CommandExt;
 use std::process::{Child, Command};
 use std::thread;
 use tokio::sync::broadcast;
 
-use crate::core::event_router::{Event, LifecycleEvent};
+use crate::core::event_router::{CaptureEvent, Event, EventRouter, LifecycleEvent};
+
+/// Set the FD_CLOEXEC flag so the descriptor closes across `execve`.
+fn set_cloexec(fd: RawFd) -> std::io::Result<()> {
+    let flags = unsafe { libc::fcntl(fd, libc::F_GETFD) };
+    if flags < 0 {
+        return Err(std::io::Error::last_os_error());
+    }
+    if unsafe { libc::fcntl(fd, libc::F_SETFD, flags | libc::FD_CLOEXEC) } < 0 {
+        return Err(std::io::Error::last_os_error());
+    }
+    Ok(())
+}
 
 /// Query the controlling terminal for its current geometry.
 ///
@@ -97,12 +109,36 @@ impl PtyShell {
         let OpenptyResult { master, slave } =
             openpty(&winsize, None).context("Failed to create PTY")?;
 
+        // Make sure the child closes the master across exec. Without CLOEXEC the
+        // child holds a reference to the master end, which means our reader on the
+        // parent side never sees EOF when the child exits.
+        set_cloexec(master.as_raw_fd()).context("Failed to set FD_CLOEXEC on PTY master")?;
+
         let slave_fd = slave.as_raw_fd();
 
         // Spawn shell with slave as controlling terminal
         let child = unsafe {
             Command::new(program)
                 .pre_exec(move || {
+                    // Reset signal dispositions. The Rust runtime sets SIGPIPE=SIG_IGN
+                    // (so `println!` to a broken pipe doesn't kill us), and SIG_IGN is
+                    // preserved across exec. Shells and most CLI tools expect default
+                    // handling for these signals; inheriting SIG_IGN causes subtle bugs.
+                    for &signo in &[
+                        libc::SIGCHLD,
+                        libc::SIGHUP,
+                        libc::SIGINT,
+                        libc::SIGQUIT,
+                        libc::SIGTERM,
+                        libc::SIGALRM,
+                        libc::SIGPIPE,
+                    ] {
+                        libc::signal(signo, libc::SIG_DFL);
+                    }
+                    // The signal mask is inherited across exec (POSIX), so reset it.
+                    let empty: libc::sigset_t = std::mem::zeroed();
+                    libc::sigprocmask(libc::SIG_SETMASK, &empty, std::ptr::null_mut());
+
                     // Create new session and set controlling terminal
                     if libc::setsid() < 0 {
                         return Err(std::io::Error::last_os_error());
@@ -164,9 +200,14 @@ impl PtyShell {
 
     /// Run the output forwarding loop.
     ///
-    /// Reads from the PTY master and writes to stdout.
-    /// Returns when the shell exits, a shutdown signal is received, or an error occurs.
-    pub fn forward_output(&mut self, mut event_rx: broadcast::Receiver<Event>) -> Result<()> {
+    /// Reads from the PTY master and writes to stdout. When the shell exits
+    /// (naturally via `exit` or because it crashed), broadcasts `CaptureEvent::Stop`
+    /// so the session unwinds — same lifecycle path as if the user had pressed Ctrl+D.
+    pub fn forward_output(
+        &mut self,
+        mut event_rx: broadcast::Receiver<Event>,
+        router: EventRouter,
+    ) -> Result<()> {
         let mut reader = self.get_reader()?;
         let mut stdout = std::io::stdout();
         let mut buf = [0u8; 4096];
@@ -177,17 +218,28 @@ impl PtyShell {
             libc::fcntl(reader.as_raw_fd(), libc::F_SETFL, flags | libc::O_NONBLOCK);
         }
 
+        let mut shutdown_received = false;
+
         loop {
             // Check for lifecycle events (non-blocking)
             match event_rx.try_recv() {
                 Ok(Event::Lifecycle(LifecycleEvent::Shutdown)) => {
                     log::debug!("Shell forwarder received shutdown signal");
+                    shutdown_received = true;
                     break;
                 }
                 Ok(_) => {} // Ignore non-lifecycle events
                 Err(broadcast::error::TryRecvError::Empty) => {}
                 Err(broadcast::error::TryRecvError::Closed) => break,
                 Err(broadcast::error::TryRecvError::Lagged(_)) => {}
+            }
+
+            // On macOS, a non-blocking read from a PTY master whose slave has been
+            // closed can return EAGAIN indefinitely instead of EOF/EIO. Polling the
+            // child's exit status is the reliable way to notice the shell is gone.
+            if matches!(self._child.try_wait(), Ok(Some(_))) {
+                log::debug!("Shell process exited; stopping forwarder");
+                break;
             }
 
             match reader.read(&mut buf) {
@@ -203,6 +255,12 @@ impl PtyShell {
                 Err(e) if e.kind() == std::io::ErrorKind::Interrupted => continue,
                 Err(_) => break, // Other errors (likely shell exited)
             }
+        }
+
+        // If we exited because the shell died (not because shutdown was already
+        // initiated), tell the session to stop. Mirrors the Ctrl+D path.
+        if !shutdown_received {
+            router.send(Event::Capture(CaptureEvent::Stop));
         }
 
         Ok(())
