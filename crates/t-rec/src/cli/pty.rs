@@ -42,6 +42,34 @@ fn parent_winsize() -> Winsize {
     }
 }
 
+/// Handle for resizing the PTY slave from another thread.
+///
+/// Owns its own duplicate of the master fd so it can outlive the borrow on
+/// `PtyShell` and be moved into an actor closure.
+pub struct PtyResizer {
+    master: File,
+}
+
+impl PtyResizer {
+    /// Apply a new geometry to the slave. The kernel will deliver SIGWINCH
+    /// to the slave's foreground process group, which is what triggers TUI
+    /// redraws.
+    pub fn resize(&self, rows: u16, cols: u16) -> Result<()> {
+        let ws = libc::winsize {
+            ws_row: rows,
+            ws_col: cols,
+            ws_xpixel: 0,
+            ws_ypixel: 0,
+        };
+        let ret = unsafe { libc::ioctl(self.master.as_raw_fd(), libc::TIOCSWINSZ, &ws) };
+        if ret != 0 {
+            return Err(anyhow::Error::new(std::io::Error::last_os_error())
+                .context("ioctl(TIOCSWINSZ) failed"));
+        }
+        Ok(())
+    }
+}
+
 /// A PTY-connected shell process.
 pub struct PtyShell {
     /// The child shell process (kept alive by struct ownership).
@@ -124,6 +152,15 @@ impl PtyShell {
         self.master_read
             .try_clone()
             .context("Failed to clone PTY master reader")
+    }
+
+    /// Get a handle that can resize the slave from another thread.
+    pub fn get_resizer(&self) -> Result<PtyResizer> {
+        let master = self
+            .master_write
+            .try_clone()
+            .context("Failed to clone PTY master for resize")?;
+        Ok(PtyResizer { master })
     }
 
     /// Run the output forwarding loop.

@@ -265,6 +265,15 @@ impl PtyShell {
         })
     }
 
+    /// Get a handle that can resize the slave from another thread.
+    ///
+    /// TODO: implement via `ResizePseudoConsole(hpc, COORD)`. Also the initial
+    /// size at spawn is hardcoded to 120x30 (see `spawn_impl`) — both should be
+    /// fixed together in a Windows-focused pass.
+    pub fn get_resizer(&self) -> Result<PtyResizer> {
+        Ok(PtyResizer { _private: () })
+    }
+
     /// Run the output forwarding loop.
     ///
     /// Reads from the PTY and writes to stdout.
@@ -339,6 +348,18 @@ impl PtyShell {
             }
         }
 
+        Ok(())
+    }
+}
+
+/// Stub resize handle for Windows. See `PtyShell::get_resizer`.
+pub struct PtyResizer {
+    _private: (),
+}
+
+impl PtyResizer {
+    pub fn resize(&self, _rows: u16, _cols: u16) -> Result<()> {
+        // ConPTY resize not wired yet; ignore so the cross-platform call site stays uniform.
         Ok(())
     }
 }

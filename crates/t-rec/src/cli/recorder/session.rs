@@ -347,6 +347,7 @@ impl RecordingSession {
     ) -> Result<()> {
         let mut pty_shell = PtyShell::spawn(&config.program)?;
         let shell_stdin = pty_shell.get_writer()?;
+        let resizer = pty_shell.get_resizer()?;
 
         // Spawn shell forwarder actor
         runtime.spawn(Actor::ShellForwarder, {
@@ -368,7 +369,11 @@ impl RecordingSession {
         runtime.spawn(Actor::InputHandler, {
             let event_rx = router.subscribe();
             move || {
-                keyboard_monitor.run(shell_stdin, event_rx)?;
+                keyboard_monitor.run(shell_stdin, event_rx, |rows, cols| {
+                    if let Err(e) = resizer.resize(rows, cols) {
+                        log::warn!("PTY resize failed: {}", e);
+                    }
+                })?;
                 Ok(())
             }
         });

@@ -172,16 +172,17 @@ impl KeyboardMonitor {
     /// 3. Handles hotkeys (F2/F3)
     /// 4. Forwards regular keys to the shell
     /// 5. Restores terminal on exit
-    pub fn run<W: Write>(
+    pub fn run<W: Write, F: FnMut(u16, u16)>(
         &self,
         mut shell_stdin: W,
         event_rx: broadcast::Receiver<Event>,
+        mut on_resize: F,
     ) -> anyhow::Result<()> {
         log::debug!("Keyboard monitor starting - F2=screenshot, F3=toggle capture, Ctrl+D=exit");
         enable_raw_mode()?;
         log::debug!("Raw mode enabled");
 
-        let result = self.run_loop(&mut shell_stdin, event_rx);
+        let result = self.run_loop(&mut shell_stdin, event_rx, &mut on_resize);
 
         // Always restore terminal, even on error
         let _ = disable_raw_mode();
@@ -189,10 +190,11 @@ impl KeyboardMonitor {
         result
     }
 
-    fn run_loop<W: Write>(
+    fn run_loop<W: Write, F: FnMut(u16, u16)>(
         &self,
         shell_stdin: &mut W,
         mut event_rx: broadcast::Receiver<Event>,
+        on_resize: &mut F,
     ) -> anyhow::Result<()> {
         loop {
             // Check for lifecycle events (non-blocking)
@@ -225,8 +227,9 @@ impl KeyboardMonitor {
                             KeyAction::Exit => break,
                         }
                     }
-                    CrosstermEvent::Resize(_, _) => {
-                        // Terminal resized, could handle this if needed
+                    CrosstermEvent::Resize(cols, rows) => {
+                        log::debug!("Terminal resized to {}x{} (cols x rows)", cols, rows);
+                        on_resize(rows, cols);
                     }
                     _ => {}
                 }
