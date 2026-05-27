@@ -11,7 +11,6 @@ use std::io::{Read, Write};
 use std::os::fd::{AsRawFd, FromRawFd, IntoRawFd, RawFd};
 use std::os::unix::process::CommandExt;
 use std::process::{Child, Command};
-use std::thread;
 use tokio::sync::broadcast;
 
 use crate::core::event_router::{CaptureEvent, Event, EventRouter, LifecycleEvent};
@@ -211,14 +210,14 @@ impl PtyShell {
         let mut reader = self.get_reader()?;
         let mut stdout = std::io::stdout();
         let mut buf = [0u8; 4096];
-
-        // Set non-blocking mode on reader
-        unsafe {
-            let flags = libc::fcntl(reader.as_raw_fd(), libc::F_GETFL);
-            libc::fcntl(reader.as_raw_fd(), libc::F_SETFL, flags | libc::O_NONBLOCK);
-        }
+        let reader_fd = reader.as_raw_fd();
 
         let mut shutdown_received = false;
+
+        // POLL_TIMEOUT_MS caps how long we sit in poll() without checking
+        // lifecycle events or the child's status. 100ms gives near-instant
+        // shutdown response without the cost of a busy loop.
+        const POLL_TIMEOUT_MS: libc::c_int = 100;
 
         loop {
             // Check for lifecycle events (non-blocking)
@@ -242,18 +241,38 @@ impl PtyShell {
                 break;
             }
 
+            // Block in the kernel until master has data, hangs up, or our timeout
+            // elapses. Avoids the 10ms latency floor and 0% CPU spin of the old
+            // non-blocking+sleep loop — TUI redraws now reach stdout as soon as
+            // the shell produces them.
+            let mut pfd = libc::pollfd {
+                fd: reader_fd,
+                events: libc::POLLIN,
+                revents: 0,
+            };
+            let n = unsafe { libc::poll(&mut pfd, 1, POLL_TIMEOUT_MS) };
+            if n < 0 {
+                let err = std::io::Error::last_os_error();
+                if err.kind() == std::io::ErrorKind::Interrupted {
+                    continue;
+                }
+                log::warn!("poll() on PTY master failed: {}", err);
+                break;
+            }
+            if n == 0 {
+                // Timeout — loop to recheck lifecycle and child status.
+                continue;
+            }
+
+            // poll reported the fd is readable or hung up; let read() decide which.
             match reader.read(&mut buf) {
-                Ok(0) => break, // EOF
+                Ok(0) => break, // EOF (slave closed)
                 Ok(n) => {
                     stdout.write_all(&buf[..n])?;
                     stdout.flush()?;
                 }
-                Err(e) if e.kind() == std::io::ErrorKind::WouldBlock => {
-                    // No data available, sleep briefly
-                    thread::sleep(std::time::Duration::from_millis(10));
-                }
                 Err(e) if e.kind() == std::io::ErrorKind::Interrupted => continue,
-                Err(_) => break, // Other errors (likely shell exited)
+                Err(_) => break, // EIO / other terminal errors
             }
         }
 
