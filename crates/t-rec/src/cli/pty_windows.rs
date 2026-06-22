@@ -19,7 +19,9 @@ use windows::Win32::Foundation::{
 use windows::Win32::Security::SECURITY_ATTRIBUTES;
 use windows::Win32::Storage::FileSystem::{ReadFile, WriteFile};
 use windows::Win32::System::Console::{
-    ClosePseudoConsole, CreatePseudoConsole, COORD, HPCON, PSEUDOCONSOLE_INHERIT_CURSOR,
+    ClosePseudoConsole, CreatePseudoConsole, GetConsoleScreenBufferInfo, GetStdHandle,
+    ResizePseudoConsole, CONSOLE_SCREEN_BUFFER_INFO, COORD, HPCON, PSEUDOCONSOLE_INHERIT_CURSOR,
+    STD_OUTPUT_HANDLE,
 };
 use windows::Win32::System::Pipes::CreatePipe;
 use windows::Win32::System::Threading::{
@@ -30,6 +32,30 @@ use windows::Win32::System::Threading::{
 };
 
 use crate::core::event_router::{CaptureEvent, Event, EventRouter, LifecycleEvent};
+
+/// Query the host console for its visible window dimensions.
+///
+/// Falls back to 120x30 if no console is attached or the query fails — the
+/// pseudo-console still needs a non-zero size or TUI apps render nothing.
+fn parent_console_size() -> COORD {
+    const FALLBACK: COORD = COORD { X: 120, Y: 30 };
+    unsafe {
+        let handle = match GetStdHandle(STD_OUTPUT_HANDLE) {
+            Ok(h) => h,
+            Err(_) => return FALLBACK,
+        };
+        let mut info: CONSOLE_SCREEN_BUFFER_INFO = zeroed();
+        if GetConsoleScreenBufferInfo(handle, &mut info).is_err() {
+            return FALLBACK;
+        }
+        let cols = info.srWindow.Right - info.srWindow.Left + 1;
+        let rows = info.srWindow.Bottom - info.srWindow.Top + 1;
+        if cols <= 0 || rows <= 0 {
+            return FALLBACK;
+        }
+        COORD { X: cols, Y: rows }
+    }
+}
 
 /// A ConPTY-connected shell process for Windows.
 pub struct PtyShell {
@@ -153,8 +179,10 @@ impl PtyShell {
         )
         .context("Failed to clear inherit on pipe_out_read")?;
 
-        // Get console size (default to 120x30 if we can't determine)
-        let size = COORD { X: 120, Y: 30 };
+        // Inherit the host console's visible window size. Without this, the
+        // ConPTY defaults to a tiny canvas and TUI apps render to nothing —
+        // same root cause as issue #346 on macOS.
+        let size = parent_console_size();
 
         // Create the pseudo-console
         let hpc = CreatePseudoConsole(
@@ -266,12 +294,8 @@ impl PtyShell {
     }
 
     /// Get a handle that can resize the slave from another thread.
-    ///
-    /// TODO: implement via `ResizePseudoConsole(hpc, COORD)`. Also the initial
-    /// size at spawn is hardcoded to 120x30 (see `spawn_impl`) — both should be
-    /// fixed together in a Windows-focused pass.
     pub fn get_resizer(&self) -> Result<PtyResizer> {
-        Ok(PtyResizer { _private: () })
+        Ok(PtyResizer { hpc: self.hpc })
     }
 
     /// Run the output forwarding loop.
@@ -364,14 +388,27 @@ impl PtyShell {
     }
 }
 
-/// Stub resize handle for Windows. See `PtyShell::get_resizer`.
+/// Handle for resizing the ConPTY from another thread.
+///
+/// Holds a copy of the `HPCON` from the owning `PtyShell`. The handle is closed
+/// by `PtyShell::Drop`, so resize calls after the shell exits will return an
+/// error — that's fine, the session is unwinding anyway and the caller logs and
+/// moves on.
 pub struct PtyResizer {
-    _private: (),
+    hpc: HPCON,
 }
 
+// SAFETY: HPCON wraps an opaque handle; Windows handles are safe to use across threads.
+unsafe impl Send for PtyResizer {}
+
 impl PtyResizer {
-    pub fn resize(&self, _rows: u16, _cols: u16) -> Result<()> {
-        // ConPTY resize not wired yet; ignore so the cross-platform call site stays uniform.
+    pub fn resize(&self, rows: u16, cols: u16) -> Result<()> {
+        let size = COORD {
+            X: cols as i16,
+            Y: rows as i16,
+        };
+        unsafe { ResizePseudoConsole(self.hpc, size) }
+            .map_err(|e| anyhow::anyhow!("ResizePseudoConsole failed: {}", e))?;
         Ok(())
     }
 }
