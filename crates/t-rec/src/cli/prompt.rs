@@ -93,6 +93,7 @@ fn run_prompt(question: &str, timeout_secs: u64) -> PromptResult {
             Err(mpsc::RecvTimeoutError::Disconnected) => {
                 print!("\n\r\x1b[2K\x1b[1A");
                 io::stdout().flush().unwrap();
+                restore_terminal();
                 return PromptResult::No;
             }
         }
@@ -106,13 +107,15 @@ fn run_prompt(question: &str, timeout_secs: u64) -> PromptResult {
 
 /// Restore terminal to normal state.
 ///
-/// This ensures the cursor is visible and terminal modes are reset
-/// after dialoguer's prompt, especially important when timeout occurs
-/// and the prompt thread is abandoned.
+/// Critical when the dialoguer prompt thread is abandoned (timeout / disconnect):
+/// dialoguer enables raw mode for keypress capture and gets killed before it can
+/// restore termios. Without `disable_raw_mode` here the user's shell foregrounds
+/// into a terminal with no echo and broken signal generation — prompt looks
+/// frozen until Ctrl+C jolts readline into redrawing.
 fn restore_terminal() {
+    let _ = crossterm::terminal::disable_raw_mode();
     let term = Term::stdout();
     let _ = term.show_cursor();
-    // Clear any remaining input state by flushing
     let _ = io::stdout().flush();
 }
 
