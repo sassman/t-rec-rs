@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.9.0-preview3](https://github.com/sassman/t-rec-rs/compare/v0.9.0-preview2...v0.9.0-preview3) - 2026-06-30
+
+### Fixed
+
+- PTY rework — render TUIs correctly and stop `exit` hangs ([#353](https://github.com/sassman/t-rec-rs/pull/353))
+
+### Other
+
+- add named regressions for #257 timing bugs
+- *(deps)* bump windows from 0.61.3 to 0.62.2 ([#347](https://github.com/sassman/t-rec-rs/pull/347))
+
 ## [0.9.0-preview1](https://github.com/sassman/t-rec-rs/compare/v0.8.2...v0.9.0-preview1) - 2026-05-23
 
 ### Added
