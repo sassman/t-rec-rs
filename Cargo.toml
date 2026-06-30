@@ -7,9 +7,13 @@ members = [
 [workspace.package]
 version = "0.9.0-preview2"
 authors = ["Sven Kanoldt <sven@d34dl0ck.me>"]
-edition = "2021"
+edition = "2018"
 license = "GPL-3.0-only"
 repository = "https://github.com/sassman/t-rec-rs"
+homepage = "https://github.com/sassman/t-rec-rs"
+description = "Blazingly fast terminal recorder that generates animated gif images for the web written in rust."
+keywords = ["recorder", "image", "terminal", "gif", "commandline"]
+categories = ["multimedia::images", "command-line-utilities"]
 
 [workspace.dependencies]
 
