@@ -120,8 +120,6 @@ fn load_wallpaper_from_path(path: &Path) -> Result<DynamicImage> {
 /// 2. File extension is supported (png, jpg, jpeg, tga)
 /// 3. File is a valid image that can be decoded
 /// 4. Resolution is sufficient for the terminal size + padding
-// Only compiled for library (used by api/headless.rs, not by CLI binary)
-#[cfg(not(feature = "cli"))]
 pub fn load_and_validate_wallpaper(
     path: &Path,
     terminal_width: u32,

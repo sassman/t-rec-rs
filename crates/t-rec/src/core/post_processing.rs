@@ -15,7 +15,6 @@ use rayon::prelude::*;
 use std::path::Path;
 
 use super::decors::{apply_corner_to_file, apply_shadow_to_file};
-#[cfg(feature = "cli")]
 use super::screenshot::ScreenshotInfo;
 use super::types::{BackgroundColor, Decor};
 use super::wallpapers::composite_frame;
@@ -84,8 +83,7 @@ impl<'a> PostProcessingOptions<'a> {
     }
 }
 
-/// Process screenshots with effects (CLI only).
-#[cfg(feature = "cli")]
+/// Process screenshots with effects.
 pub fn post_process_screenshots(
     screenshots: &[ScreenshotInfo],
     target: &str,

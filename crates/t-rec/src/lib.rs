@@ -5,7 +5,9 @@
 //!
 //! # Feature Flags
 //!
-//! - `lib` - Enables the library API with [`HeadlessRecorder`]
+//! - `headless` — Enables the [`HeadlessRecorder`] public API (opt-in; no extra deps).
+//! - `bin` — Bundled by default; enables the `t-rec` binary and its CLI deps.
+//!   Library consumers should use `--no-default-features` to exclude it.
 //!
 //! # Type-Safe Configuration
 //!
@@ -18,7 +20,7 @@
 //!
 //! Validation happens at enum construction time via factory methods:
 //! - `BackgroundColor::custom("#ff0000")` - Validates hex format
-//! - `Wallpaper::custom("/path/to/image.png")` - Validates path exists
+//! - `"/path/to/image.png".parse::<Wallpaper>()` - Parses into a `Wallpaper::Custom` variant
 //!
 //! The builder is always infallible - only `build()` can fail (for missing required fields).
 //!
@@ -39,11 +41,11 @@
 //!     .output_gif("demo.gif")
 //!     .build()?;
 //!
-//! // Custom values use factory methods for validation
+//! // Custom values use factory methods / FromStr for validation
 //! let mut recorder = HeadlessRecorder::builder()
 //!     .window_id(12345)
 //!     .bg_color(BackgroundColor::custom("#ff5500")?)  // Validates hex format
-//!     .wallpaper(Wallpaper::custom("/path/to/bg.png")?, 80)  // Validates path exists
+//!     .wallpaper("/path/to/bg.png".parse::<Wallpaper>()?, 80)  // Parses into Wallpaper::Custom
 //!     .output_gif("demo.gif")
 //!     .build()?;
 //!
@@ -63,45 +65,36 @@
 //! }
 //! ```
 
-// Core shared modules - made public so binary can use it directly
-// This avoids code duplication between lib and bin targets
+// Core shared modules — used by both the binary and library consumers.
 pub mod core;
 
-// Library API (only compiled when not building CLI binary)
-#[cfg(not(feature = "cli"))]
+// Public library API — opt-in via the `headless` feature.
+#[cfg(feature = "headless")]
 mod api;
 
-// Re-export core types
+#[cfg(feature = "headless")]
+pub use api::{HeadlessRecorder, HeadlessRecorderBuilder, HeadlessRecorderConfig, RecordingOutput};
+
+// Re-export core types.
 pub use core::{
     Image, ImageOnHeap, Margin, PlatformApi, Result, WindowId, WindowList, WindowListEntry,
 };
 
-// Re-export public modules
+// Re-export public modules.
 pub use core::error;
 pub use core::types;
 pub use core::types::{BackgroundColor, Decor};
 pub use core::wallpapers;
-#[cfg(not(feature = "cli"))]
-pub use core::wallpapers::load_and_validate_wallpaper;
-pub use core::wallpapers::{resolve_wallpaper, Wallpaper};
+pub use core::wallpapers::{load_and_validate_wallpaper, resolve_wallpaper, Wallpaper};
 
-// Re-export headless recorder API (only when not building CLI)
-#[cfg(not(feature = "cli"))]
-pub use api::{HeadlessRecorder, HeadlessRecorderBuilder, HeadlessRecorderConfig, RecordingOutput};
-
-// Re-export CLI-only items when cli feature is enabled
-// These are used by the binary but need to be exported to avoid dead code warnings
-#[cfg(feature = "cli")]
+// Re-exports used by the binary and available to any consumer.
 pub use core::common::{Platform, PlatformApiFactory};
-#[cfg(feature = "cli")]
 pub use core::event_router::{CaptureEvent, Event, EventRouter, FlashEvent, LifecycleEvent};
-#[cfg(feature = "cli")]
 #[cfg(target_os = "linux")]
 pub use core::linux::DEFAULT_SHELL;
-#[cfg(feature = "cli")]
 #[cfg(target_os = "macos")]
 pub use core::macos::DEFAULT_SHELL;
-#[cfg(feature = "cli")]
 pub use core::post_processing::post_process_screenshots;
-#[cfg(feature = "cli")]
 pub use core::screenshot::{screenshot_file_name, screenshot_output_name, ScreenshotInfo};
+#[cfg(target_os = "windows")]
+pub use core::windows::DEFAULT_SHELL;

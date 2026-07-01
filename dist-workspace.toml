@@ -21,11 +21,6 @@ publish-jobs = ["homebrew"]
 allow-dirty = ["ci"]
 # Target platforms to build apps for (Rust target-triple syntax)
 targets = ["aarch64-apple-darwin", "aarch64-unknown-linux-gnu", "x86_64-apple-darwin", "x86_64-unknown-linux-gnu", "x86_64-pc-windows-msvc"]
-# The t-rec binary requires the `cli` feature (see crates/t-rec/Cargo.toml).
-features = ["cli"]
-# Defensive: don't pull in default features (currently empty anyway).
-default-features = false
-
 # Build-time system dependency: t-rec links against libX11 on Linux
 # (see crates/t-rec/build.rs).
 [dist.dependencies.apt]
