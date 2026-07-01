@@ -94,7 +94,7 @@ pub use core::event_router::{CaptureEvent, Event, EventRouter, FlashEvent, Lifec
 pub use core::linux::DEFAULT_SHELL;
 #[cfg(target_os = "macos")]
 pub use core::macos::DEFAULT_SHELL;
-#[cfg(target_os = "windows")]
-pub use core::windows::DEFAULT_SHELL;
 pub use core::post_processing::post_process_screenshots;
 pub use core::screenshot::{screenshot_file_name, screenshot_output_name, ScreenshotInfo};
+#[cfg(target_os = "windows")]
+pub use core::windows::DEFAULT_SHELL;

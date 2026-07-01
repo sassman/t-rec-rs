@@ -5,8 +5,8 @@ pub(crate) mod ventura;
 
 // Public API
 pub use types::Wallpaper;
-pub use validation::resolve_wallpaper;
 pub use validation::load_and_validate_wallpaper;
+pub use validation::resolve_wallpaper;
 
 use image::{DynamicImage, GenericImageView, Rgba, RgbaImage};
 
