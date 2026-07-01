@@ -100,7 +100,7 @@ jobs:
         uses: sassman/rust-deb-builder@v1
         with:
           package: t-rec
-          features: cli
+          features: bin
       - name: Archive deb artifact
         uses: actions/upload-artifact@v4
         with:
