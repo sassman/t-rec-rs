@@ -75,9 +75,6 @@ windows = { version = "0.62", features = [
 
 [features]
 default = ["bin"]
-# Bundles the deps needed to build the `t-rec` binary. Users never type this
-# name — `cargo install t-rec` picks it up via `default`. Library users opt
-# out via `--no-default-features`.
 bin = [
     "dep:clap",
     "dep:crossterm",
@@ -87,7 +84,6 @@ bin = [
     "dep:toml",
     "dep:dirs",
 ]
-# Enables the `HeadlessRecorder` public API. Carries no extra deps of its own.
 headless = []
 e2e_tests = []
 
