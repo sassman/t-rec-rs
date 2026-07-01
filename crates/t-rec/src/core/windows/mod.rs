@@ -10,8 +10,7 @@ use super::{ImageOnHeap, Margin, Result, WindowList};
 use screenshot::capture_window_screenshot;
 use window_id::{get_foreground_window, window_list};
 
-/// Default shell for Windows (CLI only).
-#[cfg(feature = "cli")]
+/// Default shell for Windows.
 pub const DEFAULT_SHELL: &str = "cmd.exe";
 
 impl PlatformApiFactory for Platform {

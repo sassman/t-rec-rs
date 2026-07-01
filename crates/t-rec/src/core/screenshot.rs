@@ -1,10 +1,8 @@
-//! Screenshot capture during recording (CLI only).
+//! Screenshot capture during recording.
 
-#[cfg(feature = "cli")]
 use std::path::PathBuf;
 
-/// Information about a captured screenshot (CLI only).
-#[cfg(feature = "cli")]
+/// Information about a captured screenshot.
 #[derive(Debug, Clone)]
 pub struct ScreenshotInfo {
     /// Timecode in milliseconds from recording start.
@@ -13,19 +11,17 @@ pub struct ScreenshotInfo {
     pub temp_path: PathBuf,
 }
 
-/// Generate a screenshot filename (CLI only).
-#[cfg(feature = "cli")]
+/// Generate a screenshot filename.
 pub fn screenshot_file_name(timecode: u128, ext: &str) -> String {
     format!("t-rec-screenshot-{:09}.{}", timecode, ext)
 }
 
-/// Generate the final output filename for a screenshot (CLI only).
-#[cfg(feature = "cli")]
+/// Generate the final output filename for a screenshot.
 pub fn screenshot_output_name(base: &str, timecode: u128, format: &str) -> String {
     format!("{}_screenshot-{}.{}", base, timecode, format)
 }
 
-#[cfg(all(test, feature = "cli"))]
+#[cfg(test)]
 mod tests {
     use super::*;
 

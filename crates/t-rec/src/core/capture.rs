@@ -1,7 +1,6 @@
 use anyhow::{Context, Result};
 use image::save_buffer;
 use image::ColorType::Rgba8;
-#[cfg(feature = "cli")]
 use log::{debug, error};
 use std::borrow::Borrow;
 use std::ops::{Add, Sub};
@@ -11,12 +10,9 @@ use tempfile::TempDir;
 use tokio::sync::broadcast::error::TryRecvError;
 use tokio::sync::broadcast::Receiver;
 
-#[cfg(feature = "cli")]
 use super::event_router::LifecycleEvent;
 use super::event_router::{CaptureEvent, Event};
-#[cfg(feature = "cli")]
 use super::screenshot::screenshot_file_name;
-#[cfg(feature = "cli")]
 use super::screenshot::ScreenshotInfo;
 use super::utils::{file_name_for, IMG_EXT};
 use super::{ImageOnHeap, PlatformApi, WindowId};
@@ -38,8 +34,7 @@ pub struct CaptureContext {
     pub idle_pause: Option<Duration>,
     /// Capture framerate (4-15 fps)
     pub fps: u8,
-    /// List of captured screenshots (CLI only)
-    #[cfg(feature = "cli")]
+    /// List of captured screenshots.
     pub screenshots: Option<Arc<Mutex<Vec<ScreenshotInfo>>>>,
 }
 
@@ -61,7 +56,6 @@ pub fn capture_thread(
     ctx: CaptureContext,
 ) -> Result<()> {
     // Wait for Start event before beginning capture
-    #[cfg(feature = "cli")]
     loop {
         match rx.blocking_recv() {
             Ok(Event::Capture(CaptureEvent::Start)) => break,
@@ -70,11 +64,6 @@ pub fn capture_thread(
             Ok(_) => continue, // Ignore Flash events and Screenshot in wait-for-start phase
             Err(_) => return Ok(()),
         }
-    }
-    #[cfg(not(feature = "cli"))]
-    match rx.blocking_recv() {
-        Ok(Event::Capture(CaptureEvent::Start)) => {}
-        Ok(Event::Capture(CaptureEvent::Stop)) | Err(_) => return Ok(()),
     }
 
     let duration = ctx.frame_interval();
@@ -95,7 +84,6 @@ pub fn capture_thread(
             std::thread::sleep(remaining);
         }
 
-        #[cfg(feature = "cli")]
         let screenshot_event_tc = match rx.try_recv() {
             Ok(Event::Capture(CaptureEvent::Stop))
             | Ok(Event::Lifecycle(LifecycleEvent::Shutdown)) => break,
@@ -109,14 +97,6 @@ pub fn capture_thread(
             Err(TryRecvError::Empty) => None,
             Err(_) => None,
         };
-        #[cfg(not(feature = "cli"))]
-        let screenshot_event_tc: Option<u128> = match rx.try_recv() {
-            Ok(Event::Capture(CaptureEvent::Stop)) => break,
-            Ok(Event::Capture(CaptureEvent::Start)) => continue,
-            Err(TryRecvError::Closed) => break,
-            Err(TryRecvError::Empty) => None,
-            Err(_) => None,
-        };
         let now = Instant::now();
 
         // Calculate timestamp with skipped idle time removed
@@ -126,8 +106,7 @@ pub fn capture_thread(
         let image = api.capture_window_screenshot(ctx.win_id)?;
         let frame_duration = now.duration_since(last_now);
 
-        // Handle screenshot if triggered by event (CLI only)
-        #[cfg(feature = "cli")]
+        // Handle screenshot if triggered by event
         if let Some(screenshot_tc) = screenshot_event_tc {
             debug!("Taking screenshot at tc={}", screenshot_tc);
             if let Err(e) = save_screenshot(&image, screenshot_tc, &ctx) {
@@ -136,9 +115,6 @@ pub fn capture_thread(
                 debug!("Screenshot saved successfully to tempdir");
             }
         }
-        // Suppress unused variable warning for lib builds
-        #[cfg(not(feature = "cli"))]
-        let _ = screenshot_event_tc;
 
         // Check if frame is identical to previous (skip check in natural mode)
         let frame_unchanged = !ctx.natural
@@ -200,8 +176,7 @@ pub fn capture_thread(
     Ok(())
 }
 
-/// Saves a screenshot to the temp directory (CLI only).
-#[cfg(feature = "cli")]
+/// Saves a screenshot to the temp directory.
 fn save_screenshot(image: &ImageOnHeap, timecode_ms: u128, ctx: &CaptureContext) -> Result<()> {
     let tempdir = ctx.tempdir.lock().unwrap();
     let path = tempdir
@@ -250,7 +225,7 @@ pub fn save_frame(
     .context("Cannot save frame")
 }
 
-#[cfg(all(test, feature = "cli"))]
+#[cfg(test)]
 mod tests {
     use super::*;
     use tempfile::TempDir;

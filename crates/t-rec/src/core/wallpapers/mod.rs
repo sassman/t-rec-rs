@@ -6,8 +6,6 @@ pub(crate) mod ventura;
 // Public API
 pub use types::Wallpaper;
 pub use validation::resolve_wallpaper;
-// Library-only exports (used by api/headless.rs)
-#[cfg(not(feature = "cli"))]
 pub use validation::load_and_validate_wallpaper;
 
 use image::{DynamicImage, GenericImageView, Rgba, RgbaImage};

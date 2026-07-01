@@ -562,7 +562,6 @@ impl HeadlessRecorder {
             natural: self.config.natural,
             idle_pause: self.config.idle_pause,
             fps: self.config.fps,
-            #[cfg(feature = "cli")]
             screenshots: None,
         };
 

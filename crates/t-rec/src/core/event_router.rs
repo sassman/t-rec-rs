@@ -4,24 +4,21 @@ use tokio::sync::broadcast::Sender;
 #[derive(Debug, Clone)]
 pub enum CaptureEvent {
     Start,
-    /// Manual screenshot request (CLI only).
-    #[cfg(feature = "cli")]
+    /// Manual screenshot request.
     Screenshot {
         timecode_ms: u128,
     },
     Stop,
 }
 
-/// Visual feedback events for the Presenter actor (CLI only).
-#[cfg(feature = "cli")]
+/// Visual feedback events for the Presenter actor.
 #[derive(Debug, Clone)]
 pub enum FlashEvent {
     ScreenshotTaken,
     RecordingStarted,
 }
 
-/// Lifecycle events for actor coordination (CLI only).
-#[cfg(feature = "cli")]
+/// Lifecycle events for actor coordination.
 #[derive(Debug, Clone)]
 pub enum LifecycleEvent {
     Shutdown,
@@ -31,11 +28,7 @@ pub enum LifecycleEvent {
 #[derive(Debug, Clone)]
 pub enum Event {
     Capture(CaptureEvent),
-    /// Visual feedback events (CLI only).
-    #[cfg(feature = "cli")]
     Flash(FlashEvent),
-    /// Lifecycle events (CLI only).
-    #[cfg(feature = "cli")]
     Lifecycle(LifecycleEvent),
 }
 
@@ -62,8 +55,7 @@ impl EventRouter {
         let _ = self.tx.send(event);
     }
 
-    /// like `send` but returns a `Result` (CLI only).
-    #[cfg(feature = "cli")]
+    /// like `send` but returns a `Result`.
     pub fn try_send(
         &self,
         event: Event,
@@ -71,8 +63,7 @@ impl EventRouter {
         self.tx.send(event)
     }
 
-    /// Sends a shutdown event to all actors (CLI only).
-    #[cfg(feature = "cli")]
+    /// Sends a shutdown event to all actors.
     pub fn shutdown(&self) {
         let _ = self.tx.send(Event::Lifecycle(LifecycleEvent::Shutdown));
     }
@@ -84,7 +75,7 @@ impl EventRouter {
     }
 }
 
-#[cfg(all(test, feature = "cli"))]
+#[cfg(test)]
 mod tests {
     use super::*;
 
