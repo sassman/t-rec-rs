@@ -13,8 +13,7 @@ use screenshot::capture_window_screenshot;
 use std::env;
 use window_id::window_list;
 
-/// Default shell for macOS (CLI only).
-#[cfg(feature = "cli")]
+/// Default shell for macOS.
 pub const DEFAULT_SHELL: &str = "/bin/sh";
 
 impl PlatformApiFactory for Platform {
