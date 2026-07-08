@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.9.0-preview4](https://github.com/sassman/t-rec-rs/compare/v0.9.0-preview3...v0.9.0-preview4) - 2026-07-08
+
+### Other
+
+- default-install binary, add opt-in headless lib feature ([#356](https://github.com/sassman/t-rec-rs/pull/356))
+
 ## [0.9.0-preview3](https://github.com/sassman/t-rec-rs/compare/v0.9.0-preview2...v0.9.0-preview3) - 2026-06-30
 
 ### Fixed
