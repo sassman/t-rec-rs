@@ -1,0 +1,47 @@
+name: Publish to winget
+
+# Submits a manifest update to microsoft/winget-pkgs whenever a non-prerelease
+# GitHub Release is published. The `released` event type fires only for
+# stable releases, so pre-releases such as `v0.9.0-preview1` are skipped
+# automatically — winget-pkgs does not accept pre-releases.
+#
+# One-off setup required for this to work:
+#   1. Fork https://github.com/microsoft/winget-pkgs to the account behind
+#      WINGET_TOKEN (otherwise Komac has nowhere to push a PR branch).
+#   2. Create a Classic Personal Access Token with `public_repo` scope (the
+#      action uses it to fork-and-PR against winget-pkgs).
+#   3. Store the token as the repository secret `WINGET_TOKEN`.
+#
+# After v0.9.0 ships, the first PR that lands the manifest in winget-pkgs
+# needs a manual review by a Microsoft maintainer; subsequent version bumps
+# are auto-approved by their bot.
+
+on:
+  release:
+    types: [released]
+
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Release tag to publish (e.g. v0.9.0)"
+        required: true
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    name: Submit manifest to winget-pkgs
+    runs-on: ubuntu-latest
+    steps:
+      - name: Publish via Komac
+        uses: vedantmgoyal9/winget-releaser@main
+        with:
+          # winget identifiers allow ASCII letters, digits, hyphens, dots, and
+          # underscores. Hyphenated form keeps the package name recognisable.
+          identifier: Sassman.T-Rec
+          # Matches `t-rec.exe-vX.Y.Z-x86_64-pc-windows-msvc.zip` produced by
+          # release-binary-assets.yml.
+          installers-regex: 'x86_64-pc-windows-msvc\.zip$'
+          release-tag: ${{ github.event.inputs.tag || github.event.release.tag_name }}
+          token: ${{ secrets.WINGET_TOKEN }}
